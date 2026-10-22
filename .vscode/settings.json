@@ -1,7 +1,12 @@
 {
   "editor.formatOnSave": true,
   "files.eol": "\n",
-  "github.copilot.inlineSuggest.enable": true,
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false
+  },
   "github.copilot.nextEditSuggestions.enabled": false,
   "css.lint.unknownAtRules": "ignore"
 }
