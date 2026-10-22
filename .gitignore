@@ -1,0 +1,29 @@
+# BLOCK 1: OS and editor junk
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+.#*
+\#*\#
+
+# BLOCK 2: Gradle and Java
+.gradle/
+build/
+out/
+*.class
+
+# BLOCK 3: Node and Vite
+node_modules/
+dist/
+.vite/
+coverage/
+playwright-report/
+test-results/
+
+# BLOCK 4: secrets and local env
+.env*
+*.local
+infra/.env
