@@ -6,14 +6,13 @@ springdoc = "3.1.1"
 jooq = "3.21.9"
 flyway = "13.11.1"
 testcontainers = "2.0.5"
-elasticsearch = "9.5.5"
+# what the Boot 4.1.2 BOM manages; the elasticsearch and kibana images in infra use the same version
+elasticsearch = "9.4.8"
 awsSdk = "2.57.3"
 antlr = "4.13.2"
 owaspSanitizer = "20261011.1"
 # same JUnit the Boot 4.1.2 BOM manages, so test deps never drift from Boot's
 junit = "6.0.3"
-# matches what spring-boot-gradle-plugin 4.1.2 pulls in transitively
-dependencyManagement = "1.1.7"
 
 [libraries]
 # BOMs: one version per family, imported with platform(...)
@@ -30,7 +29,6 @@ assertj-core = { module = "org.assertj:assertj-core" }
 
 # Gradle plugins as libraries: build-logic puts them on its classpath so convention plugins can apply them
 spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "springBoot" }
-dependency-management-plugin = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "dependencyManagement" }
 
 [bundles]
 # what every module's tests need, added in one line by java-conventions

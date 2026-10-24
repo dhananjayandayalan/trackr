@@ -25,6 +25,7 @@ test-results/
 
 # BLOCK 4: secrets and local env
 .env*
+!.env.example
 *.local
 infra/.env
 

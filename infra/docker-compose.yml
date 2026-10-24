@@ -77,7 +77,7 @@ services:
     logging: *logging-defaults
 
   kafka-ui:
-    image: ghcr.io/kafbat/kafka-ui:latest
+    image: ghcr.io/kafbat/kafka-ui:v1.5.0
     profiles: ["tools"]
     environment:
       KAFKA_CLUSTERS_0_NAME: local
@@ -90,12 +90,13 @@ services:
     logging: *logging-defaults
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.4.8
     environment:
       discovery.type: single-node
       xpack.security.enabled: "false"
       ES_JAVA_OPTS: "-Xms1g -Xmx1g"
       cluster.routing.allocation.disk.threshold_enabled: "false"
+      bootstrap.memory_lock: "true"
     ulimits:
       memlock:
         soft: -1
@@ -114,16 +115,22 @@ services:
     logging: *logging-defaults
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:9.0.0
+    image: docker.elastic.co/kibana/kibana:9.4.8
     profiles: ["tools"]
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
       - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "curl", "-fsS", "http://localhost:5601/api/status"]
     logging: *logging-defaults
 
   seaweedfs:
-    image: chrislusf/seaweedfs
+    image: chrislusf/seaweedfs:4.48
     command: server -dir=/data -s3 -s3.config=/etc/seaweedfs/s3.json
     ports:
       - "8333:8333"
@@ -138,10 +145,13 @@ services:
 
   # BLOCK 9: mailpit
   mailpit:
-    image: axllent/mailpit
+    image: axllent/mailpit:v1.32.0
     ports:
       - "1025:1025"
       - "8025:8025"
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD", "/mailpit", "readyz"]
     logging: *logging-defaults
 
 volumes:
