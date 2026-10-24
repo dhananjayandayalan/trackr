@@ -15,7 +15,7 @@
 ## Files in this phase
 
 1. `infra/.env.example` and your local `infra/.env`
-2. `infra/postgres/init/01-extensions.sql`
+2. `infra/postgres/init/01-extensions.sh`
 3. `infra/seaweedfs/s3.json`
 4. `infra/docker-compose.yml`
 5. `infra/README.md` (how to start/stop/reset)
@@ -26,7 +26,9 @@ Copy the variables from 11-infra §5. Generate `KAFKA_CLUSTER_ID` once:
 `docker run --rm apache/kafka:<tag> /opt/kafka/bin/kafka-storage.sh random-uuid`.
 **Ask yourself:** why is `.env` git-ignored but `.env.example` committed?
 
-### File 2 — `01-extensions.sql`
+### File 2 — `01-extensions.sh`
+
+Use a shell init script so app-role passwords come from the environment instead of being hard-coded in SQL.
 
 | #   | Cue                                              | What it must do                                                                                                                                                                                                                                           |
 | --- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -49,7 +51,7 @@ Copy the variables from 11-infra §5. Generate `KAFKA_CLUSTER_ID` once:
 | #   | Cue                                           | What it must do                                                                                                                                                                                                                                                                                                                                      | Check                                          |
 | --- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | 1   | `# BLOCK 1: project name and shared defaults` | `name: trakr`; an `x-healthcheck-defaults` anchor (`interval: 5s`, `timeout: 3s`, `retries: 30`, `start_period: 10s`); an `x-logging` anchor capping json-file logs (`max-size: 10m`, `max-file: 3`)                                                                                                                                                 | `docker compose config` renders without errors |
-| 2   | `# BLOCK 2: postgres`                         | Image `postgres:18`; env `POSTGRES_DB=trakr`, `POSTGRES_USER=trakr`, `POSTGRES_PASSWORD=${POSTGRES_PASSWORD}`; port 5432; volume `pgdata:/var/lib/postgresql` (check the image docs — the data path changed in 18); mount `./postgres/init` to `/docker-entrypoint-initdb.d:ro`; healthcheck `pg_isready -U trakr -d trakr`                          | `psql` connects                                |
+| 2   | `# BLOCK 2: postgres`                         | Image `postgres:18`; env `POSTGRES_DB=trakr`, `POSTGRES_USER=trakr`, `POSTGRES_PASSWORD=${POSTGRES_PASSWORD}`, and the three `TRAKR_*_DB_PASSWORD` values for the init script; port 5432; volume `pgdata:/var/lib/postgresql` (check the image docs — the data path changed in 18); mount `./postgres/init` to `/docker-entrypoint-initdb.d:ro`; healthcheck `pg_isready -U trakr -d trakr`                          | `psql` connects                                |
 | 3   | `# BLOCK 3: redis`                            | `redis:8`, command `redis-server --appendonly yes`, port 6379, volume, healthcheck `redis-cli ping`                                                                                                                                                                                                                                                  | `redis-cli -p 6379 ping` → PONG                |
 | 4   | `# BLOCK 4: kafka (KRaft, single node)`       | `apache/kafka:<4.x tag>`; every env var from 11-infra §2; `CLUSTER_ID: ${KAFKA_CLUSTER_ID}`; port `9092:9092`; volume `kafkadata:/var/lib/kafka/data`; healthcheck runs `/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092`                                                                                              | see below                                      |
 | 5   | `# BLOCK 5: kafka-ui (profile tools)`         | `ghcr.io/kafbat/kafka-ui`; `profiles: [tools]`; env `KAFKA_CLUSTERS_0_NAME=local`, `KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092`; port `8085:8080`; `depends_on: kafka: condition: service_healthy`                                                                                                                                                | UI shows the cluster                           |

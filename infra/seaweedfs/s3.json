@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "trakr-dev",
+      "credentials": [
+        {
+          "accessKey": "trakr-dev",
+          "secretKey": "change-me-dev-secret"
+        }
+      ],
+      "actions": ["Read", "Write", "List", "Tagging", "Admin"]
+    }
+  ]
+}

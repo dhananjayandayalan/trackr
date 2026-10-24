@@ -62,7 +62,7 @@ jira-clone/
 ├── infra/
 │   ├── docker-compose.yml
 │   ├── .env.example
-│   ├── postgres/init/01-extensions.sql
+│   ├── postgres/init/01-extensions.sh
 │   ├── seaweedfs/s3.json
 │   └── caddy/Caddyfile           (phase 18)
 ├── backend/

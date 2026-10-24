@@ -34,7 +34,7 @@ RAM budget: ~4–5 GB with tools profile off.
 | `KAFKA_NUM_PARTITIONS`                                                                     | `3`                                                                                          | Default if a topic forgets                                                                           |
 | `CLUSTER_ID`                                                                               | a fixed base64 UUID (generate once with `kafka-storage.sh random-uuid` inside the container) | KRaft needs the storage formatted with a cluster id                                                  |
 
-## 3. Postgres init (`infra/postgres/init/01-extensions.sql`)
+## 3. Postgres init (`infra/postgres/init/01-extensions.sh`)
 
 Creates extensions `citext`, `pg_trgm` in database `trakr`, and roles `trakr_api`, `trakr_workers`, `trakr_collab` (passwords from env). Flyway runs as the owner role `trakr` (migrations); apps use their own roles from phase 18 (until then everything uses `trakr`).
 
