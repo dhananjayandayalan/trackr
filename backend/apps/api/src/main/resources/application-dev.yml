@@ -1,0 +1,13 @@
+# dev profile: layered on top of application.yml when "dev" is active
+logging:
+  level:
+    dev.trakr: debug
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

@@ -1,0 +1,40 @@
+# BLOCK 1: identity
+spring:
+  application:
+    name: trakr-api
+  profiles:
+    default: dev
+  # BLOCK 2: threads
+  threads:
+    virtual:
+      enabled: true
+  # BLOCK 3: server (spring.* half)
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  mvc:
+    problemdetails:
+      enabled: true
+
+# BLOCK 3: server
+server:
+  port: 8080
+  shutdown: graceful
+  compression:
+    enabled: true
+
+# BLOCK 4: actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,conditions
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized
+
+# BLOCK 5: our properties
+trakr:
+  app:
+    origin: ${TRAKR_APP_ORIGIN:http://localhost:5173}
