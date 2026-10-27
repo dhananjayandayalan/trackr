@@ -30,6 +30,15 @@ assertj-core = { module = "org.assertj:assertj-core" }
 # Gradle plugins as libraries: build-logic puts them on its classpath so convention plugins can apply them
 spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "springBoot" }
 
+# Spring Boot starters: no version, the Spring Boot BOM supplies it
+spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+
+# test starters: versions from the Spring Boot BOM
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
+
 [bundles]
 # what every module's tests need, added in one line by java-conventions
 testing = ["junit-jupiter", "assertj-core"]

@@ -12,6 +12,7 @@ Desktop.ini
 # BLOCK 2: Gradle and Java
 .gradle/
 build/
+bin/
 out/
 *.class
 
