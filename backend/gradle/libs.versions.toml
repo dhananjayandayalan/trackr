@@ -4,7 +4,6 @@ springBoot = "4.1.2"
 springModulith = "2.1.2"
 springdoc = "3.1.1"
 jooq = "3.21.9"
-flyway = "13.11.1"
 testcontainers = "2.0.5"
 # what the Boot 4.1.2 BOM manages; the elasticsearch and kibana images in infra use the same version
 elasticsearch = "9.4.8"
@@ -39,10 +38,28 @@ spring-boot-starter-validation = { module = "org.springframework.boot:spring-boo
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
 
+# persistence: versions from the Spring Boot BOM
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-jooq = { module = "org.springframework.boot:spring-boot-starter-jooq" }
+spring-boot-starter-flyway = { module = "org.springframework.boot:spring-boot-starter-flyway" }
+flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql" }
+postgresql = { module = "org.postgresql:postgresql" }
+
+# jOOQ codegen runs on its own classpath, outside the BOM, so it needs an explicit version
+jooq-meta-extensions = { module = "org.jooq:jooq-meta-extensions", version.ref = "jooq" }
+
+# integration tests: real services in containers
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }
+spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
+
 [bundles]
 # what every module's tests need, added in one line by java-conventions
 testing = ["junit-jupiter", "assertj-core"]
 
 [plugins]
-# Spring Boot plugin by id, same version as the BOM; jooq-codegen joins in phase 04
+# Spring Boot plugin by id, same version as the BOM
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
+# generates Java classes from our SQL migrations
+jooq-codegen = { id = "org.jooq.jooq-codegen-gradle", version.ref = "jooq" }

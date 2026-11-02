@@ -24,3 +24,8 @@ dependencies {
 tasks.bootJar {
     archiveFileName = "${project.name}.jar"
 }
+
+// BLOCK 5: run locally in UTC; postgres:18 rejects legacy zone names some machines report (Asia/Calcutta)
+tasks.bootRun {
+    systemProperty("user.timezone", "UTC")
+}

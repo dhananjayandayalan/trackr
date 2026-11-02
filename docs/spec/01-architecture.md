@@ -167,7 +167,7 @@ Delivery guarantees: outbox → Kafka is **at-least-once**. Every consumer is **
 | Spring Boot                                    | 4.1.x                               |
 | Spring Modulith                                | 2.x (the line matching Boot 4.1)    |
 | jOOQ                                           | 3.20+                               |
-| Flyway                                         | 11.x                                |
+| Flyway                                         | 12.x (managed by the Spring Boot BOM) |
 | Spring for Apache Kafka                        | 4.x                                 |
 | Kafka broker (`apache/kafka` image)            | 4.x                                 |
 | Elasticsearch server + Java client             | 9.x                                 |

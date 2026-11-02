@@ -1,4 +1,16 @@
 # dev profile: layered on top of application.yml when "dev" is active
+# BLOCK 6: datasource
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/trakr
+    username: trakr
+    password: ${POSTGRES_PASSWORD:trakr}
+    hikari:
+      maximum-pool-size: 20
+      # milliseconds: Hikari binds this as a plain long, so "3s" fails at startup
+      connection-timeout: 3000
+      pool-name: trakr-api
+
 logging:
   level:
     dev.trakr: debug

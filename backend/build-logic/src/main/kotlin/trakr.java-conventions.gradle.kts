@@ -32,9 +32,11 @@ dependencies {
 }
 
 // BLOCK 4: test task
-tasks.test {
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     jvmArgs("-XX:+EnableDynamicAgentLoading")
+    // time is UTC everywhere; the JDBC driver also sends this zone to Postgres when it connects
+    systemProperty("user.timezone", "UTC")
     testLogging {
         events("failed")
         exceptionFormat = TestExceptionFormat.FULL
@@ -45,4 +47,32 @@ tasks.test {
 tasks.withType<AbstractArchiveTask>().configureEach {
     isPreserveFileTimestamps = false
     isReproducibleFileOrder = true
+}
+
+// BLOCK 6: integration test suite
+testing {
+    suites {
+        named<JvmTestSuite>("test") {
+            useJUnitJupiter()
+        }
+        register<JvmTestSuite>("integrationTest") {
+            dependencies {
+                implementation(project())
+            }
+            targets.all {
+                testTask.configure {
+                    shouldRunAfter(tasks.named("test"))
+                }
+            }
+        }
+    }
+}
+
+// BLOCK 7: wire into check
+configurations.named("integrationTestImplementation") {
+    extendsFrom(configurations.testImplementation.get())
+}
+
+tasks.named("check") {
+    dependsOn(testing.suites.named("integrationTest"))
 }

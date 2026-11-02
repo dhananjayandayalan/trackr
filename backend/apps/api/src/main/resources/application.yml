@@ -14,6 +14,27 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  # BLOCK 7: jpa
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50
+          time_zone: UTC
+        order_inserts: true
+        order_updates: true
+        default_batch_fetch_size: 50
+  # BLOCK 8: flyway
+  flyway:
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true
+  # BLOCK 9: jooq
+  jooq:
+    sql-dialect: postgres
 
 # BLOCK 3: server
 server:

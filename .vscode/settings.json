@@ -9,5 +9,8 @@
   },
   "github.copilot.nextEditSuggestions.enabled": false,
   "css.lint.unknownAtRules": "ignore",
-  "java.configuration.updateBuildConfiguration": "automatic"
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.gradle.buildServer.enabled": "off",
+  "java.import.gradle.wrapper.enabled": false,
+  "java.import.gradle.version": "9.8.2"
 }
