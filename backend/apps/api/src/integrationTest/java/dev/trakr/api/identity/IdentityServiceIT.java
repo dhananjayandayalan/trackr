@@ -1,13 +1,13 @@
 package dev.trakr.api.identity;
 
-import static dev.trakr.api.jooq.Tables.APP_USER;
+import static dev.trakr.api.TestBrowser.uniqueEmail;
+import static dev.trakr.jooq.Tables.APP_USER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.trakr.api.TestcontainersConfiguration;
 import dev.trakr.api.workspace.CurrentWorkspace;
 import dev.trakr.api.workspace.WorkspaceService;
-import dev.trakr.kernel.Ids;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,14 +20,17 @@ import org.springframework.context.annotation.Import;
 @Import(TestcontainersConfiguration.class)
 class IdentityServiceIT {
 
-    @Autowired
-    IdentityService identityService;
+    private final IdentityService identityService;
+    private final WorkspaceService workspaceService;
+    private final DSLContext dsl;
 
+    // constructor injection in tests too: Modulith flags field injection of another module's beans
     @Autowired
-    WorkspaceService workspaceService;
-
-    @Autowired
-    DSLContext dsl;
+    IdentityServiceIT(IdentityService identityService, WorkspaceService workspaceService, DSLContext dsl) {
+        this.identityService = identityService;
+        this.workspaceService = workspaceService;
+        this.dsl = dsl;
+    }
 
     @Test
     void signUpCreatesUserPersonalWorkspaceAndOwnerMembership() {
@@ -70,9 +73,5 @@ class IdentityServiceIT {
                 .isInstanceOf(WeakPasswordException.class);
         // the email is still free, so the rejected attempt left no user behind
         assertThat(identityService.signUp("Ada", email, "correct-horse-7").email()).isEqualTo(email);
-    }
-
-    static String uniqueEmail() {
-        return "user-" + Ids.newId() + "@example.com";
     }
 }

@@ -1,5 +1,6 @@
 package dev.trakr.api.identity.internal;
 
+import dev.trakr.api.identity.TrakrPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -23,7 +24,7 @@ class TrakrUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) {
         return users.findByEmail(email)
                 .filter(user -> user.passwordHash() != null)
-                .map(TrakrPrincipal::withPasswordHash)
+                .map(user -> TrakrPrincipal.withPasswordHash(user.id(), user.email(), user.passwordHash()))
                 .orElseThrow(() -> new UsernameNotFoundException("no password account for this email"));
     }
 }

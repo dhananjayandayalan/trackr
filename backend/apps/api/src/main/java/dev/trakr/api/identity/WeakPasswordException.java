@@ -1,10 +1,10 @@
 package dev.trakr.api.identity;
 
-import dev.trakr.api.shared.web.ApiException;
+import dev.trakr.api.shared.web.TrakrException;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 
-public class WeakPasswordException extends ApiException {
+public class WeakPasswordException extends TrakrException {
 
     private static final long serialVersionUID = 1L;
 

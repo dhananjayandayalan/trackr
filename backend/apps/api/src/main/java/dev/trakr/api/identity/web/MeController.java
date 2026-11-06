@@ -1,9 +1,10 @@
 package dev.trakr.api.identity.web;
 
 import dev.trakr.api.identity.IdentityService;
-import dev.trakr.api.identity.internal.TrakrPrincipal;
-import dev.trakr.api.shared.web.ApiException;
+import dev.trakr.api.identity.TrakrPrincipal;
+import dev.trakr.api.shared.web.TrakrException;
 import dev.trakr.api.workspace.WorkspaceService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,11 +24,12 @@ class MeController {
     }
 
     // /api/** requires a login, so the principal is always there: from the session, via the SecurityContext
+    @Operation(operationId = "getMe")
     @GetMapping
     MeResponse me(@AuthenticationPrincipal TrakrPrincipal principal) {
         return identityService.findById(principal.id())
                 .map(user -> MeResponse.of(user, workspaceService.currentFor(user.id()).orElse(null)))
                 // the session outlived the account
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED", "Sign in to continue."));
+                .orElseThrow(() -> new TrakrException(HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED", "Sign in to continue."));
     }
 }

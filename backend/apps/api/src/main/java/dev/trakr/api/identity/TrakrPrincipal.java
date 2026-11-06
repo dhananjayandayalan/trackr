@@ -1,6 +1,5 @@
-package dev.trakr.api.identity.internal;
+package dev.trakr.api.identity;
 
-import dev.trakr.api.identity.UserView;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,8 @@ import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 /**
- * The signed-in user, however they signed in. It is a UserDetails (password login) and an OidcUser
+ * The signed-in user, however they signed in; public so every module's controllers can take it.
+ * It is a UserDetails (password login) and an OidcUser
  * (Google; GitHub uses its OAuth2User half), so controllers take one type:
  * {@code @AuthenticationPrincipal TrakrPrincipal}. Spring Session stores it in Redis inside the
  * SecurityContext, so it stays small and serializable (UserDetails extends Serializable).
@@ -22,15 +22,15 @@ public record TrakrPrincipal(UUID id, String email, @Nullable String password, @
         implements UserDetails, OidcUser {
 
     /** For DaoAuthenticationProvider, which compares the password hash. */
-    static TrakrPrincipal withPasswordHash(AppUser user) {
-        return new TrakrPrincipal(user.id(), user.email(), user.passwordHash(), null);
+    public static TrakrPrincipal withPasswordHash(UUID id, String email, String passwordHash) {
+        return new TrakrPrincipal(id, email, passwordHash, null);
     }
 
     public static TrakrPrincipal of(UserView user) {
         return new TrakrPrincipal(user.id(), user.email(), null, null);
     }
 
-    static TrakrPrincipal of(UserView user, OidcIdToken idToken) {
+    public static TrakrPrincipal of(UserView user, OidcIdToken idToken) {
         return new TrakrPrincipal(user.id(), user.email(), null, idToken);
     }
 

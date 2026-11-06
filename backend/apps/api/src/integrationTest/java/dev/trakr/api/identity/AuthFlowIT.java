@@ -1,17 +1,15 @@
 package dev.trakr.api.identity;
 
-import static dev.trakr.api.identity.IdentityServiceIT.uniqueEmail;
+import static dev.trakr.api.TestBrowser.uniqueEmail;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
+import dev.trakr.api.TestBrowser;
 import dev.trakr.api.TestcontainersConfiguration;
 import jakarta.servlet.http.Cookie;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +23,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
-import org.springframework.test.web.servlet.assertj.MockMvcTester.MockMvcRequestBuilder;
-import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 // the whole filter chain (Spring Session, CSRF, security) with Postgres and Redis in containers.
 // RANDOM_PORT, not the default mock environment: Spring Boot applies server.servlet.session.cookie.*
@@ -36,7 +32,7 @@ import org.springframework.test.web.servlet.assertj.MvcTestResult;
 @Import(TestcontainersConfiguration.class)
 class AuthFlowIT {
 
-    private static final String PASSWORD = "correct-horse-7";
+    private static final String PASSWORD = TestBrowser.PASSWORD;
 
     @Autowired
     MockMvcTester mvc;
@@ -47,7 +43,7 @@ class AuthFlowIT {
 
     @Test
     void signUpThenMeThenLogoutThenMeIsUnauthorized() {
-        Browser browser = new Browser();
+        TestBrowser browser = new TestBrowser(mvc);
         String email = uniqueEmail();
 
         // anonymous: 401 as problem+json, and the first response already hands out the CSRF cookie
@@ -72,12 +68,12 @@ class AuthFlowIT {
         assertThat(browser.post("/api/v1/auth/logout", "")).hasStatus(HttpStatus.NO_CONTENT);
 
         // replaying the old cookie proves the session is gone from Redis, not just from the browser
-        assertThat(new Browser(session).get("/api/v1/me")).hasStatus(HttpStatus.UNAUTHORIZED);
+        assertThat(new TestBrowser(mvc, session).get("/api/v1/me")).hasStatus(HttpStatus.UNAUTHORIZED);
     }
 
     @Test
     void mutationsWithoutCsrfHeaderAre403CsrfInvalid() {
-        Browser browser = new Browser();
+        TestBrowser browser = new TestBrowser(mvc);
         browser.get("/api/v1/me");
 
         assertThat(browser.postWithoutCsrfHeader("/api/v1/auth/signup", signUp("Ada", uniqueEmail())))
@@ -87,7 +83,7 @@ class AuthFlowIT {
 
     @Test
     void invalidBodyIs400WithFieldErrors() {
-        Browser browser = new Browser();
+        TestBrowser browser = new TestBrowser(mvc);
         browser.get("/api/v1/me");
 
         assertThat(browser.post("/api/v1/auth/signup", signUp("Ada", "not-an-email")))
@@ -100,11 +96,11 @@ class AuthFlowIT {
     @Test
     void duplicateEmailIs409() {
         String email = uniqueEmail();
-        Browser browser = new Browser();
+        TestBrowser browser = new TestBrowser(mvc);
         browser.get("/api/v1/me");
         browser.post("/api/v1/auth/signup", signUp("Ada", email));
 
-        Browser other = new Browser();
+        TestBrowser other = new TestBrowser(mvc);
         other.get("/api/v1/me");
         assertThat(other.post("/api/v1/auth/signup", signUp("Ada", email.toUpperCase())))
                 .hasStatus(HttpStatus.CONFLICT)
@@ -114,7 +110,7 @@ class AuthFlowIT {
     @Test
     void loginChecksThePasswordAndRememberMeMakesThePersistentCookie() {
         String email = signedUpUser();
-        Browser browser = new Browser();
+        TestBrowser browser = new TestBrowser(mvc);
         browser.get("/api/v1/me");
 
         assertThat(browser.post("/api/v1/auth/login", login(email, "wrong-password-1", false)))
@@ -125,7 +121,7 @@ class AuthFlowIT {
         // a browser-session cookie: no Max-Age, gone when the browser closes
         assertThat(browser.cookie("TRAKR_SESSION").getMaxAge()).isEqualTo(-1);
 
-        Browser remembered = new Browser();
+        TestBrowser remembered = new TestBrowser(mvc);
         remembered.get("/api/v1/me");
         assertThat(remembered.post("/api/v1/auth/login", login(email.toUpperCase(), PASSWORD, true))).hasStatusOk();
         assertThat(remembered.cookie("TRAKR_SESSION").getMaxAge()).isPositive();
@@ -135,7 +131,7 @@ class AuthFlowIT {
     @Test
     void tenFailedLoginsLockTheEmailWith429() {
         String email = signedUpUser();
-        Browser browser = new Browser();
+        TestBrowser browser = new TestBrowser(mvc);
         browser.get("/api/v1/me");
 
         for (int i = 0; i < 10; i++) {
@@ -152,11 +148,11 @@ class AuthFlowIT {
     @Test
     void passwordResetEmailsAOneTimeLinkAndEndsOldSessions() {
         String email = uniqueEmail();
-        Browser oldDevice = new Browser();
+        TestBrowser oldDevice = new TestBrowser(mvc);
         oldDevice.get("/api/v1/me");
         oldDevice.post("/api/v1/auth/signup", signUp("Ada", email));
 
-        Browser browser = new Browser();
+        TestBrowser browser = new TestBrowser(mvc);
         browser.get("/api/v1/me");
         assertThat(browser.post("/api/v1/auth/password/forgot", """
                 {"email": "%s"}""".formatted(email))).hasStatus(HttpStatus.ACCEPTED);
@@ -175,7 +171,7 @@ class AuthFlowIT {
 
     @Test
     void forgotPasswordForUnknownEmailIsAlso202ButSendsNothing() {
-        Browser browser = new Browser();
+        TestBrowser browser = new TestBrowser(mvc);
         browser.get("/api/v1/me");
 
         assertThat(browser.post("/api/v1/auth/password/forgot", """
@@ -185,7 +181,7 @@ class AuthFlowIT {
 
     private String signedUpUser() {
         String email = uniqueEmail();
-        Browser browser = new Browser();
+        TestBrowser browser = new TestBrowser(mvc);
         browser.get("/api/v1/me");
         assertThat(browser.post("/api/v1/auth/signup", signUp("Ada", email))).hasStatus(HttpStatus.CREATED);
         return email;
@@ -213,54 +209,5 @@ class AuthFlowIT {
     private static String reset(String token, String password) {
         return """
                 {"token": "%s", "password": "%s"}""".formatted(token, password);
-    }
-
-    /** Keeps cookies between requests like a browser, and echoes XSRF-TOKEN in X-XSRF-TOKEN like the SPA will. */
-    private final class Browser {
-
-        private final Map<String, Cookie> cookies = new HashMap<>();
-
-        Browser(Cookie... initial) {
-            for (Cookie cookie : initial) {
-                cookies.put(cookie.getName(), cookie);
-            }
-        }
-
-        MvcTestResult get(String uri) {
-            return send(mvc.get().uri(uri));
-        }
-
-        MvcTestResult post(String uri, String json) {
-            MockMvcRequestBuilder request = mvc.post().uri(uri).contentType(MediaType.APPLICATION_JSON).content(json);
-            Cookie xsrf = cookies.get("XSRF-TOKEN");
-            if (xsrf != null) {
-                request.header("X-XSRF-TOKEN", xsrf.getValue());
-            }
-            return send(request);
-        }
-
-        MvcTestResult postWithoutCsrfHeader(String uri, String json) {
-            return send(mvc.post().uri(uri).contentType(MediaType.APPLICATION_JSON).content(json));
-        }
-
-        @Nullable
-        Cookie cookie(String name) {
-            return cookies.get(name);
-        }
-
-        private MvcTestResult send(MockMvcRequestBuilder request) {
-            if (!cookies.isEmpty()) {
-                request.cookie(cookies.values().toArray(Cookie[]::new));
-            }
-            MvcTestResult result = request.exchange();
-            for (Cookie cookie : result.getResponse().getCookies()) {
-                if (cookie.getMaxAge() == 0) {
-                    cookies.remove(cookie.getName());
-                } else {
-                    cookies.put(cookie.getName(), cookie);
-                }
-            }
-            return result;
-        }
     }
 }

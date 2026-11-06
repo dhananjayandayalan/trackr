@@ -1,7 +1,7 @@
 package dev.trakr.api.identity;
 
-import static dev.trakr.api.identity.IdentityServiceIT.uniqueEmail;
-import static dev.trakr.api.jooq.Tables.APP_USER;
+import static dev.trakr.api.TestBrowser.uniqueEmail;
+import static dev.trakr.jooq.Tables.APP_USER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -22,14 +22,16 @@ import org.springframework.context.annotation.Import;
 @Import(TestcontainersConfiguration.class)
 class OAuthLinkingIT {
 
-    @Autowired
-    IdentityService identityService;
+    private final IdentityService identityService;
+    private final WorkspaceService workspaceService;
+    private final DSLContext dsl;
 
     @Autowired
-    WorkspaceService workspaceService;
-
-    @Autowired
-    DSLContext dsl;
+    OAuthLinkingIT(IdentityService identityService, WorkspaceService workspaceService, DSLContext dsl) {
+        this.identityService = identityService;
+        this.workspaceService = workspaceService;
+        this.dsl = dsl;
+    }
 
     @Test
     void newProviderAccountCreatesVerifiedUserAndWorkspace() {

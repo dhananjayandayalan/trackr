@@ -56,6 +56,12 @@ public class IdentityService {
         return users.findById(id).map(AppUser::toView);
     }
 
+    /** Case-insensitive, like every email comparison here (citext). */
+    @Transactional(readOnly = true)
+    public Optional<UserView> findByEmail(String email) {
+        return users.findByEmail(email).map(AppUser::toView);
+    }
+
     /**
      * The user behind a Google or GitHub login. Rules, in order: a provider account linked before
      * wins; else a <em>verified</em> email links to the account with that email; else a new user and

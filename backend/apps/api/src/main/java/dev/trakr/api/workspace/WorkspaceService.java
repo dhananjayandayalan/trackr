@@ -6,6 +6,7 @@ import dev.trakr.api.workspace.internal.WorkspaceMemberRepository;
 import dev.trakr.api.workspace.internal.WorkspaceQueries;
 import dev.trakr.api.workspace.internal.WorkspaceRepository;
 import java.time.Clock;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -42,5 +43,27 @@ public class WorkspaceService {
     @Transactional(readOnly = true)
     public Optional<CurrentWorkspace> currentFor(UUID userId) {
         return queries.firstWorkspaceOf(userId);
+    }
+
+    /**
+     * Every workspace the user belongs to, their own first. Being added to someone else's project
+     * also adds them to that workspace, so this can be more than one.
+     */
+    @Transactional(readOnly = true)
+    public List<UUID> workspaceIdsOf(UUID userId) {
+        return queries.workspaceIdsOf(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isMember(UUID workspaceId, UUID userId) {
+        return members.existsById(new WorkspaceMember.Key(workspaceId, userId));
+    }
+
+    /** Adds the user as a plain member; does nothing if they already belong (owners stay owners). */
+    @Transactional
+    public void addMember(UUID workspaceId, UUID userId) {
+        if (!isMember(workspaceId, userId)) {
+            members.save(WorkspaceMember.member(workspaceId, userId, clock));
+        }
     }
 }

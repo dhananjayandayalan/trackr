@@ -41,6 +41,12 @@ dependencies {
     runtimeOnly(libs.bcprov)
     testImplementation(libs.spring.boot.starter.security.test)
 
+    // BLOCK 12: application modules and the OpenAPI document
+    implementation(libs.spring.modulith.starter.core)
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
+    testImplementation(libs.spring.modulith.starter.test)
+    testImplementation(libs.spring.modulith.docs)
+
     // BLOCK 10: integration tests run against a real Postgres in a container
     integrationTestImplementation(platform(libs.testcontainers.bom))
     integrationTestImplementation(libs.spring.boot.testcontainers)
@@ -70,7 +76,7 @@ jooq {
                 }
             }
             target {
-                packageName = "dev.trakr.api.jooq"
+                packageName = "dev.trakr.jooq"
                 directory = "build/generated-sources/jooq"
             }
         }

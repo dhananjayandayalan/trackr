@@ -1,9 +1,11 @@
 package dev.trakr.api.shared.security;
 
+import dev.trakr.api.shared.web.IdempotencyFilter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
@@ -23,8 +25,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfig {
@@ -54,7 +58,8 @@ public class SecurityConfig {
             @Qualifier("handlerExceptionResolver") HandlerExceptionResolver errors,
             ObjectProvider<ClientRegistrationRepository> clientRegistrations,
             OAuth2UserService<OidcUserRequest, OidcUser> oidcUserService,
-            OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService) throws Exception {
+            OAuth2UserService<OAuth2UserRequest, OAuth2User> oauth2UserService,
+            StringRedisTemplate redis, JsonMapper json) throws Exception {
 
         // BLOCK 4: the filter chain — authorization rules
         http.authorizeHttpRequests(a -> a
@@ -66,6 +71,10 @@ public class SecurityConfig {
         http.csrf(c -> c.spa());
         http.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
 
+        // Idempotency-Key replays: after AuthorizationFilter, so it only sees signed-in, allowed requests and
+        // knows the user. Created here, not as a @Component, so Spring Boot doesn't also register it for every request.
+        http.addFilterAfter(new IdempotencyFilter(redis, json, errors), AuthorizationFilter.class);
+
         // BLOCK 6: OAuth2 login, only when registrations exist (the "oauth" profile, see application-oauth.yml)
         ClientRegistrationRepository registrations = clientRegistrations.getIfAvailable();
         if (registrations != null) {
@@ -76,7 +85,7 @@ public class SecurityConfig {
                     .failureHandler(OAuthRedirects::onFailure));
         }
 
-        // BLOCK 7: JSON errors instead of redirects — 401/403 go through ApiExceptionHandler as problem+json
+        // BLOCK 7: JSON errors instead of redirects — 401/403 go through ProblemDetailsAdvice as problem+json
         http.exceptionHandling(e -> e
                 .authenticationEntryPoint((request, response, ex) -> errors.resolveException(request, response, null, ex))
                 .accessDeniedHandler((request, response, ex) -> errors.resolveException(request, response, null, ex)));

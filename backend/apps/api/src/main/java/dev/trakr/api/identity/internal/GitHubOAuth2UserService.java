@@ -1,6 +1,7 @@
 package dev.trakr.api.identity.internal;
 
 import dev.trakr.api.identity.IdentityService;
+import dev.trakr.api.identity.TrakrPrincipal;
 import dev.trakr.api.identity.UserView;
 import java.util.List;
 import java.util.Optional;

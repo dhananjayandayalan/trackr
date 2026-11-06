@@ -4,9 +4,10 @@ import dev.trakr.api.identity.IdentityService;
 import dev.trakr.api.identity.UserView;
 import dev.trakr.api.identity.internal.LoginAttempts;
 import dev.trakr.api.identity.internal.PasswordResetService;
-import dev.trakr.api.identity.internal.TrakrPrincipal;
-import dev.trakr.api.shared.web.ApiException;
+import dev.trakr.api.identity.TrakrPrincipal;
+import dev.trakr.api.shared.web.TrakrException;
 import dev.trakr.api.workspace.WorkspaceService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -55,6 +56,7 @@ class AuthController {
     }
 
     /** New account, and already signed in: 201 Me + session cookie. */
+    @Operation(operationId = "signUp")
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
     MeResponse signUp(@Valid @RequestBody SignUpRequest body, HttpServletRequest request,
@@ -66,11 +68,12 @@ class AuthController {
         return me(user);
     }
 
+    @Operation(operationId = "login")
     @PostMapping("/login")
     MeResponse login(@Valid @RequestBody LoginRequest body, HttpServletRequest request, HttpServletResponse response) {
         // 4. lockout check first, so a locked email costs no Argon2 hashing
         if (loginAttempts.isLocked(body.email())) {
-            throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMITED",
+            throw new TrakrException(HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMITED",
                     "Too many failed sign-ins. Try again in 15 minutes.");
         }
 
@@ -81,7 +84,7 @@ class AuthController {
                     UsernamePasswordAuthenticationToken.unauthenticated(body.email(), body.password()));
         } catch (BadCredentialsException e) {
             loginAttempts.recordFailure(body.email());
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED", "Wrong email or password.");
+            throw new TrakrException(HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED", "Wrong email or password.");
         }
         loginAttempts.reset(body.email());
 
@@ -93,12 +96,14 @@ class AuthController {
     }
 
     /** Always 202, whether or not the email has an account (no user enumeration). */
+    @Operation(operationId = "forgotPassword")
     @PostMapping("/password/forgot")
     @ResponseStatus(HttpStatus.ACCEPTED)
     void forgotPassword(@Valid @RequestBody ForgotPasswordRequest body) {
         passwordResetService.requestReset(body.email());
     }
 
+    @Operation(operationId = "resetPassword")
     @PostMapping("/password/reset")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     void resetPassword(@Valid @RequestBody ResetPasswordRequest body) {

@@ -1,6 +1,7 @@
 package dev.trakr.api.identity.internal;
 
 import dev.trakr.api.identity.IdentityService;
+import dev.trakr.api.identity.TrakrPrincipal;
 import dev.trakr.api.identity.UserView;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;

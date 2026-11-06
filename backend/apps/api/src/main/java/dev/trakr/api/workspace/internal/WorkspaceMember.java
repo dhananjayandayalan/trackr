@@ -30,10 +30,18 @@ public class WorkspaceMember {
     }
 
     public static WorkspaceMember owner(UUID workspaceId, UUID userId, Clock clock) {
+        return join(workspaceId, userId, "owner", clock);
+    }
+
+    public static WorkspaceMember member(UUID workspaceId, UUID userId, Clock clock) {
+        return join(workspaceId, userId, "member", clock);
+    }
+
+    private static WorkspaceMember join(UUID workspaceId, UUID userId, String role, Clock clock) {
         WorkspaceMember member = new WorkspaceMember();
         member.workspaceId = workspaceId;
         member.userId = userId;
-        member.role = "owner";
+        member.role = role;
         member.joinedAt = clock.instant();
         return member;
     }

@@ -83,3 +83,8 @@ trakr:
     origin: ${TRAKR_APP_ORIGIN:http://localhost:5173}
   mail:
     from: ${TRAKR_MAIL_FROM:TRAKR <no-reply@trakr.local>}
+
+# BLOCK 12: OpenAPI — /v3/api-docs is always on (the frontend generates its types from it); the UI only in dev
+springdoc:
+  swagger-ui:
+    enabled: false

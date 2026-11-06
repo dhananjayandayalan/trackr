@@ -57,6 +57,15 @@ spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-star
 spring-boot-starter-security-test = { module = "org.springframework.boot:spring-boot-starter-security-test" }
 bcprov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 
+# modules: versions from the Spring Modulith BOM (trakr.spring-app imports it)
+spring-modulith-starter-core = { module = "org.springframework.modulith:spring-modulith-starter-core" }
+spring-modulith-starter-test = { module = "org.springframework.modulith:spring-modulith-starter-test" }
+# Documenter: writes module diagrams from the verified structure
+spring-modulith-docs = { module = "org.springframework.modulith:spring-modulith-docs" }
+
+# OpenAPI document + Swagger UI generated from the controllers; 3.x is the line for Boot 4
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
+
 # jOOQ codegen runs on its own classpath, outside the BOM, so it needs an explicit version
 jooq-meta-extensions = { module = "org.jooq:jooq-meta-extensions", version.ref = "jooq" }
 

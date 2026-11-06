@@ -1,9 +1,10 @@
 package dev.trakr.api.workspace.internal;
 
-import static dev.trakr.api.jooq.Tables.WORKSPACE;
-import static dev.trakr.api.jooq.Tables.WORKSPACE_MEMBER;
+import static dev.trakr.jooq.Tables.WORKSPACE;
+import static dev.trakr.jooq.Tables.WORKSPACE_MEMBER;
 
 import dev.trakr.api.workspace.CurrentWorkspace;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.jooq.DSLContext;
@@ -29,5 +30,14 @@ public class WorkspaceQueries {
                 .orderBy(WORKSPACE_MEMBER.JOINED_AT)
                 .limit(1)
                 .fetchOptional(Records.mapping(CurrentWorkspace::new));
+    }
+
+    // first joined first: that is the user's own (current) workspace
+    public List<UUID> workspaceIdsOf(UUID userId) {
+        return dsl.select(WORKSPACE_MEMBER.WORKSPACE_ID)
+                .from(WORKSPACE_MEMBER)
+                .where(WORKSPACE_MEMBER.USER_ID.eq(userId))
+                .orderBy(WORKSPACE_MEMBER.JOINED_AT)
+                .fetch(WORKSPACE_MEMBER.WORKSPACE_ID);
     }
 }

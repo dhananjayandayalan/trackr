@@ -1,7 +1,7 @@
 package dev.trakr.api;
 
-import static dev.trakr.api.jooq.Tables.APP_USER;
-import static dev.trakr.api.jooq.Tables.WORKSPACE;
+import static dev.trakr.jooq.Tables.APP_USER;
+import static dev.trakr.jooq.Tables.WORKSPACE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -30,7 +30,9 @@ class DatabaseSmokeIT {
 
     @Test
     void flywayAppliedAllMigrations() {
-        assertThat(flyway.info().applied()).hasSize(2);
+        // every migration file ran and none is waiting — a count would need editing in every phase
+        assertThat(flyway.info().pending()).isEmpty();
+        assertThat(flyway.info().applied()).isNotEmpty().allMatch(migration -> migration.getState().isApplied());
     }
 
     @Test

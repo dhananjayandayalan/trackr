@@ -26,6 +26,11 @@ server:
       cookie:
         secure: false
 
+# BLOCK 12: Swagger UI at http://localhost:8080/swagger-ui.html
+springdoc:
+  swagger-ui:
+    enabled: true
+
 logging:
   level:
     dev.trakr: debug
