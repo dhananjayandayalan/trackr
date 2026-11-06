@@ -35,6 +35,14 @@ spring:
   # BLOCK 9: jooq
   jooq:
     sql-dialect: postgres
+  # BLOCK 10: sessions in Redis (cookie and timeout are under server.servlet.session)
+  session:
+    data:
+      redis:
+        # every key starts with trakr:session, shared with collab (phase 16)
+        namespace: trakr:session
+        # indexed: sessions can be found by user id, so a password reset can end all of them
+        repository-type: indexed
 
 # BLOCK 3: server
 server:
@@ -42,6 +50,16 @@ server:
   shutdown: graceful
   compression:
     enabled: true
+  # BLOCK 11: the session cookie
+  servlet:
+    session:
+      timeout: 12h
+      cookie:
+        name: TRAKR_SESSION
+        http-only: true
+        same-site: lax
+        # only over HTTPS; application-dev.yml turns this off for http://localhost
+        secure: true
 
 # BLOCK 4: actuator
 management:
@@ -54,8 +72,14 @@ management:
       probes:
         enabled: true
       show-details: when-authorized
+  # a mail outage must not mark the whole api DOWN: password reset fails, everything else works
+  health:
+    mail:
+      enabled: false
 
 # BLOCK 5: our properties
 trakr:
   app:
     origin: ${TRAKR_APP_ORIGIN:http://localhost:5173}
+  mail:
+    from: ${TRAKR_MAIL_FROM:TRAKR <no-reply@trakr.local>}

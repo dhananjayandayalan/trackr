@@ -1,0 +1,23 @@
+# oauth profile: Google and GitHub login. Off by default, because Spring Boot refuses to start with an
+# empty client id. Once the OAuth apps exist (phase-05 "OAuth client registration"), export the four
+# variables from infra/.env and run with SPRING_PROFILES_ACTIVE=dev,oauth.
+# Without this profile there is no ClientRegistrationRepository, and SecurityConfig skips oauth2Login.
+
+# BLOCK 1: client registrations — Spring Security already knows Google's and GitHub's URLs
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: openid,profile,email
+            # the browser comes back through the Vite dev server, which proxies /login/oauth2 to :8080
+            redirect-uri: "${trakr.app.origin}/login/oauth2/code/{registrationId}"
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+            # user:email lets GitHubOAuth2UserService read /user/emails
+            scope: read:user,user:email
+            redirect-uri: "${trakr.app.origin}/login/oauth2/code/{registrationId}"

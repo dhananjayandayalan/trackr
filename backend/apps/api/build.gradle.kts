@@ -32,6 +32,15 @@ dependencies {
     // BLOCK 7: jOOQ codegen plugin
     jooqCodegen(libs.jooq.meta.extensions)
 
+    // BLOCK 11: identity — security, OAuth2 login, sessions in Redis, mail
+    implementation(libs.spring.boot.starter.security)
+    implementation(libs.spring.boot.starter.security.oauth2.client)
+    implementation(libs.spring.boot.starter.data.redis)
+    implementation(libs.spring.boot.starter.session.data.redis)
+    implementation(libs.spring.boot.starter.mail)
+    runtimeOnly(libs.bcprov)
+    testImplementation(libs.spring.boot.starter.security.test)
+
     // BLOCK 10: integration tests run against a real Postgres in a container
     integrationTestImplementation(platform(libs.testcontainers.bom))
     integrationTestImplementation(libs.spring.boot.testcontainers)

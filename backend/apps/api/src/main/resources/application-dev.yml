@@ -10,6 +10,21 @@ spring:
       # milliseconds: Hikari binds this as a plain long, so "3s" fails at startup
       connection-timeout: 3000
       pool-name: trakr-api
+  # BLOCK 10: redis (sessions, login lockout) and mail (Mailpit catches everything, UI on :8025)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  mail:
+    host: localhost
+    port: 1025
+
+# BLOCK 11: the session cookie travels over plain http on localhost
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
 
 logging:
   level:

@@ -96,8 +96,8 @@ Base package `dev.trakr.api`. Each row is a package = a module. Arrows show allo
 
 | Module         | Owns tables                                                              | Depends on                  | Publishes events                                                                                 |
 | -------------- | ------------------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------ |
-| `identity`     | app_user, user_identity, password_reset                                  | —                           | UserRegistered                                                                                   |
-| `workspace`    | workspace, workspace_member                                              | identity                    | MemberJoinedWorkspace                                                                            |
+| `identity`     | app_user, user_identity, password_reset                                  | workspace                   | UserRegistered                                                                                   |
+| `workspace`    | workspace, workspace_member                                              | —                           | MemberJoinedWorkspace                                                                            |
 | `project`      | project, project_member, project_star, project_visit                     | workspace, identity         | ProjectCreated, ProjectUpdated, ProjectArchived, ProjectMemberChanged                            |
 | `workflow`     | workflow_status, workflow_transition                                     | project                     | WorkflowChanged                                                                                  |
 | `issue`        | issue, issue_event, issue_link, watcher, worklog, issue_view, issue_star | project, workflow, identity | IssueCreated, IssueUpdated, IssueTransitioned, IssueMoved, IssueDeleted, IssueLinked, WorkLogged |
