@@ -23,6 +23,8 @@ junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 
 # null-safety annotations (@Nullable, @NullMarked); version from the Spring Boot BOM
 jspecify = { module = "org.jspecify:jspecify" }
+# @JsonProperty & co. for the event records in libs/contracts; Jackson 3 still reads these 2.x annotations
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" }
 
 # test: no version, junit-bom / the Spring Boot BOM supply it
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }

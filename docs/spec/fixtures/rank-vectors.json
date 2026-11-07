@@ -1,0 +1,30 @@
+{
+  "digits": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+  "cases": [
+    {"before": null, "after": null, "n": 1, "result": ["V"]},
+    {"before": "V", "after": null, "n": 1, "result": ["W"]},
+    {"before": "z", "after": null, "n": 1, "result": ["zV"]},
+    {"before": "zz", "after": null, "n": 1, "result": ["zzV"]},
+    {"before": "zV", "after": null, "n": 1, "result": ["zW"]},
+    {"before": null, "after": "V", "n": 1, "result": ["U"]},
+    {"before": null, "after": "1", "n": 1, "result": ["0V"]},
+    {"before": null, "after": "01", "n": 1, "result": ["00V"]},
+    {"before": null, "after": "1V", "n": 1, "result": ["1U"]},
+    {"before": "U", "after": "W", "n": 1, "result": ["V"]},
+    {"before": "U", "after": "V", "n": 1, "result": ["UV"]},
+    {"before": "UV", "after": "V", "n": 1, "result": ["Ul"]},
+    {"before": "1", "after": "2", "n": 1, "result": ["1V"]},
+    {"before": "49", "after": "5", "n": 1, "result": ["4a"]},
+    {"before": "0V", "after": "1", "n": 1, "result": ["0l"]},
+    {"before": "a", "after": "a1", "n": 1, "result": ["a0V"]},
+    {"before": "a1", "after": "a2", "n": 1, "result": ["a1V"]},
+    {"before": "Zz", "after": "a", "n": 1, "result": ["ZzV"]},
+    {"before": "V", "after": "VV", "n": 1, "result": ["VG"]},
+    {"before": "00V", "after": "01", "n": 1, "result": ["00l"]},
+    {"before": null, "after": null, "n": 5, "result": ["U", "UV", "V", "W", "X"]},
+    {"before": "U", "after": "W", "n": 10, "result": ["UG", "UV", "Ul", "Ut", "V", "VG", "VO", "VV", "Vl", "Vt"]},
+    {"before": "V", "after": null, "n": 4, "result": ["VV", "W", "X", "Y"]},
+    {"before": null, "after": "V", "n": 4, "result": ["T", "U", "UV", "Ul"]},
+    {"before": "a", "after": "b", "n": 7, "result": ["a8", "aG", "aO", "aV", "ad", "al", "at"]}
+  ]
+}

@@ -52,6 +52,18 @@ public class ProjectAccess {
         return new Grant(project.id(), project.workspaceId(), project.key(), role);
     }
 
+    /**
+     * The user's effective role in a project they may not be calling about, e.g. "can this person be
+     * assigned issues here?"; empty when they can't see it at all.
+     */
+    @Transactional(readOnly = true)
+    public Optional<ProjectRole> roleIn(UUID userId, UUID projectId) {
+        return projects.findById(projectId)
+                // the access level only gives roles to members of the project's workspace
+                .filter(project -> workspaces.isMember(project.workspaceId(), userId))
+                .flatMap(project -> roleOf(userId, project));
+    }
+
     // the stronger of: an explicit membership, and what the access level gives every workspace member
     private Optional<ProjectRole> roleOf(UUID userId, Project project) {
         Optional<ProjectRole> explicit = members.findById(new ProjectMember.Key(project.id(), userId))

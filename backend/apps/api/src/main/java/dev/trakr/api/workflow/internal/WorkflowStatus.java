@@ -42,6 +42,10 @@ public class WorkflowStatus {
         return id;
     }
 
+    public UUID projectId() {
+        return projectId;
+    }
+
     public WorkflowStatusView toView() {
         return new WorkflowStatusView(id, name, category, position, color, wipLimit);
     }

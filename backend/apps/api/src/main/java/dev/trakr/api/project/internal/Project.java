@@ -4,6 +4,7 @@ import dev.trakr.api.project.Access;
 import dev.trakr.api.project.ProjectView;
 import dev.trakr.api.project.Template;
 import dev.trakr.kernel.Ids;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -27,6 +28,9 @@ public class Project {
     private UUID leadId;
     private String access;
     private String color;
+    // owned by the issue module's IssueNumberAllocator (UPDATE … RETURNING). Hibernate's UPDATE lists every column,
+    // so a rename would write back the value it loaded and undo issue numbers allocated meanwhile: never write it.
+    @Column(insertable = false, updatable = false)
     private long issueSeq;
     private @Nullable Instant archivedAt;
     // optimistic locking: Hibernate adds "AND version = ?" to every UPDATE and bumps it; 0 rows updated

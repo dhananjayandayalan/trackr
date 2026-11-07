@@ -75,6 +75,11 @@ jooq {
                     }
                 }
             }
+            generate {
+                // issue.parent_id → issue references its own table: the to-many path method would clash
+                // with the to-one one ("Ambiguous key name"). We never use to-many paths, so leave them out.
+                withImplicitJoinPathsToMany(false)
+            }
             target {
                 packageName = "dev.trakr.jooq"
                 directory = "build/generated-sources/jooq"

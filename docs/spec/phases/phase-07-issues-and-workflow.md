@@ -35,7 +35,7 @@ Digits: `0-9A-Za-z` (62 symbols, ASCII order = sort order under `COLLATE "C"`).
 |---|---|---|
 | 1 | `// BLOCK 1: alphabet and helpers` | `DIGITS` string, `digitValue(char)`, `MIDPOINT` behaviour |
 | 2 | `// BLOCK 2: midpoint(a, b)` | Returns a string strictly between `a` and `b` (`b` may be null = +∞): walk digit by digit; if digits differ by > 1 take the middle digit; else append and recurse. Never return a string ending in `'0'` (it would have no room below it) |
-| 3 | `// BLOCK 3: between(before, after)` | Public API: `between(null, null)` → `"a0"`-style initial key; `between(x, null)` → after x; `between(null, y)` → before y; both → midpoint. Throw if `before >= after` |
+| 3 | `// BLOCK 3: between(before, after)` | Public API: `between(null, null)` → `"V"` (the middle digit; `"a0"` from fractional-indexing libraries ends in `'0'`, which BLOCK 2 forbids); `between(x, null)` → after x; `between(null, y)` → before y; both → midpoint. Throw if `before >= after` |
 | 4 | `// BLOCK 4: nBetween(before, after, n)` | Evenly spread n keys (used when inserting many issues at once, e.g. sprint completion) |
 **Tests:** property-style loop: insert 10 000 times at random positions and assert the list stays sorted and unique; insert 1 000 times always at the front and check the length stays reasonable (< 200 chars). Generate `rank-vectors.json` (inputs → expected outputs) from the Java tests; the TypeScript `rank.ts` (phase 14) must produce the same outputs.
 **Ask yourself:** why does `COLLATE "C"` matter for this column? (Try `ORDER BY` with the default collation on `"a"`, `"B"`.)
@@ -82,9 +82,19 @@ Use `multiset(select(...).from(ISSUE.as("sub")).where(...)).as("subtasks").conve
 ## Tests
 
 - `RankTest` (above), `IssueTest` (pure: transitions set/clear `resolvedAt`; subtask without parent rejected; patch returns exact changes).
-- `IssueServiceTest` (`@ApplicationModuleTest`): create publishes `IssueCreated` with sequence 0/1 (decide and document); transition not allowed → `TransitionNotAllowed`.
+- `IssueServiceIT` (`@ApplicationModuleTest(ALL_DEPENDENCIES)`, in `integrationTest` because it needs Postgres; decided: sequence 0 for `IssueCreated`, since a new row is version 0): create publishes `IssueCreated` with sequence 0/1 (decide and document); transition not allowed → `TransitionNotAllowed`.
 - `IssueNumberConcurrencyIT`: 50 virtual threads create issues in one project concurrently → numbers 1..50 with no gaps or duplicates.
 - `IssueApiIT`: full CRUD via MockMvc incl. 412 on stale `If-Match`, 404 for invisible projects, history endpoint lists changes in order.
+
+## Decisions taken while building it
+
+- Event payloads live in `libs/contracts` (`dev.trakr.contracts.events`), with `TrakrEvent` sealed. The envelope (`EventEnvelope`) waits for phase 09.
+- `between(x, null)` / `between(null, y)` step one digit instead of halving the gap: appending or prepending 1 000 times stays ~35 characters.
+- `project.issue_seq` is `insertable = false, updatable = false` in `Project`: Hibernate's UPDATE lists every column and would write back a stale value.
+- The rank of a new issue is read after the number is allocated (the project row lock), so concurrent creates get distinct ranks.
+- Linking bumps the source issue's version (the ETag covers links, and `IssueLinked` gets a fresh sequence). Unlinking publishes `IssueUpdated` with a `links` change, because the catalogue has no unlinked type.
+- `issue_view` is upserted synchronously in `get` (one `ON CONFLICT` statement); watchers, stars and views use jOOQ upserts so repeated PUTs never hit the primary key.
+- History is newest first, paged as `{items, nextCursor}` (03-api §1), cursor = last `issue_event.id`.
 
 ## Done when
 
