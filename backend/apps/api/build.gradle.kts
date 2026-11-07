@@ -45,6 +45,11 @@ dependencies {
     implementation(libs.spring.modulith.starter.core)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     testImplementation(libs.spring.modulith.starter.test)
+
+    // BLOCK 14: events — outbox in Postgres (event_publication), externalized to Kafka
+    implementation(libs.spring.modulith.starter.jdbc)
+    implementation(libs.spring.modulith.events.kafka)
+    implementation(libs.spring.boot.starter.kafka)
     testImplementation(libs.spring.modulith.docs)
 
     // BLOCK 10: integration tests run against a real Postgres in a container
@@ -52,6 +57,7 @@ dependencies {
     integrationTestImplementation(libs.spring.boot.testcontainers)
     integrationTestImplementation(libs.testcontainers.postgresql)
     integrationTestImplementation(libs.testcontainers.junit.jupiter)
+    integrationTestImplementation(libs.testcontainers.kafka)
 }
 
 // BLOCK 8: codegen configuration

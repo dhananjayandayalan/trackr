@@ -4,20 +4,23 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * An integration event: a fact other apps may learn about (04-events §3). Sealed, so a consumer's
- * {@code switch} over the event types is checked for completeness by the compiler.
+ * An integration event: a fact other apps may learn about (04-events §3).
+ *
+ * <p>BLOCK 1: sealed event hierarchy. Sealed, and split by topic below: a consumer's {@code switch}
+ * over the event types is checked by the compiler — add a new event type and every switch that
+ * doesn't handle it stops compiling, instead of silently ignoring it at runtime. Comment,
+ * notification and collab events join the list in the phases that create them (a sealed interface
+ * can only name types that exist).
  *
  * <p>The envelope fields come from here: {@code id} = {@link #eventId()} (made when the event is
  * created, so retries keep it and consumers can dedupe on it), {@code sequence} = the aggregate's
- * version after the change (consumers drop anything at or below the last one they saw).
+ * version after the change (consumers drop anything older than what they've seen).
  */
-public sealed interface TrakrEvent
-        permits IssueCreated, IssueUpdated, IssueTransitioned, IssueMoved, IssueDeleted, IssueLinked, WorkLogged,
-        SprintEvent {
+public sealed interface TrakrEvent permits IssueEvent, ProjectEvent {
 
     UUID eventId();
 
-    /** CloudEvents type, e.g. {@code trakr.issue.created.v1}. */
+    /** CloudEvents type, e.g. {@code trakr.issue.created.v1} (EventTypes). */
     String type();
 
     Instant occurredAt();
@@ -28,13 +31,11 @@ public sealed interface TrakrEvent
 
     UUID projectId();
 
-    /** The Kafka record key: events about one aggregate stay in order on one partition. */
+    /** What the event is about; also the order: one aggregate's events keep their order. */
     UUID aggregateId();
 
     /** CloudEvents subject, e.g. {@code issue/0190f2aa-…}. */
-    default String subject() {
-        return "issue/" + aggregateId();
-    }
+    String subject();
 
     long sequence();
 }

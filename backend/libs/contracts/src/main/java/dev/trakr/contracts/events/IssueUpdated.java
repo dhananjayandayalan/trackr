@@ -9,7 +9,7 @@ import org.jspecify.annotations.Nullable;
 
 /** {@code trakr.issue.updated.v1}: {@code changes} is keyed by field name, e.g. {@code {"summary": {old, new}}}. */
 public record IssueUpdated(UUID eventId, Instant occurredAt, UUID actorId, Map<String, Change> changes,
-        IssueSnapshot snapshot) implements TrakrEvent {
+        IssueSnapshot snapshot) implements IssueEvent {
 
     /** One field's values before and after; "new" is a Java keyword, so the JSON names are set by hand. */
     public record Change(@JsonProperty("old") @Nullable Object oldValue,
@@ -27,7 +27,7 @@ public record IssueUpdated(UUID eventId, Instant occurredAt, UUID actorId, Map<S
 
     @Override
     public String type() {
-        return "trakr.issue.updated.v1";
+        return EventTypes.ISSUE_UPDATED;
     }
 
     @Override

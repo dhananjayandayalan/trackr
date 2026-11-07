@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /** {@code trakr.issue.created.v1}. Its sequence is 0: a new row starts at version 0. */
 public record IssueCreated(UUID eventId, Instant occurredAt, UUID actorId, IssueSnapshot snapshot)
-        implements TrakrEvent {
+        implements IssueEvent {
 
     public static IssueCreated of(Instant occurredAt, UUID actorId, IssueSnapshot snapshot) {
         return new IssueCreated(Ids.newId(), occurredAt, actorId, snapshot);
@@ -14,7 +14,7 @@ public record IssueCreated(UUID eventId, Instant occurredAt, UUID actorId, Issue
 
     @Override
     public String type() {
-        return "trakr.issue.created.v1";
+        return EventTypes.ISSUE_CREATED;
     }
 
     @Override

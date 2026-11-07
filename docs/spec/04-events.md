@@ -44,6 +44,8 @@ COMMIT
 
 - `id`: UUIDv7 created when the domain event is created (not when sent) → stable across retries → dedupe key.
 - `sequence`: the aggregate's `version` after the change. Consumers drop events with `sequence ≤ lastSeen` for that aggregate.
+  Exception: one move publishes `issue.moved` and `issue.transitioned` with the same sequence — dedupe by `id`, order by `sequence`.
+- `data`: the event record itself (it repeats `eventId`, `occurredAt`, `actorId`; the SSE payload drops the repeats).
 - Kafka record key = aggregate id (string). Kafka headers duplicate `ce_type` and `ce_id` so consumers can route without parsing the body.
 - Java: `record EventEnvelope<T>(String specversion, UUID id, String type, …, T data)` in `libs/contracts`; a `TrakrEvent` sealed interface lets each payload declare its `type()`, `subject()`, `aggregateId()`, `sequence()`.
 

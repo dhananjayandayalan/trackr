@@ -90,6 +90,32 @@ Redis sorted set `presence:project:{id}` (member = userId, score = expiry epoch)
 - kafka-ui: watch messages land in `trakr.issues.v1`; find the partition for a given issue key; see the `api-realtime-*` consumer groups appear and disappear as you restart.
 - `curl -N -b cookies.txt localhost:8080/api/v1/projects/MAR/stream` in one terminal, move issues in another.
 
+## Decisions taken while building it
+
+- **Registry on JDBC** (`spring-modulith-starter-jdbc`), not JPA. `V009` is the verbatim **v2** PostgreSQL schema
+  from `spring-modulith-events-jdbc-2.1.2.jar` (`schemas/v2/schema-postgresql.sql`, with `status`,
+  `completion_attempts`, `last_resubmission_date`), without the archive table. Externalization mode stays the
+  default `MODULE_LISTENER`: row written in the business transaction, sent after commit, completed on the ack.
+- **Serialization:** `JacksonJsonSerializer` as value serializer with `spring.json.add.type.headers=false`, and
+  `spring.modulith.events.kafka.enable-json=false` — Modulith's own JSON message converter would otherwise turn the
+  serialized bytes into a base64 string. Consumers: `ErrorHandlingDeserializer` → `JacksonJsonDeserializer`,
+  default type `EventEnvelope`.
+- **Routing sees the original event, headers see the envelope** (read from Modulith's bytecode:
+  `determineTarget(event)`, then `map(event)`, then the Kafka transport calls `getHeadersFor(payload)`). Headers
+  `ce_type`, `ce_id`, `ce_specversion`, `ce_source` as UTF-8 bytes.
+- **Hierarchy:** `TrakrEvent permits IssueEvent, ProjectEvent`; `ProjectEvent permits ProjectLifecycle, SprintEvent`.
+  Comment, notification and collab events join in their phases (a sealed type can only list existing classes).
+  ProjectService now also publishes `ProjectLifecycle.Created/Updated/Archived/MemberChanged`; a member change bumps
+  the project's version so the event gets a fresh sequence.
+- **Cleanup:** keep completed publications 7 days (daily delete) instead of `completion-mode=delete`; plus a job that
+  resubmits publications still incomplete after 1 minute, so a Kafka outage heals without a restart.
+- **SSE:** per-subscriber chain of sends on virtual threads (`CompletableFuture.thenRunAsync` on a
+  virtual-thread-per-task executor): one slow browser can't stall the consumer or the others, and each browser keeps
+  its order; >256 pending → disconnect (it reconnects and replays). Subscribe first, replay second, live frames wait
+  behind the replay and are deduplicated by id. `ready` frame on connect; `presence` frames carry no id.
+- Flow tests live in `dev.trakr.flows`. OutboxRecoveryIT pauses the Kafka container (`docker pause`, same ports) instead
+  of stopping it, with short producer timeouts. Measured locally: `issue.moved` on the stream ~75 ms after the move.
+
 ## Done when
 
 - Moving an issue shows up in a `curl -N` stream in < 1 s.

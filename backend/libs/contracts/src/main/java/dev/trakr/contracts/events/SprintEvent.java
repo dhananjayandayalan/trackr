@@ -9,7 +9,7 @@ import java.util.UUID;
  * the sprint's snapshot. {@code deleted} is an addition to the catalogue — deleting a planned sprint
  * is a fact the board and backlog of other users need to hear about too.
  */
-public sealed interface SprintEvent extends TrakrEvent {
+public sealed interface SprintEvent extends ProjectEvent {
 
     SprintSnapshot snapshot();
 
@@ -46,7 +46,7 @@ public sealed interface SprintEvent extends TrakrEvent {
 
         @Override
         public String type() {
-            return "trakr.sprint.created.v1";
+            return EventTypes.SPRINT_CREATED;
         }
     }
 
@@ -58,7 +58,7 @@ public sealed interface SprintEvent extends TrakrEvent {
 
         @Override
         public String type() {
-            return "trakr.sprint.updated.v1";
+            return EventTypes.SPRINT_UPDATED;
         }
     }
 
@@ -70,7 +70,7 @@ public sealed interface SprintEvent extends TrakrEvent {
 
         @Override
         public String type() {
-            return "trakr.sprint.started.v1";
+            return EventTypes.SPRINT_STARTED;
         }
     }
 
@@ -84,7 +84,7 @@ public sealed interface SprintEvent extends TrakrEvent {
 
         @Override
         public String type() {
-            return "trakr.sprint.completed.v1";
+            return EventTypes.SPRINT_COMPLETED;
         }
     }
 
@@ -96,7 +96,7 @@ public sealed interface SprintEvent extends TrakrEvent {
 
         @Override
         public String type() {
-            return "trakr.sprint.deleted.v1";
+            return EventTypes.SPRINT_DELETED;
         }
     }
 }

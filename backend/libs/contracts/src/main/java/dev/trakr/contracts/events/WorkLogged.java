@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /** {@code trakr.issue.work-logged.v1}: {@code userId} spent {@code minutes} on the issue. */
 public record WorkLogged(UUID eventId, Instant occurredAt, UUID actorId, UUID workspaceId, UUID projectId,
-        UUID issueId, long sequence, int minutes, UUID userId) implements TrakrEvent {
+        UUID issueId, long sequence, int minutes, UUID userId) implements IssueEvent {
 
     public static WorkLogged of(Instant occurredAt, UUID actorId, IssueSnapshot snapshot, int minutes) {
         return new WorkLogged(Ids.newId(), occurredAt, actorId, snapshot.workspaceId(), snapshot.projectId(),
@@ -15,7 +15,7 @@ public record WorkLogged(UUID eventId, Instant occurredAt, UUID actorId, UUID wo
 
     @Override
     public String type() {
-        return "trakr.issue.work-logged.v1";
+        return EventTypes.ISSUE_WORK_LOGGED;
     }
 
     @Override

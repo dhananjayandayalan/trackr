@@ -44,6 +44,56 @@ spring:
         # indexed: sessions can be found by user id, so a password reset can end all of them
         repository-type: indexed
 
+  # BLOCK 13: kafka producer — the Modulith externalizer sends the outbox's events with this
+  kafka:
+    bootstrap-servers: ${TRAKR_KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      # the leader and every in-sync replica have the record before the send counts as done
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # Spring for Apache Kafka 4's Jackson 3 serializer (JsonSerializer is the deprecated Jackson 2 one)
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      compression-type: zstd
+      properties:
+        # retries can't write a record twice or out of order (the broker dedupes by producer id + sequence)
+        enable.idempotence: true
+        # wait up to 5 ms to batch records together: a little latency for far fewer requests
+        linger.ms: 5
+        # consumers route by the CloudEvents type in the body and the ce_type header, not by Java class names
+        spring.json.add.type.headers: false
+    # BLOCK 14: kafka consumer defaults (the realtime listener; workers have their own in phase 10)
+    consumer:
+      # offsets are committed by the listener container after a record is processed, never on a timer
+      enable-auto-commit: false
+      # only records of committed producer transactions
+      isolation-level: read_committed
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # a record that isn't valid JSON fails alone instead of crashing the consumer in a loop ("poison pill")
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+        spring.json.value.default.type: dev.trakr.contracts.events.EventEnvelope
+        spring.json.trusted.packages: "dev.trakr.contracts.*"
+        spring.json.use.type.headers: false
+    listener:
+      ack-mode: record
+  # BLOCK 15: modulith events — the registry (outbox) and its externalization to Kafka
+  modulith:
+    events:
+      externalization:
+        enabled: true
+      # incomplete publications (the app died before Kafka acked) are sent again at startup
+      republish-outstanding-events-on-restart: true
+      jdbc:
+        # Flyway owns event_publication (V009)
+        schema-initialization:
+          enabled: false
+      kafka:
+        # we configure the JSON serializer above; Modulith's own JSON message converter would turn the already
+        # serialized bytes into a base64 string
+        enable-json: false
+
 # BLOCK 3: server
 server:
   port: 8080
@@ -79,6 +129,9 @@ management:
 
 # BLOCK 5: our properties
 trakr:
+  events:
+    # Kafka partitions per topic (04-events §4: 3 locally, 12/6 in prod)
+    partitions: 3
   app:
     origin: ${TRAKR_APP_ORIGIN:http://localhost:5173}
   mail:

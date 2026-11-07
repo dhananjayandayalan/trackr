@@ -9,7 +9,7 @@ import java.util.UUID;
  * bumps the source's version, so the event has a fresh sequence like every other issue event.
  */
 public record IssueLinked(UUID eventId, Instant occurredAt, UUID actorId, UUID workspaceId, UUID projectId,
-        UUID issueId, long sequence, UUID linkId, UUID targetIssueId, String linkType) implements TrakrEvent {
+        UUID issueId, long sequence, UUID linkId, UUID targetIssueId, String linkType) implements IssueEvent {
 
     public static IssueLinked of(Instant occurredAt, UUID actorId, IssueSnapshot source, UUID linkId,
             UUID targetIssueId, String linkType) {
@@ -19,7 +19,7 @@ public record IssueLinked(UUID eventId, Instant occurredAt, UUID actorId, UUID w
 
     @Override
     public String type() {
-        return "trakr.issue.linked.v1";
+        return EventTypes.ISSUE_LINKED;
     }
 
     @Override

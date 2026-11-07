@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /** {@code trakr.issue.transitioned.v1}: the issue moved to another workflow status. */
 public record IssueTransitioned(UUID eventId, Instant occurredAt, UUID actorId, UUID fromStatusId, UUID toStatusId,
-        String toCategory, IssueSnapshot snapshot) implements TrakrEvent {
+        String toCategory, IssueSnapshot snapshot) implements IssueEvent {
 
     public static IssueTransitioned of(Instant occurredAt, UUID actorId, UUID fromStatusId, IssueSnapshot snapshot) {
         return new IssueTransitioned(Ids.newId(), occurredAt, actorId, fromStatusId, snapshot.statusId(),
@@ -15,7 +15,7 @@ public record IssueTransitioned(UUID eventId, Instant occurredAt, UUID actorId, 
 
     @Override
     public String type() {
-        return "trakr.issue.transitioned.v1";
+        return EventTypes.ISSUE_TRANSITIONED;
     }
 
     @Override

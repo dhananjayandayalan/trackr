@@ -11,7 +11,7 @@ import org.jspecify.annotations.Nullable;
  * statuses need not read this one.
  */
 public record IssueMoved(UUID eventId, Instant occurredAt, UUID actorId, UUID statusId, @Nullable UUID sprintId,
-        String rank, @Nullable UUID previousSprintId, IssueSnapshot snapshot) implements TrakrEvent {
+        String rank, @Nullable UUID previousSprintId, IssueSnapshot snapshot) implements IssueEvent {
 
     public static IssueMoved of(Instant occurredAt, UUID actorId, @Nullable UUID previousSprintId,
             IssueSnapshot snapshot) {
@@ -21,7 +21,7 @@ public record IssueMoved(UUID eventId, Instant occurredAt, UUID actorId, UUID st
 
     @Override
     public String type() {
-        return "trakr.issue.moved.v1";
+        return EventTypes.ISSUE_MOVED;
     }
 
     @Override

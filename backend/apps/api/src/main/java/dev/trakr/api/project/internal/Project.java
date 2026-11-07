@@ -3,6 +3,7 @@ package dev.trakr.api.project.internal;
 import dev.trakr.api.project.Access;
 import dev.trakr.api.project.ProjectView;
 import dev.trakr.api.project.Template;
+import dev.trakr.contracts.events.ProjectSnapshot;
 import dev.trakr.kernel.Ids;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -93,8 +94,21 @@ public class Project {
         }
     }
 
+    /**
+     * Membership is part of the project resource (GET /projects/{key} lists members): a change bumps the
+     * version, so the ETag changes and the member-changed event gets a fresh sequence.
+     */
+    public void membersChanged(Clock clock) {
+        touch(clock);
+    }
+
     private void touch(Clock clock) {
         updatedAt = clock.instant();
+    }
+
+    public ProjectSnapshot snapshot() {
+        return new ProjectSnapshot(id, workspaceId, key, name, description, template, leadId, access, color,
+                archivedAt, version);
     }
 
     public ProjectView toView() {

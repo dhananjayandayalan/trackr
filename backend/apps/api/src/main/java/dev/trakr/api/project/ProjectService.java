@@ -18,10 +18,12 @@ import dev.trakr.api.shared.web.TrakrException;
 import dev.trakr.api.shared.web.TrakrException.FieldMessage;
 import dev.trakr.api.workspace.CurrentWorkspace;
 import dev.trakr.api.workspace.WorkspaceService;
+import dev.trakr.contracts.events.ProjectLifecycle;
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -89,8 +91,10 @@ public class ProjectService {
             members.save(ProjectMember.add(project.id(), leadId, ProjectRole.ADMIN, clock));
         }
 
-        // BLOCK 3: publish — workflow and board seed the project synchronously, in this transaction
+        // BLOCK 3: publish — workflow and board seed the project synchronously, in this transaction;
+        // the contracts event goes to the outbox and on to Kafka after commit
         events.publishEvent(new ProjectCreated(project.id(), workspace.id(), project.key(), project.template(), userId));
+        events.publishEvent(ProjectLifecycle.Created.of(clock.instant(), userId, project.snapshot()));
 
         // BLOCK 4: invites — existing users become members now; unknown emails get an invitation later
         for (String email : command.invite()) {
@@ -142,14 +146,18 @@ public class ProjectService {
         // dirty checking writes the UPDATE; flush now so the new version is in the response and the event
         projects.flush();
         events.publishEvent(new ProjectUpdated(project.id(), project.workspaceId(), project.key(), project.version(), userId));
+        events.publishEvent(ProjectLifecycle.Updated.of(clock.instant(), userId, project.snapshot()));
         return project.toView();
     }
 
     @Transactional
     public void archive(UUID userId, String key) {
         Grant grant = access.require(userId, key, ProjectRole.ADMIN);
-        projects.findById(grant.projectId()).orElseThrow().archive(clock);
+        Project project = projects.findById(grant.projectId()).orElseThrow();
+        project.archive(clock);
+        projects.flush();
         events.publishEvent(new ProjectArchived(grant.projectId(), grant.workspaceId(), grant.key(), userId));
+        events.publishEvent(ProjectLifecycle.Archived.of(clock.instant(), userId, project.snapshot()));
     }
 
     @Transactional
@@ -185,6 +193,7 @@ public class ProjectService {
         }
         member.changeRole(role);
         events.publishEvent(new ProjectMemberChanged(grant.projectId(), memberId, role, userId));
+        publishMemberChanged(projects.findById(grant.projectId()).orElseThrow(), memberId, role, userId);
         return toView(memberId, role);
     }
 
@@ -197,6 +206,7 @@ public class ProjectService {
         }
         members.delete(member);
         events.publishEvent(new ProjectMemberChanged(grant.projectId(), memberId, null, userId));
+        publishMemberChanged(projects.findById(grant.projectId()).orElseThrow(), memberId, null, userId);
     }
 
     /** The first suggested key that is free in the caller's workspace. */
@@ -228,7 +238,16 @@ public class ProjectService {
             member.changeRole(role);
         }
         events.publishEvent(new ProjectMemberChanged(project.id(), memberId, role, invitedBy));
+        publishMemberChanged(project, memberId, role, invitedBy);
         return Optional.of(toView(user.get(), role));
+    }
+
+    // bump the project's version first: the event's sequence must be newer than the last one about this project
+    private void publishMemberChanged(Project project, UUID memberId, @Nullable ProjectRole role, UUID actorId) {
+        project.membersChanged(clock);
+        projects.flush();
+        events.publishEvent(ProjectLifecycle.MemberChanged.of(clock.instant(), actorId, project.snapshot(), memberId,
+                role == null ? null : role.value()));
     }
 
     private ProjectMember memberOf(Grant grant, UUID memberId) {

@@ -56,12 +56,17 @@ spring-boot-starter-security-oauth2-client = { module = "org.springframework.boo
 spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis" }
 spring-boot-starter-session-data-redis = { module = "org.springframework.boot:spring-boot-starter-session-data-redis" }
 spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail" }
+# Boot 4 keeps Kafka auto-configuration in its own module; the starter brings it and Spring for Apache Kafka
+spring-boot-starter-kafka = { module = "org.springframework.boot:spring-boot-starter-kafka" }
 spring-boot-starter-security-test = { module = "org.springframework.boot:spring-boot-starter-security-test" }
 bcprov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 
 # modules: versions from the Spring Modulith BOM (trakr.spring-app imports it)
 spring-modulith-starter-core = { module = "org.springframework.modulith:spring-modulith-starter-core" }
 spring-modulith-starter-test = { module = "org.springframework.modulith:spring-modulith-starter-test" }
+# the event publication registry (the outbox) on plain JDBC, and its Kafka externalizer
+spring-modulith-starter-jdbc = { module = "org.springframework.modulith:spring-modulith-starter-jdbc" }
+spring-modulith-events-kafka = { module = "org.springframework.modulith:spring-modulith-events-kafka" }
 # Documenter: writes module diagrams from the verified structure
 spring-modulith-docs = { module = "org.springframework.modulith:spring-modulith-docs" }
 
@@ -75,6 +80,7 @@ jooq-meta-extensions = { module = "org.jooq:jooq-meta-extensions", version.ref =
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }
+testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka" }
 spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
 
 [bundles]
