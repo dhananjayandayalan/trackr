@@ -4,8 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.trakr.kernel.Ids;
 import jakarta.servlet.http.Cookie;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.Map;
+import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -31,6 +36,17 @@ public final class TestBrowser {
         }
     }
 
+    /** An id from the dev seed: Postgres's md5(name)::uuid, i.e. the MD5 digest's 32 hex digits as a UUID. */
+    public static UUID seedId(String name) {
+        try {
+            String hex = HexFormat.of().formatHex(MessageDigest.getInstance("MD5")
+                    .digest(name.getBytes(StandardCharsets.UTF_8)));
+            return UUID.fromString(hex.replaceFirst("(.{8})(.{4})(.{4})(.{4})(.{12})", "$1-$2-$3-$4-$5"));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     public static String uniqueEmail() {
         return "user-" + Ids.newId() + "@example.com";
     }
@@ -42,6 +58,16 @@ public final class TestBrowser {
         assertThat(browser.post("/api/v1/auth/signup", """
                 {"name": "%s", "email": "%s", "password": "%s"}""".formatted(name, email, PASSWORD)))
                 .hasStatus(HttpStatus.CREATED);
+        return browser;
+    }
+
+    /** An existing account, signed in with a password (the dev seed's ada@trakr.dev and grace@trakr.dev use PASSWORD). */
+    public static TestBrowser loggedIn(MockMvcTester mvc, String email) {
+        TestBrowser browser = new TestBrowser(mvc);
+        browser.get("/api/v1/me");
+        assertThat(browser.post("/api/v1/auth/login", """
+                {"email": "%s", "password": "%s", "remember": false}""".formatted(email, PASSWORD)))
+                .hasStatusOk();
         return browser;
     }
 

@@ -22,7 +22,7 @@ import org.jspecify.annotations.Nullable;
 public class IssueEventRecord {
 
     public enum Kind {
-        CREATED, FIELD_CHANGED, TRANSITIONED, LINKED, LOGGED_WORK, DELETED;
+        CREATED, FIELD_CHANGED, TRANSITIONED, MOVED, LINKED, LOGGED_WORK, DELETED;
 
         String value() {
             return name().toLowerCase(java.util.Locale.ROOT);

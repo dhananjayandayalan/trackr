@@ -105,3 +105,12 @@ tasks.named<org.jooq.codegen.gradle.CodegenTask>("jooqCodegen") {
 tasks.compileJava {
     dependsOn(tasks.named("jooqCodegen"))
 }
+
+// BLOCK 13: integration test switches — -PupdateSnapshots=true rewrites snapshot files, -Pperf=true runs @Tag("perf")
+tasks.named<Test>("integrationTest") {
+    val snapshots = layout.projectDirectory.dir("src/integrationTest/resources/snapshots")
+    systemProperty("snapshots.dir", snapshots.asFile.absolutePath)
+    systemProperty("snapshots.update", providers.gradleProperty("updateSnapshots").getOrElse("false"))
+    systemProperty("perf", providers.gradleProperty("perf").getOrElse("false"))
+    inputs.files(snapshots).withPropertyName("snapshots")
+}

@@ -4,11 +4,9 @@ import dev.trakr.api.issue.IssueType;
 import dev.trakr.api.issue.PatchIssue;
 import dev.trakr.api.issue.PatchIssue.Value;
 import dev.trakr.api.issue.Priority;
-import dev.trakr.api.shared.web.TrakrException;
 import dev.trakr.api.shared.web.TrakrException.FieldMessage;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +14,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import org.jspecify.annotations.Nullable;
-import org.springframework.http.HttpStatus;
 
 /**
  * PATCH /issues/{key} as JSON merge patch, parsed from a Map for the same reason as
@@ -35,9 +32,8 @@ record IssuePatchRequest(String summary, @Nullable String description, IssueType
     private static final BigDecimal MAX_POINTS = new BigDecimal("100");
 
     static PatchIssue parse(Map<String, @Nullable Object> body) {
-        Parser p = new Parser(body);
-        body.keySet().stream().filter(field -> !FIELDS.contains(field))
-                .forEach(field -> p.errors.add(new FieldMessage(field, "is not a field you can change here")));
+        MergePatch p = new MergePatch(body);
+        p.rejectUnknown(FIELDS, "is not a field you can change here");
 
         Value<String> summary = p.required("summary", String.class, value -> {
             p.check("summary", !value.isBlank(), "must not be blank");
@@ -80,17 +76,14 @@ record IssuePatchRequest(String summary, @Nullable String description, IssueType
             return value.intValue();
         });
 
-        if (!p.errors.isEmpty()) {
-            throw new TrakrException(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", "The patch has invalid fields.",
-                    p.errors);
-        }
+        p.throwIfInvalid("The patch has invalid fields.");
         return new PatchIssue(summary, description, type, priority, assigneeId, parentKey, storyPoints, labels,
                 dueDate, startDate, flagged, fixVersion, estimate);
     }
 
-    private static List<String> labels(Object raw, Parser p) {
+    private static List<String> labels(Object raw, MergePatch p) {
         if (!(raw instanceof List<?> values)) {
-            p.errors.add(new FieldMessage("labels", "must be a list of strings"));
+            p.error(new FieldMessage("labels", "must be a list of strings"));
             return List.of();
         }
         p.check("labels", values.size() <= 20, "must have at most 20 labels");
@@ -99,70 +92,10 @@ record IssuePatchRequest(String summary, @Nullable String description, IssueType
             if (value instanceof String label && label.matches(IssueRequests.LABEL) && label.length() <= 50) {
                 labels.add(label);
             } else {
-                p.errors.add(new FieldMessage("labels", "each label must be 1 to 50 characters without spaces"));
+                p.error(new FieldMessage("labels", "each label must be 1 to 50 characters without spaces"));
                 break;
             }
         }
         return labels;
-    }
-
-    /** Collects every field's error before failing, so the client sees all of them at once. */
-    private static final class Parser {
-
-        private final Map<String, @Nullable Object> body;
-        private final List<FieldMessage> errors = new ArrayList<>();
-
-        Parser(Map<String, @Nullable Object> body) {
-            this.body = body;
-        }
-
-        // a field that may be cleared with null
-        <J, T> @Nullable Value<T> optional(String field, Class<J> jsonType, Function<J, @Nullable T> convert) {
-            if (!body.containsKey(field)) {
-                return null;
-            }
-            Object raw = body.get(field);
-            if (raw == null) {
-                return new Value<>(null);
-            }
-            return typed(field, raw, jsonType, convert);
-        }
-
-        // a field that must have a value when present
-        <J, T> @Nullable Value<T> required(String field, Class<J> jsonType, Function<J, @Nullable T> convert) {
-            if (!body.containsKey(field)) {
-                return null;
-            }
-            Object raw = body.get(field);
-            if (raw == null) {
-                errors.add(new FieldMessage(field, "cannot be cleared"));
-                return null;
-            }
-            return typed(field, raw, jsonType, convert);
-        }
-
-        private <J, T> @Nullable Value<T> typed(String field, Object raw, Class<J> jsonType,
-                Function<J, @Nullable T> convert) {
-            if (!jsonType.isInstance(raw)) {
-                errors.add(new FieldMessage(field, "has the wrong JSON type"));
-                return null;
-            }
-            return new Value<>(convert.apply(jsonType.cast(raw)));
-        }
-
-        <T> @Nullable T parse(String field, String value, Function<String, T> parser, String message) {
-            try {
-                return parser.apply(value);
-            } catch (IllegalArgumentException | DateTimeParseException e) {
-                errors.add(new FieldMessage(field, message));
-                return null;
-            }
-        }
-
-        void check(String field, boolean ok, String message) {
-            if (!ok) {
-                errors.add(new FieldMessage(field, message));
-            }
-        }
     }
 }

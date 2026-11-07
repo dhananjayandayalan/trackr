@@ -10,6 +10,9 @@ spring:
       # milliseconds: Hikari binds this as a plain long, so "3s" fails at startup
       connection-timeout: 3000
       pool-name: trakr-api
+  # BLOCK 13: dev data — the migrations plus the repeatable seed in db/dev (2 users, 3 projects, ~300 issues)
+  flyway:
+    locations: classpath:db/migration,classpath:db/dev
   # BLOCK 10: redis (sessions, login lockout) and mail (Mailpit catches everything, UI on :8025)
   data:
     redis:

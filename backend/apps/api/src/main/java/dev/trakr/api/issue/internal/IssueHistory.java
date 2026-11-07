@@ -6,6 +6,7 @@ import java.time.Clock;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
@@ -49,6 +50,20 @@ public class IssueHistory {
     public void transitioned(Issue issue, UUID actorId, WorkflowStatusView from, WorkflowStatusView to) {
         save(issue, actorId, Kind.TRANSITIONED, "status", Map.of("id", from.id().toString(), "name", from.name()),
                 Map.of("id", to.id().toString(), "name", to.name()));
+    }
+
+    /** Where it was and where it is: field "sprint" when the list changed, "rank" for a re-order within it. */
+    public void moved(Issue issue, UUID actorId, @Nullable UUID fromSprintId, String fromRank) {
+        boolean sprintChanged = !Objects.equals(fromSprintId, issue.sprintId());
+        save(issue, actorId, Kind.MOVED, sprintChanged ? "sprint" : "rank", position(fromSprintId, fromRank),
+                position(issue.sprintId(), issue.rank()));
+    }
+
+    private static Map<String, @Nullable Object> position(@Nullable UUID sprintId, String rank) {
+        Map<String, @Nullable Object> position = new LinkedHashMap<>();
+        position.put("sprintId", sprintId == null ? null : sprintId.toString());
+        position.put("rank", rank);
+        return position;
     }
 
     public void deleted(Issue issue, UUID actorId) {

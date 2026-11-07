@@ -1,10 +1,13 @@
 package dev.trakr.api.issue.web;
 
 import dev.trakr.api.identity.TrakrPrincipal;
+import dev.trakr.api.issue.BulkCommand;
 import dev.trakr.api.issue.HistoryItem;
 import dev.trakr.api.issue.IssueDetails;
 import dev.trakr.api.issue.IssueService;
+import dev.trakr.api.issue.MoveResult;
 import dev.trakr.api.issue.TransitionIssue;
+import dev.trakr.api.issue.web.IssueRequests.BulkRequest;
 import dev.trakr.api.issue.web.IssueRequests.TransitionRequest;
 import dev.trakr.api.shared.web.CursorPage;
 import dev.trakr.api.shared.web.ETags;
@@ -84,6 +87,23 @@ class IssueController {
             @PathVariable String key, @Valid @RequestBody TransitionRequest body) {
         return withETag(issues.transition(principal.id(), key,
                 new TransitionIssue(body.toStatusId(), body.expectedVersion())));
+    }
+
+    /** Drag and drop on the board or in the backlog; the response may carry warnings (WIP limit, stale neighbours). */
+    @Operation(operationId = "moveIssue", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            content = @Content(schema = @Schema(implementation = MoveRequest.class))))
+    @PostMapping("/{key}/move")
+    ResponseEntity<MoveResult> move(@AuthenticationPrincipal TrakrPrincipal principal, @PathVariable String key,
+            @RequestBody Map<String, @Nullable Object> body) {
+        MoveResult result = issues.move(principal.id(), key, MoveRequest.parse(body));
+        return ResponseEntity.ok().eTag(ETags.of(result.issue().version())).body(result);
+    }
+
+    @Operation(operationId = "bulkIssues")
+    @PostMapping("/bulk")
+    List<BulkCommand.Result> bulk(@AuthenticationPrincipal TrakrPrincipal principal,
+            @Valid @RequestBody BulkRequest body) {
+        return issues.bulk(principal.id(), body.toCommand());
     }
 
     @Operation(operationId = "listIssueTransitions")

@@ -36,6 +36,8 @@ infra:       event_publication (Spring Modulith outbox), flyway_schema_history
 | `V006__sprints.sql`              | sprint                                                                          | 07               |
 | `V007__issues.sql`               | issue + indexes                                                                 | 07               |
 | `V008__issue_children.sql`       | issue_event, issue_link, watcher, worklog, issue_view, issue_star               | 07               |
+| `V008_1__sprint_commitment.sql`  | sprint: started_at, committed_points, committed_issue_ids                       | 08               |
+| `V008_2__board_index_with_id.sql` | ix_issue_board rebuilt with `id` in INCLUDE                                    | 08               |
 | `V009__event_publication.sql`    | Spring Modulith event publication table                                         | 09               |
 | `V010__read_models.sql`          | notification, sprint_day_snapshot, sprint_report, processed_event, saved_filter | 10               |
 | `V011__comments_attachments.sql` | comment, comment_mention, attachment                                            | 15               |

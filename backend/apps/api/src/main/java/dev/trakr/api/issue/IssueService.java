@@ -7,6 +7,7 @@ import dev.trakr.api.issue.internal.Issue;
 import dev.trakr.api.issue.internal.IssueHistory;
 import dev.trakr.api.issue.internal.IssueLink;
 import dev.trakr.api.issue.internal.IssueLinkRepository;
+import dev.trakr.api.issue.internal.IssueLocks;
 import dev.trakr.api.issue.internal.IssueMarks;
 import dev.trakr.api.issue.internal.IssueNumberAllocator;
 import dev.trakr.api.issue.internal.IssueQueries;
@@ -14,6 +15,8 @@ import dev.trakr.api.issue.internal.IssueRepository;
 import dev.trakr.api.issue.internal.Parent;
 import dev.trakr.api.issue.internal.Worklog;
 import dev.trakr.api.issue.internal.WorklogRepository;
+import dev.trakr.api.board.BoardColumnView;
+import dev.trakr.api.board.BoardService;
 import dev.trakr.api.project.ProjectAccess;
 import dev.trakr.api.project.ProjectAccess.Grant;
 import dev.trakr.api.project.ProjectRole;
@@ -25,6 +28,8 @@ import dev.trakr.api.workflow.WorkflowStatusView;
 import dev.trakr.contracts.events.IssueCreated;
 import dev.trakr.contracts.events.IssueDeleted;
 import dev.trakr.contracts.events.IssueLinked;
+import dev.trakr.contracts.events.IssueMoved;
+import dev.trakr.contracts.events.IssueSnapshot;
 import dev.trakr.contracts.events.IssueTransitioned;
 import dev.trakr.contracts.events.IssueUpdated;
 import dev.trakr.contracts.events.WorkLogged;
@@ -32,8 +37,11 @@ import dev.trakr.kernel.Rank;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -41,9 +49,11 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * The issue module's public API. Every method starts with an access check on the issue's project,
@@ -66,14 +76,18 @@ public class IssueService {
     private final IssueHistory history;
     private final IssueMarks marks;
     private final IssueNumberAllocator numbers;
+    private final IssueLocks locks;
     private final ProjectAccess access;
     private final WorkflowService workflow;
+    private final BoardService boards;
     private final ApplicationEventPublisher events;
+    private final TransactionTemplate transactions;
     private final Clock clock;
 
     IssueService(IssueRepository issues, IssueLinkRepository links, WorklogRepository worklogs, IssueQueries queries,
-            IssueHistory history, IssueMarks marks, IssueNumberAllocator numbers, ProjectAccess access,
-            WorkflowService workflow, ApplicationEventPublisher events, Clock clock) {
+            IssueHistory history, IssueMarks marks, IssueNumberAllocator numbers, IssueLocks locks,
+            ProjectAccess access, WorkflowService workflow, BoardService boards, ApplicationEventPublisher events,
+            TransactionTemplate transactions, Clock clock) {
         this.issues = issues;
         this.links = links;
         this.worklogs = worklogs;
@@ -81,9 +95,12 @@ public class IssueService {
         this.history = history;
         this.marks = marks;
         this.numbers = numbers;
+        this.locks = locks;
         this.access = access;
         this.workflow = workflow;
+        this.boards = boards;
         this.events = events;
+        this.transactions = transactions;
         this.clock = clock;
     }
 
@@ -205,6 +222,146 @@ public class IssueService {
             history.deleted(each, userId);
             events.publishEvent(IssueDeleted.of(clock.instant(), userId, each.snapshot()));
         }
+    }
+
+    /**
+     * The hot path (01-architecture §5.1): a card dropped on the board or in the backlog. One row
+     * changes — status, sprint and rank of this issue — and the rank is computed here from the
+     * neighbours' <em>current</em> ranks, not taken from the client.
+     */
+    @Transactional
+    public MoveResult move(UUID userId, String key, MoveIssue cmd) {
+        // BLOCK 1: load + lock — the project's rank lock first (same order as create), then the issue row
+        Grant grant = grant(userId, key, ProjectRole.MEMBER);
+        locks.lockRanks(grant.projectId());
+        UUID issueId = locks.lockIssue(grant.workspaceId(), key).orElseThrow(() -> notFound(key));
+        Issue issue = issues.findById(issueId).orElseThrow(() -> notFound(key));
+        requireVersion(cmd.expectedVersion(), issue, grant, userId);
+        List<String> warnings = new ArrayList<>();
+        UUID fromSprintId = issue.sprintId();
+        String fromRank = issue.rank();
+
+        // BLOCK 2: status change? The workflow decides; the issue sets resolvedAt
+        WorkflowStatusView fromStatus = null;
+        WorkflowStatusView toStatus = null;
+        if (cmd.toStatusId() != null && !cmd.toStatusId().equals(issue.statusId())) {
+            toStatus = workflow.requireTransition(grant.projectId(), issue.statusId(), cmd.toStatusId());
+            fromStatus = workflow.status(grant.projectId(), issue.statusId());
+            issue.transitionTo(toStatus, clock);
+        }
+
+        // BLOCK 3: sprint change? Absent = stay, null = backlog
+        UUID toSprintId = fromSprintId;
+        if (cmd.toSprintId() != null) {
+            toSprintId = cmd.toSprintId().value();
+            if (toSprintId != null) {
+                requireOpenSprint(grant, toSprintId);
+            }
+        }
+        boolean sprintChanged = !Objects.equals(fromSprintId, toSprintId);
+
+        // BLOCK 4: rank, from the neighbours as they are now (we hold the lock, so they can't change under us)
+        String rank = rankBetween(grant, issue, toSprintId, cmd.beforeKey(), cmd.afterKey(), sprintChanged, warnings);
+        boolean moved = issue.moveTo(toSprintId, rank, clock);
+        if (!moved && toStatus == null) {
+            // dropped where it already was: nothing changed, nothing to tell anyone
+            return new MoveResult(detailOf(grant, key, userId), warnings);
+        }
+        issues.flush();
+
+        // BLOCK 5: WIP check — advisory (00-product §4.4): the move stands, the response warns
+        if (toStatus != null || sprintChanged) {
+            wipExceeded(grant, issue).ifPresent(warnings::add);
+        }
+
+        // BLOCK 6: history + events. Both events carry the same sequence (one version bump); dedupe by event id
+        history.moved(issue, userId, fromSprintId, fromRank);
+        IssueSnapshot snapshot = issue.snapshot();
+        events.publishEvent(IssueMoved.of(clock.instant(), userId, fromSprintId, snapshot));
+        if (toStatus != null && fromStatus != null) {
+            history.transitioned(issue, userId, fromStatus, toStatus);
+            events.publishEvent(IssueTransitioned.of(clock.instant(), userId, fromStatus.id(), snapshot));
+        }
+        return new MoveResult(detailOf(grant, key, userId), warnings);
+    }
+
+    /**
+     * Moves a sprint's issues to the backlog ({@code toSprintId} null; they go to its <em>top</em>, in
+     * their sprint order) or to the bottom of another sprint. For the sprint module — completing a sprint
+     * (open issues only) or deleting one (all) — inside its transaction, after it checked access.
+     *
+     * @return the ids of the moved issues, in their order
+     */
+    @Transactional
+    public List<UUID> moveSprintIssues(UUID actorId, UUID projectId, UUID fromSprintId, @Nullable UUID toSprintId,
+            boolean openOnly) {
+        locks.lockRanks(projectId);
+        List<Issue> moving = issues.findBySprintIdAndDeletedAtIsNullOrderByRank(fromSprintId).stream()
+                .filter(issue -> !openOnly || !"done".equals(issue.statusCategory()))
+                .toList();
+        if (!openOnly) {
+            issues.detachDeletedFromSprint(fromSprintId);
+        }
+        if (moving.isEmpty()) {
+            return List.of();
+        }
+        // nBetween spreads them evenly in the gap and keeps their order
+        List<String> ranks = toSprintId == null
+                ? Rank.nBetween(null, queries.firstRank(projectId, null).orElse(null), moving.size())
+                : Rank.nBetween(queries.lastRank(projectId, toSprintId).orElse(null), null, moving.size());
+        List<String> fromRanks = moving.stream().map(Issue::rank).toList();
+        for (int i = 0; i < moving.size(); i++) {
+            moving.get(i).moveTo(toSprintId, ranks.get(i), clock);
+        }
+        issues.flush();
+        for (int i = 0; i < moving.size(); i++) {
+            Issue issue = moving.get(i);
+            history.moved(issue, actorId, fromSprintId, fromRanks.get(i));
+            events.publishEvent(IssueMoved.of(clock.instant(), actorId, fromSprintId, issue.snapshot()));
+        }
+        return moving.stream().map(Issue::id).toList();
+    }
+
+    /**
+     * One action on up to 100 issues, each in its own transaction: one issue failing (no permission, a
+     * transition the workflow refuses) doesn't undo the others, and the answer says which did what.
+     * Not @Transactional itself — TransactionTemplate opens one transaction per key.
+     */
+    public List<BulkCommand.Result> bulk(UUID userId, BulkCommand cmd) {
+        List<BulkCommand.Result> results = new ArrayList<>();
+        for (String key : new LinkedHashSet<>(cmd.keys())) {
+            try {
+                results.add(transactions.execute(status -> bulkOne(userId, key, cmd)));
+            } catch (TrakrException e) {
+                results.add(BulkCommand.Result.failed(key, e.code(), e.getMessage()));
+            } catch (OptimisticLockingFailureException e) {
+                results.add(BulkCommand.Result.failed(key, "VERSION_MISMATCH", "Changed by someone else meanwhile."));
+            }
+        }
+        return results;
+    }
+
+    // runs inside the per-key transaction; calls on "this" skip the @Transactional proxy, and the template's
+    // transaction covers them instead
+    private BulkCommand.Result bulkOne(UUID userId, String key, BulkCommand cmd) {
+        long version = load(grant(userId, key, ProjectRole.MEMBER), key).version();
+        return switch (cmd.action()) {
+            case TRANSITION -> {
+                if (cmd.statusId() == null) {
+                    throw new TrakrException(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", "Transition needs statusId.");
+                }
+                yield BulkCommand.Result.ok(key,
+                        transition(userId, key, new TransitionIssue(cmd.statusId(), version)).version());
+            }
+            case ASSIGN -> BulkCommand.Result.ok(key,
+                    patch(userId, key, version, PatchIssue.none().withAssignee(cmd.assigneeId())).version());
+            case MOVE_TO_SPRINT -> BulkCommand.Result.ok(key, move(userId, key,
+                    new MoveIssue(null, new PatchIssue.Value<>(cmd.sprintId()), null, null, version)).issue().version());
+            case DELETE -> {
+                delete(userId, key, version);
+                yield BulkCommand.Result.ok(key, null);
+            }
+        };
     }
 
     /** Newest first, {@value #HISTORY_PAGE} per page. */
@@ -377,6 +534,54 @@ public class IssueService {
             throw new TrakrException(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", "No open sprint with this id in " + grant.key() + ".",
                     List.of(new FieldMessage("sprintId", "is not an open sprint of " + grant.key())));
         }
+    }
+
+    /**
+     * A rank strictly between the requested neighbours and unique in the destination list. The new rank
+     * goes between the lower bound and the <em>next existing rank</em> above it, so even when another move
+     * landed between the same two neighbours a moment ago, ours lands in the gap that is left.
+     * Neighbours missing or out of order: the end of the list, plus NEIGHBOURS_CHANGED.
+     */
+    private String rankBetween(Grant grant, Issue issue, @Nullable UUID sprintId, @Nullable String beforeKey,
+            @Nullable String afterKey, boolean sprintChanged, List<String> warnings) {
+        UUID projectId = grant.projectId();
+        if (beforeKey == null && afterKey == null) {
+            // no position given: keep it within the same list, append when it changes lists
+            return sprintChanged ? endOf(projectId, sprintId, issue) : issue.rank();
+        }
+        String before = beforeKey == null ? null
+                : queries.rankInList(projectId, sprintId, beforeKey, issue.id()).orElse(null);
+        String after = afterKey == null ? null
+                : queries.rankInList(projectId, sprintId, afterKey, issue.id()).orElse(null);
+        boolean missing = (beforeKey != null && before == null) || (afterKey != null && after == null);
+        if (missing || (before != null && after != null && before.compareTo(after) >= 0)) {
+            warnings.add("NEIGHBOURS_CHANGED");
+            return endOf(projectId, sprintId, issue);
+        }
+        if (before != null) {
+            String next = queries.rankAbove(projectId, sprintId, before, issue.id()).orElse(null);
+            return Rank.between(before, next);
+        }
+        String previous = queries.rankBelow(projectId, sprintId, after, issue.id()).orElse(null);
+        return Rank.between(previous, after);
+    }
+
+    private String endOf(UUID projectId, @Nullable UUID sprintId, Issue issue) {
+        return Rank.between(queries.rankBelow(projectId, sprintId, null, issue.id()).orElse(null), null);
+    }
+
+    // scrum: counts the issue's sprint (a backlog issue is on no board); kanban: the whole project
+    private Optional<String> wipExceeded(Grant grant, Issue issue) {
+        BoardColumnView column = boards.columnFor(grant.projectId(), issue.statusId()).orElse(null);
+        if (column == null || column.wipLimit() == null) {
+            return Optional.empty();
+        }
+        boolean kanban = "kanban".equals(column.boardType());
+        if (!kanban && issue.sprintId() == null) {
+            return Optional.empty();
+        }
+        int count = queries.countInStatuses(grant.projectId(), column.statusIds(), kanban ? null : issue.sprintId());
+        return count > column.wipLimit() ? Optional.of("WIP_LIMIT_EXCEEDED") : Optional.empty();
     }
 
     private static long parseCursor(String cursor) {

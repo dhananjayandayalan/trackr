@@ -237,6 +237,21 @@ public class Issue {
         return true;
     }
 
+    /**
+     * Puts the issue in another list ({@code sprintId} null = backlog) at {@code rank}. The service
+     * computes the rank from the neighbours; the issue only records where it ended up. False when
+     * neither changed.
+     */
+    public boolean moveTo(@Nullable UUID newSprintId, String newRank, Clock clock) {
+        if (Objects.equals(sprintId, newSprintId) && rank.equals(newRank)) {
+            return false;
+        }
+        sprintId = newSprintId;
+        rank = newRank;
+        touch(clock);
+        return true;
+    }
+
     /** Adds logged time; the worklog row itself is a separate entity. */
     public void logWork(int minutes, Clock clock) {
         if (minutes <= 0) {
@@ -394,6 +409,14 @@ public class Issue {
 
     public @Nullable UUID parentId() {
         return parentId;
+    }
+
+    public @Nullable UUID sprintId() {
+        return sprintId;
+    }
+
+    public String rank() {
+        return rank;
     }
 
     public @Nullable Instant resolvedAt() {

@@ -40,6 +40,11 @@ public record PatchIssue(
                 storyPoints, labels, dueDate, startDate, flagged, fixVersion, originalEstimateMin);
     }
 
+    public PatchIssue withAssignee(@Nullable UUID newAssignee) {
+        return new PatchIssue(summary, description, type, priority, new Value<>(newAssignee), parentKey,
+                storyPoints, labels, dueDate, startDate, flagged, fixVersion, originalEstimateMin);
+    }
+
     public PatchIssue withPriority(Priority newPriority) {
         return new PatchIssue(summary, description, type, new Value<>(newPriority), assigneeId, parentKey,
                 storyPoints, labels, dueDate, startDate, flagged, fixVersion, originalEstimateMin);

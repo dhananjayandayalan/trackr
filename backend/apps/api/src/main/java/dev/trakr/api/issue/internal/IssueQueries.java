@@ -5,13 +5,10 @@ import static dev.trakr.jooq.Tables.ISSUE;
 import static dev.trakr.jooq.Tables.ISSUE_EVENT;
 import static dev.trakr.jooq.Tables.ISSUE_LINK;
 import static dev.trakr.jooq.Tables.ISSUE_STAR;
-import static dev.trakr.jooq.Tables.PROJECT;
-import static dev.trakr.jooq.Tables.PROJECT_MEMBER;
 import static dev.trakr.jooq.Tables.SPRINT;
 import static dev.trakr.jooq.Tables.WATCHER;
 import static dev.trakr.jooq.Tables.WORKFLOW_STATUS;
 import static dev.trakr.jooq.Tables.WORKLOG;
-import static dev.trakr.jooq.Tables.WORKSPACE_MEMBER;
 
 import dev.trakr.api.issue.HistoryItem;
 import dev.trakr.api.issue.IssueDetails;
@@ -25,6 +22,7 @@ import dev.trakr.api.issue.IssueType;
 import dev.trakr.api.issue.LinkType;
 import dev.trakr.api.issue.Priority;
 import dev.trakr.api.issue.WorklogView;
+import dev.trakr.api.project.ProjectVisibility;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -165,14 +163,16 @@ public class IssueQueries {
                 .join(other).on(other.ID.eq(ISSUE_LINK.TARGET_ISSUE_ID))
                 .join(otherStatus).on(otherStatus.ID.eq(other.STATUS_ID))
                 .where(ISSUE_LINK.SOURCE_ISSUE_ID.eq(issueId), other.DELETED_AT.isNull(),
-                        visibleTo(other.PROJECT_ID, viewerId));
+                        // a link may point into a private project the viewer isn't in: don't show its summary
+                        ProjectVisibility.visibleTo(other.PROJECT_ID, viewerId));
         var inward = DSL.select(ISSUE_LINK.ID, ISSUE_LINK.TYPE, DSL.inline(false).as("from_source"), other.ID,
                         other.KEY, other.SUMMARY, other.TYPE, other.STATUS_CATEGORY, otherStatus.NAME)
                 .from(ISSUE_LINK)
                 .join(other).on(other.ID.eq(ISSUE_LINK.SOURCE_ISSUE_ID))
                 .join(otherStatus).on(otherStatus.ID.eq(other.STATUS_ID))
                 .where(ISSUE_LINK.TARGET_ISSUE_ID.eq(issueId), other.DELETED_AT.isNull(),
-                        visibleTo(other.PROJECT_ID, viewerId));
+                        // a link may point into a private project the viewer isn't in: don't show its summary
+                        ProjectVisibility.visibleTo(other.PROJECT_ID, viewerId));
         return DSL.multiset(outward.unionAll(inward))
                 .as("links")
                 .convertFrom(rows -> rows.map(r -> {
@@ -183,20 +183,6 @@ public class IssueQueries {
                 }).stream()
                         .sorted(Comparator.comparing(LinkView::label).thenComparing(link -> link.issue().key()))
                         .toList());
-    }
-
-    /**
-     * Whether the viewer may see a project: the same rule as ProjectAccess, in SQL. A link may point
-     * into a private project the viewer isn't in — that issue's summary must not show up here.
-     */
-    private static Condition visibleTo(Field<UUID> projectId, UUID viewerId) {
-        var p = PROJECT.as("visible_project");
-        return DSL.exists(DSL.selectOne().from(p).where(p.ID.eq(projectId))
-                .and(DSL.exists(DSL.selectOne().from(PROJECT_MEMBER)
-                                .where(PROJECT_MEMBER.PROJECT_ID.eq(p.ID), PROJECT_MEMBER.USER_ID.eq(viewerId)))
-                        .or(p.ACCESS.in("limited", "open").and(DSL.exists(DSL.selectOne().from(WORKSPACE_MEMBER)
-                                .where(WORKSPACE_MEMBER.WORKSPACE_ID.eq(p.WORKSPACE_ID),
-                                        WORKSPACE_MEMBER.USER_ID.eq(viewerId)))))));
     }
 
     /** One issue as a parent or link shows it; deleted issues are not found. */
@@ -220,6 +206,55 @@ public class IssueQueries {
                         sprintId == null ? ISSUE.SPRINT_ID.isNull() : ISSUE.SPRINT_ID.eq(sprintId),
                         ISSUE.DELETED_AT.isNull())
                 .fetchOptional(0, String.class);
+    }
+
+    // BLOCK: ranks inside one list — the backlog (sprintId null) or one sprint — of a project, live issues only.
+    // excludeId leaves out the issue being moved: its own current rank is not a neighbour.
+
+    /** The rank of {@code key} if it is in this list. */
+    public Optional<String> rankInList(UUID projectId, @Nullable UUID sprintId, String key, UUID excludeId) {
+        return dsl.select(ISSUE.RANK).from(ISSUE)
+                .where(inList(projectId, sprintId, excludeId), ISSUE.KEY.eq(key))
+                .fetchOptional(ISSUE.RANK);
+    }
+
+    /** The first rank after {@code lower} (the very first when null), or empty at the end of the list. */
+    public Optional<String> rankAbove(UUID projectId, @Nullable UUID sprintId, @Nullable String lower, UUID excludeId) {
+        return dsl.select(DSL.min(ISSUE.RANK)).from(ISSUE)
+                .where(inList(projectId, sprintId, excludeId), lower == null ? DSL.noCondition() : ISSUE.RANK.gt(lower))
+                .fetchOptional(0, String.class);
+    }
+
+    /** The last rank before {@code upper} (the very last when null), or empty at the top of the list. */
+    public Optional<String> rankBelow(UUID projectId, @Nullable UUID sprintId, @Nullable String upper, UUID excludeId) {
+        return dsl.select(DSL.max(ISSUE.RANK)).from(ISSUE)
+                .where(inList(projectId, sprintId, excludeId), upper == null ? DSL.noCondition() : ISSUE.RANK.lt(upper))
+                .fetchOptional(0, String.class);
+    }
+
+    /** The first rank of a list, for putting issues at its top. */
+    public Optional<String> firstRank(UUID projectId, @Nullable UUID sprintId) {
+        return dsl.select(DSL.min(ISSUE.RANK)).from(ISSUE)
+                .where(ISSUE.PROJECT_ID.eq(projectId), sprintIs(sprintId), ISSUE.DELETED_AT.isNull())
+                .fetchOptional(0, String.class);
+    }
+
+    private static Condition inList(UUID projectId, @Nullable UUID sprintId, UUID excludeId) {
+        return ISSUE.PROJECT_ID.eq(projectId).and(sprintIs(sprintId)).and(ISSUE.DELETED_AT.isNull())
+                .and(ISSUE.ID.ne(excludeId));
+    }
+
+    private static Condition sprintIs(@Nullable UUID sprintId) {
+        return sprintId == null ? ISSUE.SPRINT_ID.isNull() : ISSUE.SPRINT_ID.eq(sprintId);
+    }
+
+    /**
+     * Live issues in these statuses — the population of one board column. {@code sprintId} null counts
+     * across all sprints (kanban boards have none).
+     */
+    public int countInStatuses(UUID projectId, List<UUID> statusIds, @Nullable UUID sprintId) {
+        return dsl.fetchCount(ISSUE, ISSUE.PROJECT_ID.eq(projectId), ISSUE.STATUS_ID.in(statusIds),
+                ISSUE.DELETED_AT.isNull(), sprintId == null ? DSL.noCondition() : ISSUE.SPRINT_ID.eq(sprintId));
     }
 
     /** A sprint's state (planned, active, closed), if it belongs to the project. */

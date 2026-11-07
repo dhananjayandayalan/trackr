@@ -53,6 +53,22 @@ public class ProjectAccess {
     }
 
     /**
+     * The same check for things addressed by id (a sprint, a link) whose project is known but whose URL
+     * has no key. 404 again when the caller can't see the project.
+     */
+    @Transactional(readOnly = true)
+    public Grant require(UUID userId, UUID projectId, ProjectRole minimum) {
+        Project project = projects.findById(projectId)
+                .filter(candidate -> workspaces.isMember(candidate.workspaceId(), userId))
+                .orElseThrow(() -> new TrakrException.NotFound("No such project."));
+        ProjectRole role = roleOf(userId, project).orElseThrow(() -> new TrakrException.NotFound("No such project."));
+        if (!role.atLeast(minimum)) {
+            throw new TrakrException.Forbidden("This needs the " + minimum.value() + " role in " + project.key() + ".");
+        }
+        return new Grant(project.id(), project.workspaceId(), project.key(), role);
+    }
+
+    /**
      * The user's effective role in a project they may not be calling about, e.g. "can this person be
      * assigned issues here?"; empty when they can't see it at all.
      */

@@ -236,12 +236,53 @@ class IssueApiIT {
     }
 
     @Test
+    void moveAndBulkOverHttp() {
+        TestBrowser ada = TestBrowser.signedUp(mvc, "Ada", uniqueEmail());
+        createProject(ada, "BLK");
+        for (String summary : List.of("One", "Two", "Three")) {
+            createIssue(ada, """
+                    {"projectKey": "BLK", "type": "task", "summary": "%s"}""".formatted(summary));
+        }
+        TestBrowser stranger = TestBrowser.signedUp(mvc, "Str", uniqueEmail());
+        createProject(stranger, "HID");
+        createIssue(stranger, """
+                {"projectKey": "HID", "type": "task", "summary": "Not yours"}""");
+
+        // BLOCK 1: move — BLK-3 to the top of the backlog, above BLK-1
+        assertThat(ada.post("/api/v1/issues/BLK-3/move", """
+                {"afterKey": "BLK-1", "expectedVersion": 0}"""))
+                .hasStatusOk()
+                .hasHeader("ETag", "\"v1\"")
+                .bodyJson()
+                .hasPathSatisfying("$.warnings", v -> v.assertThat().asArray().isEmpty())
+                .hasPathSatisfying("$.issue.key", v -> v.assertThat().isEqualTo("BLK-3"));
+        assertThat(ada.post("/api/v1/issues/BLK-3/move", """
+                {"toSprintId": "next week", "expectedVersion": 1}"""))
+                .hasStatus(HttpStatus.BAD_REQUEST)
+                .bodyJson().extractingPath("$.errors[0].field").isEqualTo("toSprintId");
+
+        // BLOCK 2: bulk — one result per key; the invisible issue fails alone
+        String done = statusId(ada, "BLK-1", "Done");
+        assertThat(ada.post("/api/v1/issues/bulk", """
+                {"keys": ["BLK-1", "BLK-2", "HID-1"], "action": "transition", "args": {"statusId": "%s"}}"""
+                .formatted(done)))
+                .hasStatusOk()
+                .bodyJson()
+                .hasPathSatisfying("$[*].ok", v -> v.assertThat().asArray().containsExactly(true, true, false))
+                .hasPathSatisfying("$[0].version", v -> v.assertThat().isEqualTo(1))
+                .hasPathSatisfying("$[2].code", v -> v.assertThat().isEqualTo("NOT_FOUND"));
+        assertThat(ada.get("/api/v1/issues/BLK-2")).bodyJson()
+                .extractingPath("$.status.name").isEqualTo("Done");
+    }
+
+    @Test
     void openApiDocumentNamesTheIssueOperations() {
         assertThat(new TestBrowser(mvc).get("/v3/api-docs")).hasStatusOk()
                 .bodyJson().extractingPath("$.paths..operationId").asArray()
                 .contains("createIssue", "getIssue", "updateIssue", "deleteIssue", "transitionIssue",
                         "listIssueTransitions", "getIssueHistory", "linkIssue", "unlinkIssue", "watchIssue",
-                        "starIssue", "logWork", "listWorklogs");
+                        "starIssue", "logWork", "listWorklogs", "moveIssue", "bulkIssues", "getBoard",
+                        "getBacklog", "createSprint", "startSprint", "completeSprint", "getMyWork", "getMyStats");
     }
 
     private void createProject(TestBrowser browser, String key) {

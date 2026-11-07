@@ -12,7 +12,8 @@ import java.util.UUID;
  * version after the change (consumers drop anything at or below the last one they saw).
  */
 public sealed interface TrakrEvent
-        permits IssueCreated, IssueUpdated, IssueTransitioned, IssueDeleted, IssueLinked, WorkLogged {
+        permits IssueCreated, IssueUpdated, IssueTransitioned, IssueMoved, IssueDeleted, IssueLinked, WorkLogged,
+        SprintEvent {
 
     UUID eventId();
 

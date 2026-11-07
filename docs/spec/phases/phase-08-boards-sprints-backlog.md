@@ -78,6 +78,30 @@ Same style. `HomeQueries.stats(userId)` computes the four tiles in one statement
 - `BoardQueryIT`: board JSON matches a snapshot for the seed data; filter combinations.
 - Performance smoke (`@Tag("perf")`): board view with 500 issues < 50 ms server time on your laptop (log it).
 
+## Decisions taken while building it
+
+- **Two extra migrations, versions 8.1 and 8.2** (between V008 and phase 09's V009, which no database had applied):
+  `V008_1__sprint_commitment.sql` stores what a sprint committed to when it started (`started_at`,
+  `committed_points`, `committed_issue_ids`) — the report projector that could recompute it from history only
+  arrives in phase 10. `V008_2__board_index_with_id.sql` adds `id` to `ix_issue_board`'s INCLUDE list: a Card
+  carries `id`, and without it the card query can't be an index-only scan.
+- **One rank lock per project.** Create (via the number allocator's UPDATE), move and sprint completion all take the
+  project row `FOR NO KEY UPDATE` before reading neighbours, then rank between the lower neighbour and the next
+  existing rank above it. That's what makes 20 concurrent drops into one gap unique. The moved issue is also locked.
+- `IssueMoved` and `IssueTransitioned` from one move carry the **same sequence** (one version bump); consumers dedupe
+  by event id and order by sequence.
+- `issue` depends on `board` (`BoardService.columnFor` for WIP limits). Board view = one tiny query (board + sprint),
+  then one query with nested MULTISETs (columns → cards, epics, people). Epic colours derive from the epic's number.
+- Sprints only for scrum projects (`SPRINTS_NOT_ENABLED`); `GET /sprints/{id}` added; deleting a planned sprint
+  publishes `trakr.sprint.deleted.v1` (new type in the catalogue).
+- "Waiting on review" counts open issues in a status whose colour token is `review` (categories have no review);
+  `unreadMentions` is 0 until phase 10. Recent projects on the home screen are not in this phase.
+- Cross-module flow tests (`MoveIssueIT`, `BoardPerfIT`) live in `dev.trakr.flows`, outside the app's base package:
+  inside a module's package (or the root) Modulith counts their calls as module dependencies and finds a cycle.
+- The dev seed is loaded in tests too (dev is the default profile); `BoardQueryIT` snapshots the MAR board
+  (`src/integrationTest/resources/snapshots/board-MAR.json`, `-PupdateSnapshots=true` to rewrite).
+  `BoardPerfIT` runs with `-Pperf=true` (measured: 500 cards, median 12 ms).
+
 ## Done when
 
 - `GET /projects/MAR/board` returns the full board in one call and matches the canvas data shape.
