@@ -2,6 +2,7 @@ package dev.trakr.api.search.internal.tql;
 
 import dev.trakr.api.search.internal.tql.FieldRegistry.FieldSpec;
 import dev.trakr.api.search.internal.tql.grammar.TqlLexer;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -29,6 +30,7 @@ public final class TqlCompleter {
     }
 
     /** {@code from}: where the replaced text starts — the word being typed, or the caret if there is none. */
+    @Schema(name = "TqlCompletion")
     public record Result(int from, List<Suggestion> expected) {
     }
 

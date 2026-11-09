@@ -2,6 +2,7 @@ import { getRouteApi, useRouter } from '@tanstack/react-router'
 import { useActionState, type ReactNode } from 'react'
 import { useFormStatus } from 'react-dom'
 import { isApiError, messageOf } from '@/shared/api/errors.ts'
+import { text } from '@/shared/lib/forms.ts'
 import { safeNext } from '@/shared/lib/urls.ts'
 import { Button } from '@/shared/ui/Button.tsx'
 import { Field } from '@/shared/ui/Field.tsx'
@@ -239,9 +240,4 @@ export function passwordProblems(password: string): string[] {
     problems.push('must contain a symbol')
   }
   return problems
-}
-
-function text(form: FormData, name: string): string {
-  const value = form.get(name)
-  return typeof value === 'string' ? value : ''
 }

@@ -1,0 +1,167 @@
+@layer components {
+  /* BLOCK 1: the row — spans every track of the list's grid and takes them over (subgrid), so its cells
+     line up with every other row's */
+  .root {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: center;
+    min-block-size: 44px;
+    padding-inline: var(--space-2);
+    background: var(--color-paper);
+    border-block-end: var(--border-line);
+    cursor: grab;
+
+    &:hover {
+      background: color-mix(in oklch, var(--color-primary) 6%, var(--color-paper));
+    }
+
+    &[data-flagged] {
+      background: color-mix(in oklch, var(--color-yellow) 18%, var(--color-paper));
+    }
+
+    &[data-dragging] {
+      opacity: 0.4;
+    }
+
+    /* the drop line */
+    &[data-drop-edge]::before {
+      content: '';
+      position: absolute;
+      z-index: 1;
+      inset-inline: 0;
+      block-size: 3px;
+      background: var(--color-primary);
+      pointer-events: none;
+    }
+
+    &[data-drop-edge='top']::before {
+      inset-block-start: -2px;
+    }
+
+    &[data-drop-edge='bottom']::before {
+      inset-block-end: -2px;
+    }
+  }
+
+  .flash {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--color-accent);
+    opacity: 0;
+    animation: flash 1s var(--ease-out);
+    pointer-events: none;
+  }
+
+  @keyframes flash {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flash {
+      animation-duration: 0.01ms;
+    }
+  }
+
+  /* BLOCK 2: cells */
+  .handle {
+    display: inline-flex;
+    color: var(--text-muted);
+  }
+
+  .key {
+    font: var(--text-mono-sm);
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .summary {
+    min-inline-size: 0;
+    overflow: hidden;
+    font: var(--text-body-sm);
+    font-weight: 600;
+    color: var(--text-color);
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .epic,
+  .status {
+    min-inline-size: 0;
+    overflow: hidden;
+  }
+
+  .epicTag {
+    --_tag: var(--avatar-violet);
+    display: inline-block;
+    max-inline-size: 100%;
+    overflow: hidden;
+    padding: 0 var(--space-2);
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+    background: var(--_tag);
+    border: var(--border-thin);
+    border-radius: var(--radius-sm);
+
+    &[data-color='cyan'] {
+      --_tag: var(--avatar-cyan);
+    }
+
+    &[data-color='lime'] {
+      --_tag: var(--avatar-lime);
+    }
+
+    &[data-color='orange'] {
+      --_tag: var(--avatar-orange);
+    }
+
+    &[data-color='pink'] {
+      --_tag: var(--avatar-pink);
+    }
+
+    &[data-color='yellow'] {
+      --_tag: var(--avatar-yellow);
+    }
+  }
+
+  .points {
+    justify-self: center;
+    min-inline-size: var(--space-6);
+    padding-inline: var(--space-1);
+    font: var(--text-mono-sm);
+    text-align: center;
+    background: var(--surface-sunken);
+    border-radius: var(--radius-round);
+  }
+
+  .assignee {
+    display: inline-flex;
+    justify-content: center;
+  }
+
+  /* BLOCK 3: a narrow list (the section is the container): epic and status make room for the summary */
+  @container list (inline-size < 40rem) {
+    .epic,
+    .status {
+      display: none;
+    }
+  }
+}

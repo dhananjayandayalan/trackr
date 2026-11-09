@@ -1,5 +1,6 @@
 package dev.trakr.api.issue;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -56,6 +57,7 @@ public record IssueDetails(
             String statusName) {
     }
 
+    @Schema(name = "IssueSprint")
     public record SprintRef(UUID id, String name, String state) {
     }
 

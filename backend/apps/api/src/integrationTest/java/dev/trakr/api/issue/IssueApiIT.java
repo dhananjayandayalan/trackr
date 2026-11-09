@@ -256,6 +256,11 @@ class IssueApiIT {
                 .bodyJson()
                 .hasPathSatisfying("$.warnings", v -> v.assertThat().asArray().isEmpty())
                 .hasPathSatisfying("$.issue.key", v -> v.assertThat().isEqualTo("BLK-3"));
+        // null neighbours and status = not given (the OpenAPI document says nullable; generated clients send null)
+        assertThat(ada.post("/api/v1/issues/BLK-3/move", """
+                {"toStatusId": null, "beforeKey": null, "afterKey": "BLK-1", "expectedVersion": 1}"""))
+                .hasStatusOk()
+                .bodyJson().extractingPath("$.issue.key").isEqualTo("BLK-3");
         assertThat(ada.post("/api/v1/issues/BLK-3/move", """
                 {"toSprintId": "next week", "expectedVersion": 1}"""))
                 .hasStatus(HttpStatus.BAD_REQUEST)

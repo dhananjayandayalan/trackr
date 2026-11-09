@@ -1,0 +1,78 @@
+@layer components {
+  .page {
+    container: backlog / inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+  }
+
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .eyebrow {
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .headerActions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .search {
+    position: relative;
+    display: inline-flex;
+    inline-size: 16rem;
+
+    & input {
+      inline-size: 100%;
+      padding-inline-start: calc(var(--space-3) + var(--icon-sm) + var(--space-2));
+    }
+  }
+
+  .searchIcon {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: var(--space-3);
+    margin-block: auto;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  /* epics panel beside the lists; above them when the page is narrow */
+  .layout {
+    display: grid;
+    grid-template-columns: 16rem minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-6);
+  }
+
+  .lists {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-inline-size: 0;
+  }
+
+  @container backlog (inline-size < 52rem) {
+    .layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}

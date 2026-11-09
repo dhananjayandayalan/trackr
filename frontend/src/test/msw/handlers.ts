@@ -1,5 +1,17 @@
 import { http, HttpResponse } from 'msw/http'
-import type { ActivityItem, IssueRow, Me, ProjectDetails, ProjectSummary, Stats } from '@/shared/api/types.ts'
+import type {
+  ActivityItem,
+  BacklogView,
+  BoardCard,
+  BoardView,
+  IssueDetails,
+  IssueRow,
+  Me,
+  MoveRequest,
+  ProjectDetails,
+  ProjectSummary,
+  Stats,
+} from '@/shared/api/types.ts'
 
 // MSW intercepts fetch at the network layer: the app's real client, middleware and parsing all run, only the
 // server is fake. The fixtures are typed with the generated schema types, so a backend change that breaks
@@ -96,11 +108,198 @@ export const marketing: ProjectDetails = {
   version: 1,
   createdAt: '2026-10-01T00:00:00Z',
   updatedAt: '2026-10-01T00:00:00Z',
-  statuses: [],
-  transitions: [],
+  // To do -> In progress -> Done, To do -> Done, back from Done only to In progress (never to To do)
+  statuses: [
+    { id: 'st-todo', name: 'To do', category: 'todo', position: 0, color: 'todo' },
+    { id: 'st-prog', name: 'In progress', category: 'in_progress', position: 1, color: 'progress' },
+    { id: 'st-done', name: 'Done', category: 'done', position: 2, color: 'done' },
+  ],
+  transitions: [
+    { id: 't1', fromStatusId: 'st-todo', toStatusId: 'st-prog' },
+    { id: 't2', fromStatusId: 'st-prog', toStatusId: 'st-done' },
+    { id: 't3', fromStatusId: 'st-prog', toStatusId: 'st-todo' },
+    { id: 't4', fromStatusId: 'st-done', toStatusId: 'st-prog' },
+    { id: 't5', fromStatusId: 'st-todo', toStatusId: 'st-done' },
+  ],
   board: null,
-  members: [],
+  members: [
+    { userId: ada.id, displayName: 'Ada Lovelace', initials: 'AL', avatarColor: 'violet', role: 'admin' },
+    { userId: 'u-grace', displayName: 'Grace Hopper', initials: 'GH', avatarColor: 'cyan', role: 'member' },
+  ],
   myRole: 'admin',
+}
+
+// BLOCK: the MAR board (phase 14) - the active sprint: two cards to do, one in progress (WIP limit 1), none done
+export function card(
+  key: string,
+  statusId: string,
+  rank: string,
+  changes: Partial<BoardCard> = {},
+): BoardCard {
+  return {
+    key,
+    id: `id-${key}`,
+    summary: `Summary of ${key}`,
+    type: 'story',
+    priority: 'medium',
+    storyPoints: 3,
+    assigneeId: null,
+    epicId: null,
+    flagged: false,
+    rank,
+    statusId,
+    version: 1,
+    ...changes,
+  }
+}
+
+export function marBoard(): BoardView {
+  return {
+    board: { id: 'b1', name: 'MAR board', type: 'scrum' },
+    sprint: {
+      id: 's1',
+      name: 'MAR Sprint 1',
+      state: 'active',
+      goal: 'Ship the landing page',
+      startsOn: '2026-11-02',
+      endsOn: '2026-11-16',
+    },
+    columns: [
+      {
+        id: 'col-todo',
+        name: 'To do',
+        statusIds: ['st-todo'],
+        count: 2,
+        overLimit: false,
+        cards: [
+          card('MAR-1', 'st-todo', 'H', { assigneeId: ada.id, epicId: 'e1' }),
+          card('MAR-2', 'st-todo', 'P', { type: 'bug', flagged: true }),
+        ],
+      },
+      {
+        id: 'col-prog',
+        name: 'In progress',
+        statusIds: ['st-prog'],
+        wipLimit: 1,
+        count: 1,
+        overLimit: false,
+        cards: [card('MAR-3', 'st-prog', 'K', { assigneeId: 'u-grace' })],
+      },
+      { id: 'col-done', name: 'Done', statusIds: ['st-done'], count: 0, overLimit: false, cards: [] },
+    ],
+    epics: { e1: { key: 'MAR-10', name: 'Launch', color: 'cyan' } },
+    people: {
+      [ada.id]: { name: 'Ada Lovelace', initials: 'AL', color: 'violet' },
+      'u-grace': { name: 'Grace Hopper', initials: 'GH', color: 'cyan' },
+    },
+  }
+}
+
+export function marBacklog(): BacklogView {
+  const row = (key: string, rank: string, statusId = 'st-todo') => ({
+    id: `id-${key}`,
+    key,
+    summary: `Summary of ${key}`,
+    type: 'story',
+    priority: 'medium',
+    statusId,
+    statusName: statusId === 'st-done' ? 'Done' : 'To do',
+    statusCategory: statusId === 'st-done' ? 'done' : 'todo',
+    assigneeId: null,
+    storyPoints: 2,
+    epicId: null,
+    rank,
+    flagged: false,
+    version: 1,
+  })
+  const sprint = (id: string, name: string, state: 'active' | 'planned', position: number) => ({
+    id,
+    projectId: 'p1',
+    name,
+    state,
+    position,
+    version: 1,
+  })
+  return {
+    activeSprint: {
+      sprint: sprint('s1', 'MAR Sprint 1', 'active', 0),
+      issues: [row('MAR-1', 'H'), row('MAR-3', 'K', 'st-done')],
+      points: { todo: 2, inProgress: 0, done: 2 },
+    },
+    plannedSprints: [
+      {
+        sprint: sprint('s2', 'MAR Sprint 2', 'planned', 1),
+        issues: [],
+        points: { todo: 0, inProgress: 0, done: 0 },
+      },
+    ],
+    backlog: {
+      issues: [row('MAR-5', 'M'), row('MAR-6', 'N'), row('MAR-7', 'O')],
+      points: { todo: 6, inProgress: 0, done: 0 },
+    },
+    epics: [
+      {
+        id: 'e1',
+        key: 'MAR-10',
+        summary: 'Launch',
+        color: 'cyan',
+        issueCount: 4,
+        doneCount: 1,
+        progressPct: 25,
+      },
+    ],
+  }
+}
+
+/** What GET /issues/{key} (and a move) answers: the issue as the server now has it. */
+export function issueDetails(key: string, changes: Partial<IssueDetails> = {}): IssueDetails {
+  return {
+    id: `id-${key}`,
+    key,
+    projectKey: 'MAR',
+    type: 'story',
+    summary: `Summary of ${key}`,
+    status: { id: 'st-todo', name: 'To do', category: 'todo', color: 'todo' },
+    priority: 'medium',
+    reporter: { id: ada.id, displayName: 'Ada Lovelace', initials: 'AL', avatarColor: 'violet' },
+    sprint: { id: 's1', name: 'MAR Sprint 1', state: 'active' },
+    storyPoints: 3,
+    rank: 'V',
+    labels: [],
+    flagged: false,
+    timeTracking: { timeSpentMin: 0 },
+    subtasks: [],
+    links: [],
+    watching: false,
+    watcherCount: 0,
+    starred: false,
+    attachments: [],
+    version: 2,
+    createdAt: '2026-11-01T00:00:00Z',
+    updatedAt: '2026-11-09T00:00:00Z',
+    ...changes,
+  }
+}
+
+/** A move that succeeds: the requested status and sprint, the version bumped, and the server's own rank. */
+export function moveAnswer(key: string, body: MoveRequest, rank = 'Z') {
+  const status = marketing.statuses.find((s) => s.id === body.toStatusId)
+  return {
+    issue: issueDetails(key, {
+      rank,
+      version: body.expectedVersion + 1,
+      ...(status
+        ? { status: { id: status.id, name: status.name, category: status.category, color: status.color } }
+        : {}),
+      ...(body.toSprintId === undefined
+        ? {}
+        : {
+            sprint:
+              body.toSprintId === null ? null : { id: body.toSprintId, name: 'Sprint', state: 'planned' },
+          }),
+    }),
+    warnings: [] as string[],
+  }
 }
 
 /** An RFC 9457 problem response, the way the api sends errors. */
@@ -122,6 +321,11 @@ export const handlers = [
   http.get('/api/v1/me/activity', () => HttpResponse.json(activity)),
   http.get('/api/v1/projects', () => HttpResponse.json(projects)),
   http.get('/api/v1/projects/MAR', () => HttpResponse.json(marketing)),
+  http.get('/api/v1/projects/MAR/board', () => HttpResponse.json(marBoard())),
+  http.get('/api/v1/projects/MAR/backlog', () => HttpResponse.json(marBacklog())),
+  http.post('/api/v1/issues/:key/move', async ({ params, request }) =>
+    HttpResponse.json(moveAnswer(String(params.key), (await request.json()) as MoveRequest)),
+  ),
   http.get('/api/v1/projects/key-suggestion', ({ request }) => {
     const name = new URL(request.url).searchParams.get('name') ?? ''
     const key = name

@@ -15,6 +15,15 @@ To also start the optional Kafka UI and Kibana tools:
 docker compose --env-file .env --profile tools up -d --wait
 ```
 
+## Seed a long backlog (dev only)
+
+To check how the backlog screen handles a long list, add 1 000 issues to the bottom of the demo workspace's
+MAR backlog. Each run adds another 1 000, and they don't reach search, because they bypass the api's events.
+
+```powershell
+Get-Content postgres/seed-big-backlog.sql | docker compose --env-file .env exec -T postgres psql -U trakr -d trakr -v ON_ERROR_STOP=1
+```
+
 ## View Kafka logs
 
 ```powershell

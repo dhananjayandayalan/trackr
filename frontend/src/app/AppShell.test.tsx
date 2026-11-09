@@ -17,8 +17,8 @@ describe('AppShell', () => {
 
   it('inside a project: the sidebar with the project, its current page marked, and a drawer toggle', async () => {
     const { user } = renderApp('/p/MAR')
-    // /p/MAR redirects to the board
-    expect(await screen.findByRole('heading', { name: 'Board' })).toBeInTheDocument()
+    // /p/MAR redirects to the board, which shows the active sprint
+    expect(await screen.findByRole('heading', { name: 'MAR Sprint 1' })).toBeInTheDocument()
     expect(screen.getByText('Marketing site')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Board' })).toHaveAttribute('aria-current', 'page')
 

@@ -1,6 +1,7 @@
 package dev.trakr.api.issue;
 
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
@@ -37,6 +38,7 @@ public record BulkCommand(List<String> keys, Action action, @Nullable UUID statu
     }
 
     /** One issue's outcome: ok with its new version (null after delete), or the error code and message. */
+    @Schema(name = "BulkResult")
     public record Result(String key, boolean ok, @Nullable Long version, @Nullable String code,
             @Nullable String message) {
 

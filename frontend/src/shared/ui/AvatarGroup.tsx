@@ -20,15 +20,18 @@ export function AvatarGroup({
   people,
   max = 3,
   size = 'sm',
+  label,
 }: {
   people: readonly Person[]
   max?: number
   size?: 'sm' | 'md'
+  /** the list's accessible name; default "N people" */
+  label?: string
 }) {
   const shown = people.slice(0, max)
   const rest = people.length - shown.length
   return (
-    <ul className={styles.root} aria-label={`${people.length} people`}>
+    <ul className={styles.root} aria-label={label ?? `${people.length} people`}>
       {shown.map((person) => (
         <li key={person.id} className={styles.item}>
           <Avatar

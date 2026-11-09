@@ -43,9 +43,16 @@ class PresenceTracker {
         hub.onLeave(this::leave);
     }
 
-    void join(UUID projectId, UUID userId) {
+    /**
+     * A new stream: its user is in the set, and the stream learns who is here. When the set didn't change (the
+     * user already had the board open in another tab) nothing is broadcast — but this stream has never been told,
+     * so it gets the current set on its own.
+     */
+    void join(UUID projectId, UUID userId, SseHub.Subscriber subscriber) {
         redis.opsForZSet().add(key(projectId), userId.toString(), expiry());
-        publishIfChanged(projectId);
+        if (!publishIfChanged(projectId)) {
+            subscriber.enqueue(frame(lastSent.getOrDefault(projectId, Set.of(userId.toString()))));
+        }
     }
 
     // the same user may have the board open in two tabs: only the last one leaving takes them off
@@ -64,20 +71,27 @@ class PresenceTracker {
         });
     }
 
-    private void publishIfChanged(UUID projectId) {
+    /** @return whether a presence frame went to the project's streams */
+    private boolean publishIfChanged(UUID projectId) {
         String key = key(projectId);
         // drop entries whose instance stopped refreshing them
         redis.opsForZSet().removeRangeByScore(key, Double.NEGATIVE_INFINITY, clock.millis());
         Set<String> members = new TreeSet<>(redis.opsForZSet().range(key, 0, -1));
         Set<String> previous = lastSent.put(projectId, members);
+        boolean sent = false;
         if (!members.equals(previous) && hub.subscriberCount(projectId) > 0) {
-            // no id: presence is "now", there is nothing to replay after a reconnect
-            hub.broadcast(projectId, new Frame(null, "presence",
-                    json.writeValueAsString(Map.of("userIds", List.copyOf(members)))));
+            hub.broadcast(projectId, frame(members));
+            sent = true;
         }
         if (hub.subscriberCount(projectId) == 0) {
             lastSent.remove(projectId);
         }
+        return sent;
+    }
+
+    // no id: presence is "now", there is nothing to replay after a reconnect
+    private Frame frame(Set<String> members) {
+        return new Frame(null, "presence", json.writeValueAsString(Map.of("userIds", List.copyOf(members))));
     }
 
     private double expiry() {

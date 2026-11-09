@@ -1,0 +1,95 @@
+@layer components {
+  .root {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-4);
+  }
+
+  .search {
+    position: relative;
+    display: inline-flex;
+    inline-size: 14rem;
+
+    & input {
+      inline-size: 100%;
+      padding-inline-start: calc(var(--space-3) + var(--icon-sm) + var(--space-2));
+    }
+  }
+
+  .searchIcon {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: var(--space-3);
+    margin-block: auto;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  /* BLOCK 1: avatars that overlap a little; a pressed one rises and gets a ring */
+  .people {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    & li + li {
+      margin-inline-start: calc(-1 * var(--space-1));
+    }
+  }
+
+  .person {
+    display: inline-flex;
+    padding: 2px;
+    background: none;
+    border: 2px solid transparent;
+    border-radius: var(--radius-round);
+    cursor: pointer;
+    transition: translate var(--dur-lift) var(--ease-out);
+
+    &:hover {
+      translate: 0 -2px;
+    }
+
+    &[aria-pressed='true'] {
+      position: relative;
+      border-color: var(--color-primary);
+      translate: 0 -2px;
+    }
+  }
+
+  /* BLOCK 2: toggle chips */
+  .toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .toggle {
+    block-size: var(--control-sm);
+    padding-inline: var(--space-3);
+    font: var(--text-button-sm);
+    color: var(--text-color);
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--surface-sunken);
+    }
+
+    &[aria-pressed='true'] {
+      background: var(--color-accent);
+      box-shadow: var(--shadow-2);
+    }
+  }
+
+  .group {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-inline-start: auto;
+    font: var(--text-body-sm);
+  }
+}

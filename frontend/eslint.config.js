@@ -58,6 +58,11 @@ export default tseslint.config(
     files: ['**/*.route.tsx', '*.config.{js,ts}'],
     rules: { 'no-restricted-syntax': 'off' },
   },
+  // Playwright tests: a fixture's `use(value)` is Playwright's, not React's use() hook
+  {
+    files: ['e2e/**'],
+    rules: { 'react-hooks/rules-of-hooks': 'off' },
+  },
 
   // BLOCK 7: plain JS (this file) isn't in a tsconfig: lint it without type information, in Node
   {

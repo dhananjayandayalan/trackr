@@ -5,6 +5,9 @@ import { cleanup } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 import { server } from './msw/server.ts'
 
+// jsdom has no layout, so no scrolling: the router's scroll restoration would log "not implemented" each time
+window.scrollTo = () => undefined
+
 // the fake api: a request no handler answers fails the test, so nothing reaches the real network by accident
 beforeAll(() => {
   server.listen({ onUnhandledFrame: 'error' })

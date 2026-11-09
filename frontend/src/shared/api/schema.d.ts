@@ -857,7 +857,7 @@ export interface components {
             assignee?: components["schemas"]["UserRef"] | null;
             reporter: components["schemas"]["UserRef"];
             parent?: components["schemas"]["IssueRef"] | null;
-            sprint?: components["schemas"]["SprintRef"] | null;
+            sprint?: components["schemas"]["IssueSprint"] | null;
             storyPoints?: number | null;
             rank: string;
             labels: string[];
@@ -894,6 +894,12 @@ export interface components {
             statusCategory: string;
             statusName: string;
         };
+        IssueSprint: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            state: string;
+        };
         LinkView: {
             /** Format: uuid */
             id: string;
@@ -901,12 +907,6 @@ export interface components {
             type: "blocks" | "relates" | "duplicates";
             label: string;
             issue: components["schemas"]["IssueRef"];
-        };
-        SprintRef: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            state: string;
         };
         StatusRef: {
             /** Format: uuid */
@@ -986,7 +986,7 @@ export interface components {
             action: "transition" | "assign" | "moveToSprint" | "delete";
             args?: components["schemas"]["BulkArgs"] | null;
         };
-        Result: {
+        BulkResult: {
             key: string;
             ok: boolean;
             /** Format: int64 */
@@ -1146,9 +1146,9 @@ export interface components {
             id: string;
             name: string;
             type: string;
-            columns: components["schemas"]["Column"][];
+            columns: components["schemas"]["ProjectColumn"][];
         };
-        Column: {
+        ProjectColumn: {
             /** Format: uuid */
             id: string;
             name: string;
@@ -1211,16 +1211,58 @@ export interface components {
             /** Format: int64 */
             timeout?: number;
         };
+        BoardCard: {
+            key: string;
+            /** Format: uuid */
+            id: string;
+            summary: string;
+            type: string;
+            priority: string;
+            storyPoints?: number | null;
+            /** Format: uuid */
+            assigneeId?: string | null;
+            /** Format: uuid */
+            epicId?: string | null;
+            flagged: boolean;
+            rank: string;
+            /** Format: uuid */
+            statusId: string;
+            /** Format: int64 */
+            version: number;
+        };
+        BoardColumn: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            statusIds: string[];
+            /** Format: int32 */
+            wipLimit?: number | null;
+            /** Format: int32 */
+            count: number;
+            overLimit: boolean;
+            cards: components["schemas"]["BoardCard"][];
+        };
         BoardRef: {
             /** Format: uuid */
             id: string;
             name: string;
             type: string;
         };
+        BoardSprint: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            goal?: string | null;
+            state: string;
+            /** Format: date */
+            startsOn?: string | null;
+            /** Format: date */
+            endsOn?: string | null;
+        };
         BoardView: {
             board: components["schemas"]["BoardRef"];
-            sprint?: components["schemas"]["SprintRef"] | null;
-            columns: components["schemas"]["Column"][];
+            sprint?: components["schemas"]["BoardSprint"] | null;
+            columns: components["schemas"]["BoardColumn"][];
             epics: {
                 [key: string]: components["schemas"]["EpicTag"];
             };
@@ -1910,7 +1952,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["Result"][];
+                    "*/*": components["schemas"]["BulkResult"][];
                 };
             };
         };

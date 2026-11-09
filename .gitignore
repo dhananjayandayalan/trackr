@@ -32,3 +32,6 @@ test-results/
 infra/.env
 
 .idea/
+
+# BLOCK 5: dev.ps1 logs
+.dev-logs/

@@ -9,11 +9,14 @@ import {
 } from '@tanstack/react-router'
 import { z } from 'zod'
 import { meQuery } from '@/features/auth/queries.ts'
+import { backlogQuery } from '@/features/backlog/queries.ts'
+import { boardQuery } from '@/features/board/queries.ts'
 import { activityQuery, statsQuery, workQuery, workTabs } from '@/features/home/queries.ts'
 import { projectQuery, projectsQuery } from '@/features/projects/queries.ts'
 import { isApiError } from '@/shared/api/errors.ts'
 import { safeNext } from '@/shared/lib/urls.ts'
-import { AppLayout, ComingSoon, ProjectLayout, RootLayout, RouteError } from './layouts.tsx'
+import { AppLayout, ComingSoon, RootLayout, RouteError } from './layouts.tsx'
+import { ProjectShell } from './ProjectShell.tsx'
 
 // BLOCK 1: the root route, with a typed context. Every route's beforeLoad and loader receives it: the query
 // client is how a loader puts data in the cache before the page renders.
@@ -126,13 +129,13 @@ const dashboardsRoute = createRoute({
   component: () => <ComingSoon title="Dashboards" phase={17} />,
 })
 
-// BLOCK 5: project routes — the shell with the project sidebar; the screens arrive in later phases
+// BLOCK 5: project routes — the shell with the project sidebar and the project's live stream
 const projectRoute = createRoute({
   getParentRoute: () => authedRoute,
   path: 'p/$projectKey',
   loader: ({ context: { queryClient }, params }) =>
     queryClient.query({ ...projectQuery(params.projectKey), staleTime: 'static' }),
-  component: ProjectLayout,
+  component: ProjectShell,
 })
 
 const projectIndexRoute = createRoute({
@@ -146,15 +149,42 @@ const projectIndexRoute = createRoute({
 
 // one route each (not a .map over a list): each keeps its own literal path, so its params are typed exactly —
 // a link to /p/$projectKey/board needs projectKey and nothing else
+// The board's filters live in the URL (shareable, survive reload). Only `recent` is sent to the api, so it is
+// the only one in loaderDeps: changing the text filter re-renders, it doesn't reload.
+const boardSearch = z.object({
+  q: z.string().optional().catch(undefined),
+  mine: z.boolean().optional().catch(undefined),
+  bugs: z.boolean().optional().catch(undefined),
+  recent: z.boolean().optional().catch(undefined),
+  assignee: z.array(z.string()).optional().catch(undefined),
+  group: z.enum(['none', 'assignee', 'epic']).optional().catch(undefined),
+})
+export type BoardSearch = z.infer<typeof boardSearch>
+
 const boardRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: 'board',
-  component: () => <ComingSoon title="Board" phase={14} />,
+  validateSearch: boardSearch,
+  loaderDeps: ({ search }) => ({ recent: search.recent ?? false }),
+  loader: ({ context: { queryClient }, params, deps }) =>
+    queryClient.query({ ...boardQuery(params.projectKey, 'active', deps.recent), staleTime: 'static' }),
+  component: lazyRouteComponent(() => import('@/features/board/BoardPage.tsx'), 'BoardPage'),
 })
+
+const backlogSearch = z.object({
+  q: z.string().optional().catch(undefined),
+  type: z.enum(['story', 'bug', 'task']).optional().catch(undefined),
+  epic: z.string().optional().catch(undefined),
+})
+export type BacklogSearch = z.infer<typeof backlogSearch>
+
 const backlogRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: 'backlog',
-  component: () => <ComingSoon title="Backlog" phase={14} />,
+  validateSearch: backlogSearch,
+  loader: ({ context: { queryClient }, params }) =>
+    queryClient.query({ ...backlogQuery(params.projectKey), staleTime: 'static' }),
+  component: lazyRouteComponent(() => import('@/features/backlog/BacklogPage.tsx'), 'BacklogPage'),
 })
 const timelineRoute = createRoute({
   getParentRoute: () => projectRoute,

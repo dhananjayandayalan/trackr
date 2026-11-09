@@ -1,0 +1,48 @@
+@layer components {
+  .page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-inline-size: 0;
+  }
+
+  /* BLOCK 1: the board scroller (08-css-volt §6): columns side by side, at least --column-min wide each,
+     scrolling sideways when they don't fit; snap is "proximity", so it helps without fighting the user */
+  .scroller {
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding-block-end: var(--space-4);
+    /* the cards' lift and shadow need room, or the scroller would clip them */
+    padding-inline: var(--space-1);
+    margin-inline: calc(-1 * var(--space-1));
+  }
+
+  /* BLOCK 2: the grid — one track per column; headers in the first row, then the lanes' cells. Rows size to
+     their content, so one long column doesn't stretch the others' cards. */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--columns), minmax(var(--column-min), 1fr));
+    align-items: start;
+    gap: var(--space-3);
+
+    & > * {
+      scroll-snap-align: start;
+    }
+  }
+
+  .laneTitle {
+    margin-block-start: var(--space-3);
+    padding-block-end: var(--space-1);
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    border-block-end: var(--border-line);
+  }
+
+  .noMatch {
+    padding-block: var(--space-6);
+    font: var(--text-body-sm);
+    text-align: center;
+    color: var(--text-muted);
+  }
+}

@@ -99,7 +99,7 @@ Legend: 🔒 any signed-in user · P:viewer / P:member / P:admin = project role 
 | `PATCH /issues/{key}` P:member                          | merge patch of editable fields, `If-Match`                                                                                                                                                        |
 | `DELETE /issues/{key}` P:member                         | soft delete, `If-Match`                                                                                                                                                                           |
 | `POST /issues/{key}/transition` P:member                | `{toStatusId, expectedVersion}` → `Issue`                                                                                                                                                         |
-| `POST /issues/{key}/move` P:member                      | `{toStatusId?, toSprintId? (null = backlog, absent = unchanged), beforeKey?, afterKey?, expectedVersion}` → `{issue, warnings}`. Server recomputes rank between the neighbours' **current** ranks |
+| `POST /issues/{key}/move` P:member                      | `{toStatusId?, toSprintId? (null = backlog, absent = unchanged), beforeKey?, afterKey?, expectedVersion}` → `{issue, warnings}`. Server recomputes rank between the neighbours' **current** ranks. For `toStatusId`, `beforeKey`, `afterKey`, null = absent |
 | `POST /issues/bulk` P:member                            | `{keys[], action: transition\|assign\|moveToSprint\|delete, args}` → per-key result list                                                                                                          |
 | `GET /issues/{key}/history?cursor`                      | `HistoryItem[]`                                                                                                                                                                                   |
 | `POST /issues/{key}/links` / `DELETE /issue-links/{id}` | `{targetKey, type}`                                                                                                                                                                               |
@@ -170,7 +170,7 @@ data: {"key":"MAR-131","sequence":42,"statusId":"…","sprintId":"…","rank":"a
 
 - `id` = event envelope id. The browser sends it back as `Last-Event-ID` on reconnect; the server replays missed events from a 5-minute Redis stream buffer per project (`XRANGE`), else sends `event: resync` telling the client to refetch.
 - Heartbeat comment line `: ping` every 15 s keeps proxies from closing the connection.
-- Event names (project stream): `issue.created`, `issue.updated`, `issue.moved`, `issue.deleted`, `comment.added`, `sprint.started`, `sprint.completed`, `sprint.updated`, `workflow.changed`, `board.changed`, `presence` (who is viewing the board).
+- Event names (project stream): `issue.created`, `issue.updated`, `issue.moved`, `issue.deleted`, `comment.added`, `sprint.started`, `sprint.completed`, `sprint.updated`, `workflow.changed`, `board.changed`, `presence` (who is viewing the board: sent to everyone when the set changes, and to each new stream when it opens). Also forwarded: `issue.transitioned`, `sprint.created`, `sprint.deleted`, `project.*`, `comment.edited/deleted`; the stream starts with `ready` when there is no `Last-Event-ID`.
 - Event names (me stream): `notification`, `unread-count`.
 - The `data` payload is the event's `data` from 04-events (minus private fields) plus `sequence`.
 

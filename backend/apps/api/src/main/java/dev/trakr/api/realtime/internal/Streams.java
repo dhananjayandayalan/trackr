@@ -34,7 +34,7 @@ public class Streams {
                 ? List.of(new Frame(null, "ready", "{}"))
                 : replay.since(projectId, lastEventId).orElseGet(() -> List.of(new Frame(null, "resync", "{}")));
         subscriber.open(first);
-        presence.join(projectId, userId);
+        presence.join(projectId, userId, subscriber);
         return emitter;
     }
 

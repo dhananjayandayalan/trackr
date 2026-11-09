@@ -1,0 +1,53 @@
+@layer components {
+  .root {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .status {
+    --_dot: var(--gray-400);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font: var(--text-caption);
+    color: var(--text-muted);
+
+    &[data-status='open'] {
+      --_dot: var(--color-accent);
+    }
+
+    &[data-status='reconnecting'] {
+      --_dot: var(--color-yellow);
+    }
+
+    &[data-status='closed'] {
+      --_dot: var(--color-danger);
+    }
+  }
+
+  .dot {
+    inline-size: var(--space-3);
+    block-size: var(--space-3);
+    background: var(--_dot);
+    border: var(--border-thin);
+    border-radius: var(--radius-round);
+  }
+
+  /* reconnecting pulses, so "not live" catches the eye without a banner */
+  .status[data-status='reconnecting'] .dot {
+    animation: pulse 1s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse {
+    to {
+      opacity: 0.3;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .status[data-status='reconnecting'] .dot {
+      animation: none;
+    }
+  }
+}

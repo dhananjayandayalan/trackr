@@ -1,5 +1,6 @@
 package dev.trakr.api.board;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -19,16 +20,19 @@ public record BoardView(BoardRef board, @Nullable SprintRef sprint, List<Column>
     public record BoardRef(UUID id, String name, String type) {
     }
 
+    @Schema(name = "BoardSprint")
     public record SprintRef(UUID id, String name, @Nullable String goal, String state, @Nullable LocalDate startsOn,
             @Nullable LocalDate endsOn) {
     }
 
     /** {@code count} ignores the filters: the WIP limit is about the real column, not what's on screen. */
+    @Schema(name = "BoardColumn")
     public record Column(UUID id, String name, List<UUID> statusIds, @Nullable Integer wipLimit, int count,
             boolean overLimit, List<Card> cards) {
     }
 
     /** Exactly the columns of ix_issue_board, so the card query never touches the table. */
+    @Schema(name = "BoardCard")
     public record Card(String key, UUID id, String summary, String type, String priority,
             @Nullable BigDecimal storyPoints, @Nullable UUID assigneeId, @Nullable UUID epicId, boolean flagged,
             String rank, UUID statusId, long version) {

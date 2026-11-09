@@ -86,6 +86,42 @@ Each list (`SprintSection`) is virtualised with `useVirtualizer` once it has > 5
 - `sse.test.ts` — with a fake `EventSource` class.
 - Playwright (phase 18 runs it in CI, write it now): two browser contexts on the same board; move in A appears in B within 1 s.
 
+## Decisions taken while building it
+
+- **OpenAPI schema names (backend):** springdoc names a schema after the class's simple name and silently keeps one
+  of two clashing classes — `BoardView.Column` and `ProjectDetails.Column` were both `Column`, so the board's
+  generated type had no `cards`. Clashing nested records now carry `@Schema(name = …)` (`BoardColumn`,
+  `BoardCard`, `BoardSprint`, `ProjectColumn`, `IssueSprint`, `BulkResult`, `TqlCompletion`), and
+  `SchemaNamesTest` fails the build on any new clash.
+- **Move request (backend):** `toStatusId`, `beforeKey` and `afterKey` are documented nullable, and generated clients
+  send `null`; the api answered 400 "cannot be cleared". null now means "not given" (only `toSprintId` keeps its
+  null = backlog meaning). `IssueApiIT` sends explicit nulls.
+- **Presence (backend):** `presence` was broadcast only when the set changed, so a second tab — or anyone joining a
+  set that already contained them — never heard who was there. Each new stream now gets the current set
+  (`SseStreamIT.everyNewStreamIsToldWhoIsHere`, which fails without the fix).
+- **No new workflow endpoint:** `GET /projects/{key}` (`ProjectDetails`) already has statuses and transitions; the
+  board uses those for drop targets and the card menu.
+- **Filters run in the browser** over one cached board / backlog — instant, and live updates patch one cache entry.
+  Only the board's `recent` goes to the api (cards carry no `updatedAt`).
+- **Moves read the version at send time:** in the `board-moves` scope the second move's `mutationFn` runs after the
+  first one finished and takes the card's version from the cache then — not the stale one from drag time.
+- **Rollback is per card** (`restoreCard`/`restoreRow`), not the whole snapshot: restoring the snapshot would also
+  undo other moves that finished meanwhile. A later pending move of the same card makes `onSuccess` take only the
+  version; live events for a card with a pending move are skipped (its answer, or its 412, sets it right).
+- **Reconnects:** EventSource retries by itself (and sends `Last-Event-ID`); when it gives up (401/502) `sse.ts`
+  reopens with backoff. A second `ready` means "reconnected with nothing to resume from" → refetch.
+- **Live stream in `ProjectShell`**, not the board: one connection per open project; headers show it through
+  `ProjectLiveContext` (connection dot + who's here).
+- **Virtualised lists:** rows stay in the subgrid flow, with padding standing in for rows not drawn. The padding is
+  on the list *inside* the scroll box — on the scroll box itself, a border-box can't be smaller than its padding,
+  so `max-block-size` stops working and every row renders.
+- **Swimlanes** (group by assignee/epic): a drop can't leave its lane — a move doesn't change assignee or epic.
+- **Seeding 1 000 issues:** `infra/postgres/seed-big-backlog.sql` (dev only; scoped to the demo workspace, whose MAR
+  isn't the only one); see infra/README.
+- **Playwright** runs locally on the installed Chrome (`channel: 'chrome'`); tests restore what they move in a
+  fixture (`restoreLater`) that is torn down before the pages close — a `finally` doesn't run in time on a timeout.
+  The card menu is driven by keyboard, as its users do.
+
 ## Done when
 
 - Dragging feels instant; with DevTools network throttled to "Slow 3G" the card still lands immediately, and an injected 409 snaps it back with a toast.

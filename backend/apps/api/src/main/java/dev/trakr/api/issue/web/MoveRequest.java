@@ -10,7 +10,8 @@ import org.jspecify.annotations.Nullable;
 /**
  * POST /issues/{key}/move, bound to a Map: {@code "toSprintId": null} (to the backlog) and no
  * {@code toSprintId} at all (stay in the sprint) mean different things (03-api §3.4). The record only
- * documents the shape for OpenAPI.
+ * documents the shape for OpenAPI. For the other optional fields null and absent mean the same thing — no
+ * status change, no neighbour — because the document says they are nullable, and generated clients send null.
  */
 record MoveRequest(@Nullable UUID toStatusId, @Nullable UUID toSprintId, @Nullable String beforeKey,
         @Nullable String afterKey, long expectedVersion) {
@@ -22,12 +23,12 @@ record MoveRequest(@Nullable UUID toStatusId, @Nullable UUID toSprintId, @Nullab
         MergePatch p = new MergePatch(body);
         p.rejectUnknown(FIELDS, "is not a move field");
 
-        Value<UUID> toStatusId = p.required("toStatusId", String.class,
+        Value<UUID> toStatusId = p.optional("toStatusId", String.class,
                 value -> p.parse("toStatusId", value, UUID::fromString, "must be a status id"));
         Value<UUID> toSprintId = p.optional("toSprintId", String.class,
                 value -> p.parse("toSprintId", value, UUID::fromString, "must be a sprint id"));
-        Value<String> beforeKey = p.required("beforeKey", String.class, value -> key(p, "beforeKey", value));
-        Value<String> afterKey = p.required("afterKey", String.class, value -> key(p, "afterKey", value));
+        Value<String> beforeKey = p.optional("beforeKey", String.class, value -> key(p, "beforeKey", value));
+        Value<String> afterKey = p.optional("afterKey", String.class, value -> key(p, "afterKey", value));
         Value<Long> version = p.required("expectedVersion", Number.class, value -> {
             p.check("expectedVersion", value.longValue() >= 0 && value.doubleValue() == value.longValue(),
                     "must be the version you last saw");

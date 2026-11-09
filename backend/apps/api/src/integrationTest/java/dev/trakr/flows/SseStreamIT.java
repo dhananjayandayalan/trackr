@@ -153,6 +153,26 @@ class SseStreamIT {
     }
 
     @Test
+    void everyNewStreamIsToldWhoIsHere() throws Exception {
+        UUID userId = signUp();
+        projects.create(userId, new NewProject("Here", "PRS", Template.SCRUM, null, Access.PRIVATE, null, "cyan",
+                List.of()));
+
+        // the first stream changes the set (nobody → this user): a broadcast, which it receives too
+        try (Stream first = open("PRS", null)) {
+            assertThat(JsonPath.<List<String>>read(first.await("presence", Duration.ofSeconds(5)).data(), "$.userIds"))
+                    .containsExactly(userId.toString());
+
+            // a second tab of the same user: the set doesn't change, so nothing is broadcast — but the new
+            // stream must still learn who is here, or it shows nobody until someone else comes or goes
+            try (Stream second = open("PRS", null)) {
+                assertThat(JsonPath.<List<String>>read(second.await("presence", Duration.ofSeconds(5)).data(),
+                        "$.userIds")).containsExactly(userId.toString());
+            }
+        }
+    }
+
+    @Test
     void outsidersCannotOpenAProjectsStream() throws Exception {
         UUID owner = signUp();
         projects.create(owner, new NewProject("Closed", "SSX", Template.SCRUM, null, Access.PRIVATE, null, "cyan",
@@ -168,7 +188,11 @@ class SseStreamIT {
     }
 
     private Stream open(@Nullable String lastEventId) {
-        HttpRequest.Builder request = HttpRequest.newBuilder(uri("/api/v1/projects/SSE/stream"))
+        return open("SSE", lastEventId);
+    }
+
+    private Stream open(String projectKey, @Nullable String lastEventId) {
+        HttpRequest.Builder request = HttpRequest.newBuilder(uri("/api/v1/projects/" + projectKey + "/stream"))
                 .header("Accept", "text/event-stream").GET();
         if (lastEventId != null) {
             request.header("Last-Event-ID", lastEventId);

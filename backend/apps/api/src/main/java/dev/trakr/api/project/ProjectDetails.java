@@ -1,6 +1,7 @@
 package dev.trakr.api.project;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
@@ -23,6 +24,7 @@ public record ProjectDetails(@JsonUnwrapped ProjectView project, List<Status> st
     public record Board(UUID id, String name, String type, List<Column> columns) {
     }
 
+    @Schema(name = "ProjectColumn")
     public record Column(UUID id, String name, int position, List<UUID> statusIds, @Nullable Integer wipLimit) {
     }
 }

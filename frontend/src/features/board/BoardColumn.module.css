@@ -1,0 +1,82 @@
+@layer components {
+  /* BLOCK 1: the head of a column */
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--surface-sunken);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+
+    &[data-over-limit] {
+      background: var(--color-danger-soft);
+      border-color: var(--color-danger);
+    }
+  }
+
+  .name {
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+  }
+
+  .count {
+    font: var(--text-mono-sm);
+    color: var(--text-muted);
+  }
+
+  .header[data-over-limit] .count {
+    color: var(--color-danger-text);
+    font-weight: 700;
+  }
+
+  .limit {
+    color: inherit;
+  }
+
+  /* BLOCK 2: one cell — a lane's part of a column. It is the `column` container the card's container query
+     measures (a narrow column hides the epic tags). */
+  .cell {
+    container: column / inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-block-size: 6rem;
+    margin: 0;
+    padding: var(--space-2);
+    list-style: none;
+    background: color-mix(in oklch, var(--surface-sunken) 60%, transparent);
+    border: var(--border-width) dashed transparent;
+    border-radius: var(--radius-sm);
+    transition:
+      background var(--dur-lift) var(--ease-out),
+      opacity var(--dur-lift) var(--ease-out);
+
+    &[data-over-limit] {
+      background: color-mix(in oklch, var(--color-danger-soft) 50%, transparent);
+    }
+
+    /* BLOCK 3: during a drag — where it can go, where it is, where it can't */
+    &[data-over] {
+      border: var(--border-drop);
+      background: color-mix(in oklch, var(--color-primary) 8%, var(--color-paper));
+    }
+
+    /* the column the card came from: :has() finds the faded original inside it */
+    &:has([data-dragging]) {
+      border: var(--border-drop);
+      border-color: var(--line);
+    }
+
+    &[data-drop-disabled] {
+      opacity: 0.45;
+      background: repeating-linear-gradient(-45deg, var(--surface-sunken) 0 6px, transparent 6px 12px);
+    }
+  }
+
+  .item {
+    display: block;
+  }
+}

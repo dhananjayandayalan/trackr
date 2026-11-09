@@ -1,13 +1,10 @@
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { Link, Outlet, getRouteApi, useRouter, type ErrorComponentProps } from '@tanstack/react-router'
+import { Link, Outlet, useRouter, type ErrorComponentProps } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
-import { projectQuery } from '@/features/projects/queries.ts'
 import { isApiError, messageOf } from '@/shared/api/errors.ts'
 import { Button } from '@/shared/ui/Button.tsx'
 import { EmptyState } from '@/shared/ui/EmptyState.tsx'
 import { Toaster } from '@/shared/ui/Toast.tsx'
 import { AppShell } from './AppShell.tsx'
-import { Sidebar } from './Sidebar.tsx'
 import styles from './layouts.module.css'
 
 // dev-only tools: in a build import.meta.env.DEV is false, so the import (and the devtools) disappear
@@ -33,19 +30,6 @@ export function RootLayout() {
 export function AppLayout() {
   return (
     <AppShell>
-      <Outlet />
-    </AppShell>
-  )
-}
-
-const projectRoute = getRouteApi('/_authed/p/$projectKey')
-
-/** /p/$projectKey/…: the shell with the project's sidebar. The route's loader already cached the project. */
-export function ProjectLayout() {
-  const { projectKey } = projectRoute.useParams()
-  const { data: project } = useSuspenseQuery(projectQuery(projectKey))
-  return (
-    <AppShell sidebar={<Sidebar project={project} />}>
       <Outlet />
     </AppShell>
   )
