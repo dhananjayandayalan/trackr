@@ -1,0 +1,64 @@
+@layer components {
+  .root {
+    container: home / inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    max-inline-size: var(--content-max);
+  }
+
+  .header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .eyebrow {
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* work list beside a narrower column of projects and activity; stacked when the page is narrow */
+  .columns {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-8);
+  }
+
+  .side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  @container home (inline-size < 56rem) {
+    .columns {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* shared by the home sections */
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .sectionTitle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+
+    & a {
+      font: var(--text-body-sm);
+      letter-spacing: 0;
+      text-transform: none;
+    }
+  }
+}

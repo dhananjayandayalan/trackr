@@ -67,12 +67,13 @@
     border-radius: var(--radius-sm);
   }
 
-  /* a fixed-size window onto the shell: it adapts to this box, not to the browser window */
-  .narrow {
-    inline-size: min(100%, 40rem);
-    block-size: 36rem;
-    overflow: auto;
-    background: var(--color-canvas);
-    border: var(--border-strong);
+  .fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--space-4);
+  }
+
+  .progress {
+    inline-size: 8rem;
   }
 }

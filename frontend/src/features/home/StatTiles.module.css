@@ -1,0 +1,48 @@
+@layer components {
+  /* as many tiles per row as fit at 14rem each: 4 on a wide page, 2 × 2 on a narrow one, no media query */
+  .root {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: var(--space-4);
+  }
+
+  .tile {
+    --_stripe: var(--status-progress);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-block-start: var(--space-2) solid var(--_stripe);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-3);
+
+    &[data-tone='pink'] {
+      --_stripe: var(--color-pink);
+    }
+
+    &[data-tone='review'] {
+      --_stripe: var(--status-review);
+    }
+
+    &[data-tone='accent'] {
+      --_stripe: var(--color-accent);
+    }
+  }
+
+  .label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .value {
+    font: var(--text-display);
+    letter-spacing: var(--track-display);
+  }
+}

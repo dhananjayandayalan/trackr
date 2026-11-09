@@ -88,6 +88,31 @@ Build them from the canvas artboards 02–04. For each screen:
 - `HomePage.test.tsx`: tab switch updates the URL and data.
 - `CreateProjectPage.test.tsx`: template selection, key suggestion, 409 `PROJECT_KEY_TAKEN` shows on the key field.
 
+## Decisions taken while building it
+
+- **Backend, OpenAPI nullability:** springdoc marked no field required, so every generated TS field was optional.
+  `shared/config/NullabilityModelConverter` applies 03-api §5: a record component is required unless JSpecify
+  `@Nullable`, which makes it nullable (`type: [T, "null"]`, or `oneOf: [$ref, null]`).
+- **Backend, `ProjectSummary`** now carries `lead {id, displayName, initials, avatarColor}` (instead of `leadId`),
+  `openIssues`, `progressPct` (done / all live issues), `activeSprint` and `lastVisitedAt` (Home's "recent
+  projects" sorts the same cached list — no extra endpoint).
+- **Packages:** `@tanstack/react-router-devtools` (the old `router-devtools` name is retired); msw 3
+  (`msw/http`, `msw/node`, `onUnhandledFrame: 'error'`, `delay` from `msw`).
+- **Client:** `createClient({ fetch: (r) => globalThis.fetch(r) })` — openapi-fetch otherwise captures `fetch` at
+  import time and MSW (or any later wrapper) is bypassed. The 401 redirect skips `/api/v1/auth/*` (a wrong
+  password is a 401) and `/api/v1/me` (the auth gate handles it). Logout is Spring Security's filter, not in the
+  OpenAPI document: `postOutsideSchema()`.
+- **Loaders** use `queryClient.query({ ...options, staleTime: 'static' })` — TanStack Query 5.10x deprecates
+  `ensureQueryData` for it (same meaning: cached data is good enough to render; components refresh stale data).
+- **`/login` asks `/me` in `beforeLoad`:** a signed-in user is sent on to `next`, and a signed-out one receives the
+  XSRF-TOKEN cookie with the 401 before the sign-in POST needs it. `next` must be a same-site path (`safeNext`).
+- **Form actions never `await` navigation:** React 19 keeps every form pending until all in-flight actions
+  settle, so an action that awaits a navigation that never resolves freezes every other form.
+- **Lead picker:** there is no workspace-members endpoint yet; the creator is the lead (shown read-only).
+- **Create** in the top nav shows a toast until the Create Issue dialog (phase 15). `/issues`, `/dashboards` and the
+  project screens are placeholders with their routes, loaders and sidebar in place.
+- Devtools are excluded from tests (`import.meta.env.MODE !== 'test'`) as well as from builds.
+
 ## Done when
 
 - Fresh browser → `/` redirects to `/login` → sign up → land on Home with real data (from the dev seed).

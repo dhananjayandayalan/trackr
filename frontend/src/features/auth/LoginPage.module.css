@@ -1,0 +1,160 @@
+@layer components {
+  /* two halves: the brand on ink, the form on canvas; one column on a narrow screen */
+  .root {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    min-block-size: 100dvh;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-8);
+    padding: var(--space-10);
+    color: var(--text-on-dark);
+    background: var(--surface-dark);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font: var(--text-h2);
+    letter-spacing: var(--track-h2);
+  }
+
+  .mark {
+    display: inline-grid;
+    place-items: center;
+    inline-size: var(--control-md);
+    block-size: var(--control-md);
+    color: var(--color-ink);
+    background: var(--color-accent);
+    border: var(--border-width) solid var(--color-paper);
+    border-radius: var(--radius-sm);
+  }
+
+  .slogan {
+    font: var(--text-display-xl);
+    letter-spacing: var(--track-display-xl);
+    text-wrap: balance;
+  }
+
+  .highlight {
+    color: var(--color-accent);
+  }
+
+  .tagline {
+    font: var(--text-body-lg);
+    color: var(--text-on-dark-muted);
+  }
+
+  .panel {
+    display: grid;
+    place-items: center;
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    inline-size: min(100%, 26rem);
+    padding: var(--space-8);
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-6);
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .check {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font: var(--text-body-sm);
+
+    & input {
+      inline-size: var(--icon-sm);
+      block-size: var(--icon-sm);
+      accent-color: var(--color-primary);
+    }
+  }
+
+  .submit {
+    inline-size: 100%;
+  }
+
+  .alert {
+    padding: var(--space-3);
+    font: var(--text-body-sm);
+    color: var(--color-danger-text);
+    background: var(--color-danger-soft);
+    border: var(--border-width) solid var(--color-danger);
+    border-radius: var(--radius-sm);
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+
+    &::before,
+    &::after {
+      content: '';
+      flex: 1;
+      border-block-start: var(--border-line);
+    }
+  }
+
+  .oauth {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .oauthLink {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    block-size: var(--control-md);
+    font: var(--text-button);
+    color: var(--color-ink);
+    text-decoration: none;
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-2);
+
+    &:hover {
+      color: var(--color-ink);
+      background: var(--surface-sunken);
+    }
+  }
+
+  /* the whole viewport is this page's space, so a media query (not a container query) is the right tool */
+  @media (width < 56rem) {
+    .root {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .brand {
+      padding: var(--space-6);
+    }
+
+    .slogan {
+      font: var(--text-h1);
+      letter-spacing: var(--track-h1);
+    }
+  }
+}

@@ -1,0 +1,30 @@
+@layer components {
+  .root {
+    display: flex;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* each avatar overlaps the previous one by a quarter */
+  .item + .item,
+  .item + .more {
+    margin-inline-start: calc(-1 * var(--space-2));
+  }
+
+  .more {
+    display: grid;
+    place-items: center;
+    min-inline-size: var(--control-xs);
+    block-size: var(--control-xs);
+    padding-inline: var(--space-1);
+    font: var(--text-mono-sm);
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+
+    &[data-size='md'] {
+      min-inline-size: var(--control-sm);
+      block-size: var(--control-sm);
+    }
+  }
+}

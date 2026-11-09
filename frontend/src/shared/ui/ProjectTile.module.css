@@ -1,0 +1,42 @@
+@layer components {
+  .root {
+    --_bg: var(--avatar-violet);
+    --_size: var(--control-md);
+    display: grid;
+    place-items: center;
+    flex: none;
+    inline-size: var(--_size);
+    block-size: var(--_size);
+    font: var(--text-mono-sm);
+    color: var(--color-ink);
+    background: var(--_bg);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+
+    &[data-size='sm'] {
+      --_size: var(--control-sm);
+    }
+
+    &[data-size='lg'] {
+      --_size: var(--control-lg);
+      font: var(--text-mono);
+      box-shadow: var(--shadow-2);
+    }
+
+    &[data-color='pink'] {
+      --_bg: var(--avatar-pink);
+    }
+    &[data-color='cyan'] {
+      --_bg: var(--avatar-cyan);
+    }
+    &[data-color='lime'] {
+      --_bg: var(--avatar-lime);
+    }
+    &[data-color='yellow'] {
+      --_bg: var(--avatar-yellow);
+    }
+    &[data-color='orange'] {
+      --_bg: var(--avatar-orange);
+    }
+  }
+}

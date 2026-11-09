@@ -1,0 +1,46 @@
+/* Shared by TextInput, Textarea and Select: one look for every text control. */
+@layer components {
+  .control {
+    inline-size: 100%;
+    block-size: var(--control-md);
+    padding-inline: var(--space-3);
+    font: var(--text-body);
+    color: var(--text-color);
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-2);
+
+    &::placeholder {
+      color: var(--gray-500);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 2px;
+    }
+
+    /* invalid: set by Field from a server error (aria-invalid), or by the browser's own checks once the
+       user has interacted (:user-invalid — unlike :invalid, an untouched empty required field isn't red) */
+    &[aria-invalid='true'],
+    &:user-invalid {
+      background: var(--color-danger-soft);
+      border-color: var(--color-danger);
+    }
+
+    &:disabled,
+    &[readonly] {
+      color: var(--text-muted);
+      background: var(--surface-sunken);
+      box-shadow: none;
+    }
+  }
+
+  .area {
+    block-size: auto;
+    min-block-size: calc(var(--control-md) * 2);
+    padding-block: var(--space-2);
+    resize: vertical;
+    field-sizing: content;
+  }
+}

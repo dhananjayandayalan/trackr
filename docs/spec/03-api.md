@@ -67,7 +67,7 @@ Legend: 🔒 any signed-in user · P:viewer / P:member / P:admin = project role 
 
 | Method & path                                     | Notes                                                                                                                                           |
 | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /projects?q&template&leadId&starred` 🔒      | `ProjectSummary[]` (only visible ones) incl. `openIssues`, `activeSprint`, `progressPct`, `starred`                                             |
+| `GET /projects?q&template&leadId&starred` 🔒      | `ProjectSummary[]` (only visible ones) incl. `lead`, `openIssues`, `activeSprint`, `progressPct`, `starred`, `lastVisitedAt`                                           |
 | `POST /projects` 🔒                               | `{name,key,template,leadId,access,description,color,invite:[email]}` → 201 `Project`; seeds workflow+board per template in the same transaction |
 | `GET /projects/{key}` P:viewer                    | `Project` incl. `statuses[]`, `transitions[]`, `board`, `members[]`, `myRole`                                                                   |
 | `PATCH /projects/{key}` P:admin                   | name, description, leadId, access, color                                                                                                        |

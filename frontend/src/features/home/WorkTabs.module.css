@@ -1,0 +1,67 @@
+@layer components {
+  .list {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-3);
+  }
+
+  /* one row per issue: a grid so the columns line up from row to row */
+  .row {
+    display: grid;
+    grid-template-columns: auto 5.5rem minmax(0, 1fr) auto auto 6.5rem;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    color: var(--text-color);
+    text-decoration: none;
+
+    li + li & {
+      border-block-start: var(--border-line);
+    }
+
+    &:hover {
+      color: var(--text-color);
+      background: color-mix(in oklch, var(--color-primary) 6%, var(--color-paper));
+    }
+
+    &:focus-visible {
+      outline-offset: -3px;
+    }
+  }
+
+  .key {
+    font: var(--text-mono);
+    color: var(--text-muted);
+  }
+
+  .summary {
+    overflow: hidden;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .time {
+    font: var(--text-caption);
+    color: var(--text-muted);
+    text-align: end;
+  }
+
+  .more {
+    align-self: center;
+  }
+
+  /* narrow: the time column goes first, the summary keeps the space */
+  @container home (inline-size < 40rem) {
+    .row {
+      grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+    }
+
+    .time {
+      display: none;
+    }
+  }
+}

@@ -29,9 +29,26 @@
     block-size: var(--control-md);
     font: var(--text-mono);
     color: var(--color-ink);
-    background: var(--color-pink);
+    background: var(--_tile, var(--avatar-violet));
     border: var(--border-width) solid var(--color-paper);
     border-radius: var(--radius-sm);
+
+    /* the project's colour (one of the avatar palette, ck_project_color) */
+    &[data-color='pink'] {
+      --_tile: var(--avatar-pink);
+    }
+    &[data-color='cyan'] {
+      --_tile: var(--avatar-cyan);
+    }
+    &[data-color='lime'] {
+      --_tile: var(--avatar-lime);
+    }
+    &[data-color='yellow'] {
+      --_tile: var(--avatar-yellow);
+    }
+    &[data-color='orange'] {
+      --_tile: var(--avatar-orange);
+    }
   }
 
   .projectText {

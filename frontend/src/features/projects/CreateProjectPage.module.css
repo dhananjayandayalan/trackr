@@ -1,0 +1,84 @@
+@layer components {
+  .root {
+    container: create / inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    max-inline-size: 48rem;
+  }
+
+  .header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .crumbs {
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    padding: var(--space-6);
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-4);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-4);
+  }
+
+  .key {
+    font: var(--text-mono);
+    letter-spacing: 0.1em;
+  }
+
+  .lead {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .leadLabel {
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+  }
+
+  .leadValue {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    block-size: var(--control-md);
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .alert {
+    padding: var(--space-3);
+    color: var(--color-danger-text);
+    background: var(--color-danger-soft);
+    border: var(--border-width) solid var(--color-danger);
+    border-radius: var(--radius-sm);
+  }
+
+  @container create (inline-size < 36rem) {
+    .row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}

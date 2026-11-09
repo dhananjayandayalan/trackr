@@ -126,33 +126,67 @@
     gap: var(--space-1);
   }
 
-  .bell {
-    position: relative;
-  }
-
-  .badge {
-    position: absolute;
-    inset-block-start: calc(var(--space-1) * -0.5);
-    inset-inline-end: calc(var(--space-1) * -0.5);
-    display: grid;
-    place-items: center;
-    min-inline-size: var(--space-5);
-    block-size: var(--space-5);
-    padding-inline: var(--space-1);
-    font: var(--text-mono-sm);
-    color: var(--color-ink);
-    background: var(--color-pink);
-    border: var(--border-strong);
-    border-radius: var(--radius-sm);
-    pointer-events: none;
-  }
-
   .profile {
     padding: 0;
     margin-inline-start: var(--space-2);
     background: none;
     border: 0;
     border-radius: var(--radius-sm);
+    anchor-name: --profile-button;
+  }
+
+  /* the account menu: a popover in the top layer. Anchor positioning ties it to the avatar's corner;
+     browsers without it place it under the nav at the inline end (the fixed inset below) */
+  .menu {
+    inset: var(--topnav-h) var(--space-4) auto auto;
+    display: none;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-inline-size: 14rem;
+    margin: 0;
+    padding: var(--space-4);
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-4);
+    opacity: 1;
+    translate: 0 0;
+    transition:
+      opacity var(--dur-lift) var(--ease-out),
+      translate var(--dur-lift) var(--ease-out),
+      display var(--dur-lift) allow-discrete,
+      overlay var(--dur-lift) allow-discrete;
+
+    &:popover-open {
+      display: flex;
+
+      @starting-style {
+        opacity: 0;
+        translate: 0 calc(-1 * var(--space-1));
+      }
+    }
+
+    @supports (anchor-name: --a) {
+      position-anchor: --profile-button;
+      inset: auto;
+      position-area: block-end span-inline-start;
+      margin-block-start: var(--space-2);
+      position-try-fallbacks: flip-block;
+    }
+  }
+
+  .menuName {
+    font: var(--text-body);
+    font-weight: 800;
+  }
+
+  .menuEmail {
+    font: var(--text-caption);
+    color: var(--text-muted);
+  }
+
+  .menuAction {
+    margin-block-start: var(--space-3);
   }
 
   /* BLOCK 6: narrow — the text links and the Create label give way first, then the search box shrinks */

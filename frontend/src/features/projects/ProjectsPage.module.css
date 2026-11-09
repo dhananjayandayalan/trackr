@@ -1,0 +1,104 @@
+@layer components {
+  .root {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    max-inline-size: var(--content-max);
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .search {
+    inline-size: min(100%, 22rem);
+  }
+
+  .filter {
+    inline-size: 12rem;
+  }
+
+  /* as many 18rem cards per row as fit */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+    gap: var(--space-5);
+  }
+
+  .newCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    block-size: 100%;
+    min-block-size: 12rem;
+    font: var(--text-button);
+    color: var(--text-muted);
+    text-decoration: none;
+    border: var(--border-drop);
+    border-color: var(--line);
+    border-radius: var(--radius-sm);
+
+    &:hover {
+      color: var(--color-primary);
+      border-color: var(--color-primary);
+      background: color-mix(in oklch, var(--color-primary) 6%, transparent);
+    }
+  }
+
+  .table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    background: var(--color-paper);
+    border: var(--border-strong);
+    box-shadow: var(--shadow-3);
+
+    & th {
+      padding: var(--space-3);
+      font: var(--text-label);
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      text-align: start;
+      border-block-end: var(--border-strong);
+    }
+
+    & td {
+      padding: var(--space-2) var(--space-3);
+      border-block-end: var(--border-line);
+    }
+  }
+
+  .tableProject {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 700;
+    color: var(--text-color);
+    text-decoration: none;
+  }
+
+  .lead {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .number {
+    font: var(--text-mono);
+  }
+
+  .progressCell {
+    inline-size: 8rem;
+  }
+}

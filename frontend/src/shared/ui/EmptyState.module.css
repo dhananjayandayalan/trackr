@@ -1,0 +1,33 @@
+@layer components {
+  .root {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-8) var(--space-4);
+    text-align: center;
+    border: var(--border-drop);
+    border-color: var(--line);
+    border-radius: var(--radius-sm);
+  }
+
+  .icon {
+    display: grid;
+    place-items: center;
+    inline-size: var(--control-lg);
+    block-size: var(--control-lg);
+    background: var(--color-accent);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-3);
+  }
+
+  .title {
+    font: var(--text-h3);
+  }
+
+  .text {
+    max-inline-size: 32rem;
+    color: var(--text-muted);
+  }
+}

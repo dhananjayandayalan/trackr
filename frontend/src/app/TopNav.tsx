@@ -1,44 +1,65 @@
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useId } from 'react'
+import { useLogout } from '@/features/auth/mutations.ts'
+import { meQuery } from '@/features/auth/queries.ts'
 import { Avatar } from '@/shared/ui/Avatar.tsx'
+import { avatarColor } from '@/shared/ui/AvatarGroup.tsx'
 import { Button } from '@/shared/ui/Button.tsx'
 import { Icon } from '@/shared/ui/Icon.tsx'
 import { Kbd } from '@/shared/ui/Kbd.tsx'
+import { showToast } from '@/shared/ui/Toast.tsx'
 import styles from './TopNav.module.css'
-
-// static until phase 13 brings the router and the signed-in user
-const links = [
-  { href: '/', label: 'Your work', current: true },
-  { href: '/projects', label: 'Projects', current: false },
-  { href: '/issues', label: 'Issues', current: false },
-  { href: '/reports', label: 'Dashboards', current: false },
-]
-const unread = 3
 
 /** 00-product §3.13: Your work, Projects, Issues, Dashboards, Create, search, notifications, help, settings, profile. */
 export function TopNav() {
-  // a generated id: two shells on one page (the UI gallery) must not share an id
+  // the auth gate cached /me before any of this renders, so this never suspends
+  const { data: me } = useSuspenseQuery(meQuery())
   const searchId = useId()
+  const menuId = useId()
+  const logout = useLogout()
+  const navigate = useNavigate()
+
   return (
     <header className={styles.root}>
-      {/* BLOCK 1: logo and main navigation; aria-current marks where you are, for screen readers and CSS */}
-      <a className={styles.logo} href="/">
+      {/* BLOCK 1: logo and main navigation. <Link> renders a real <a href>, adds aria-current="page" when
+          its route is active, and (defaultPreload: 'intent') starts the route's loader on hover or focus */}
+      <Link className={styles.logo} to="/">
         <span className={styles.mark} aria-hidden="true">
           T
         </span>
         TRAKR
-      </a>
+      </Link>
       <nav aria-label="Main" className={styles.nav}>
         <ul role="list" className={styles.links}>
-          {links.map((link) => (
-            <li key={link.href}>
-              <a className={styles.link} href={link.href} aria-current={link.current ? 'page' : undefined}>
-                {link.label}
-              </a>
-            </li>
-          ))}
+          <li>
+            <Link className={styles.link} to="/" activeOptions={{ exact: true, includeSearch: false }}>
+              Your work
+            </Link>
+          </li>
+          <li>
+            <Link className={styles.link} to="/projects">
+              Projects
+            </Link>
+          </li>
+          <li>
+            <Link className={styles.link} to="/issues">
+              Issues
+            </Link>
+          </li>
+          <li>
+            <Link className={styles.link} to="/dashboards">
+              Dashboards
+            </Link>
+          </li>
         </ul>
       </nav>
-      <Button variant="primary" icon="plus" className={styles.create}>
+      <Button
+        variant="primary"
+        icon="plus"
+        className={styles.create}
+        onClick={() => showToast('Creating issues arrives in phase 15.')}
+      >
         Create
       </Button>
 
@@ -52,19 +73,37 @@ export function TopNav() {
         <Kbd aria-label="Shortcut: slash">/</Kbd>
       </form>
 
-      {/* BLOCK 3: icon buttons — each has a spoken name; the count is part of the bell's name */}
+      {/* BLOCK 3: icon buttons, then the profile menu. popoverTarget wires the button to the popover with no
+          JavaScript of ours: click toggles it, Esc and a click outside close it (popover="auto"). */}
       <div className={styles.actions}>
-        <span className={styles.bell}>
-          <Button variant="ghost" icon="bell" aria-label={`Notifications, ${unread} unread`} />
-          <span className={styles.badge} aria-hidden="true">
-            {unread}
-          </span>
-        </span>
+        <Button variant="ghost" icon="bell" aria-label="Notifications" />
         <Button variant="ghost" icon="help" aria-label="Help" />
-        <Button variant="ghost" icon="settings" aria-label="Settings" />
-        <button type="button" className={styles.profile} aria-label="Your profile: Ada Lovelace">
-          <Avatar name="Ada Lovelace" initials="AL" color="violet" />
+        <button
+          type="button"
+          className={styles.profile}
+          popoverTarget={menuId}
+          aria-label={`Account: ${me.displayName}`}
+        >
+          <Avatar name={me.displayName} initials={me.initials} color={avatarColor(me.avatarColor)} />
         </button>
+        <div id={menuId} popover="auto" className={styles.menu}>
+          <p className={styles.menuName}>{me.displayName}</p>
+          <p className={styles.menuEmail}>{me.email}</p>
+          {me.workspace && <p className={styles.menuEmail}>{me.workspace.name}</p>}
+          <Button
+            icon="logout"
+            size="sm"
+            className={styles.menuAction}
+            disabled={logout.isPending}
+            onClick={() => {
+              logout.mutate(undefined, {
+                onSettled: () => void navigate({ to: '/login' }),
+              })
+            }}
+          >
+            Sign out
+          </Button>
+        </div>
       </div>
     </header>
   )

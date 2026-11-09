@@ -1,0 +1,50 @@
+@layer components {
+  .root {
+    display: inline-flex;
+    /* as wide as its options, also inside a flex column (which would otherwise stretch it) */
+    inline-size: fit-content;
+    padding: 0;
+    margin: 0;
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-2);
+    background: var(--color-paper);
+  }
+
+  .option {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    block-size: calc(var(--control-md) - 2 * var(--border-width));
+    padding-inline: var(--space-3);
+    font: var(--text-button);
+    cursor: pointer;
+    user-select: none;
+
+    & + & {
+      border-inline-start: var(--border-strong);
+    }
+
+    &:hover {
+      background: var(--surface-sunken);
+    }
+
+    /* :has() — the label styles itself from the state of the radio inside it */
+    &:has(:checked) {
+      background: var(--color-accent);
+    }
+
+    &:has(:focus-visible) {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 2px;
+      position: relative;
+    }
+  }
+
+  /* the radio itself is invisible but still focusable and clickable through its label */
+  .input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+}

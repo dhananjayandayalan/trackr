@@ -3,9 +3,12 @@ package dev.trakr.api.project.internal;
 import static dev.trakr.jooq.Tables.APP_USER;
 import static dev.trakr.jooq.Tables.BOARD;
 import static dev.trakr.jooq.Tables.BOARD_COLUMN;
+import static dev.trakr.jooq.Tables.ISSUE;
 import static dev.trakr.jooq.Tables.PROJECT;
 import static dev.trakr.jooq.Tables.PROJECT_MEMBER;
 import static dev.trakr.jooq.Tables.PROJECT_STAR;
+import static dev.trakr.jooq.Tables.PROJECT_VISIT;
+import static dev.trakr.jooq.Tables.SPRINT;
 import static dev.trakr.jooq.Tables.WORKFLOW_STATUS;
 import static dev.trakr.jooq.Tables.WORKFLOW_TRANSITION;
 
@@ -16,6 +19,7 @@ import dev.trakr.api.project.ProjectFilter;
 import dev.trakr.api.project.ProjectRole;
 import dev.trakr.api.project.ProjectSummary;
 import dev.trakr.api.project.Template;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -68,15 +72,41 @@ public class ProjectQueries {
             conditions.add(starred.isTrue());
         }
 
-        // BLOCK 4: one query, mapped by position onto the record's constructor
-        return dsl.select(PROJECT.ID, PROJECT.KEY, PROJECT.NAME,
-                        PROJECT.TEMPLATE.convertFrom(Template::fromValue),
-                        PROJECT.ACCESS.convertFrom(Access::fromValue),
-                        PROJECT.COLOR, PROJECT.LEAD_ID, starred)
+        // BLOCK 4: the card's numbers. Issue counts in one grouped derived table (one pass over the project's
+        // issues, using count(*) FILTER), the sprint and the visit as correlated subqueries: at most one row each.
+        var counts = DSL.select(ISSUE.PROJECT_ID,
+                        DSL.count().filterWhere(ISSUE.STATUS_CATEGORY.ne("done")).as("open_issues"),
+                        DSL.count().filterWhere(ISSUE.STATUS_CATEGORY.eq("done")).as("done_issues"),
+                        DSL.count().as("all_issues"))
+                .from(ISSUE)
+                .where(ISSUE.DELETED_AT.isNull())
+                .groupBy(ISSUE.PROJECT_ID)
+                .asTable("counts");
+        Field<Integer> open = DSL.coalesce(counts.field("open_issues", Integer.class), 0);
+        Field<Integer> done = DSL.coalesce(counts.field("done_issues", Integer.class), 0);
+        Field<Integer> all = counts.field("all_issues", Integer.class);
+        // integer percent; NULLIF turns "no issues" into NULL instead of a division by zero, coalesce makes it 0
+        Field<Integer> progress = DSL.coalesce(
+                DSL.field("({0} * 100 / NULLIF({1}, 0))", Integer.class, done, all), 0);
+        Field<String> activeSprint = DSL.field(DSL.select(SPRINT.NAME).from(SPRINT)
+                .where(SPRINT.PROJECT_ID.eq(PROJECT.ID), SPRINT.STATE.eq("active")).limit(1));
+        Field<OffsetDateTime> visited = DSL.field(DSL.select(PROJECT_VISIT.VISITED_AT).from(PROJECT_VISIT)
+                .where(PROJECT_VISIT.PROJECT_ID.eq(PROJECT.ID), PROJECT_VISIT.USER_ID.eq(userId)));
+
+        // BLOCK 5: one query, each row mapped onto the record
+        return dsl.select(PROJECT.ID, PROJECT.KEY, PROJECT.NAME, PROJECT.TEMPLATE, PROJECT.ACCESS, PROJECT.COLOR,
+                        APP_USER.ID, APP_USER.DISPLAY_NAME, APP_USER.INITIALS, APP_USER.AVATAR_COLOR, starred, open,
+                        progress, activeSprint, visited)
                 .from(PROJECT)
+                .join(APP_USER).on(APP_USER.ID.eq(PROJECT.LEAD_ID))
+                .leftJoin(counts).on(counts.field(ISSUE.PROJECT_ID).eq(PROJECT.ID))
                 .where(DSL.and(conditions))
                 .orderBy(PROJECT.NAME)
-                .fetch(Records.mapping(ProjectSummary::new));
+                .fetch(r -> new ProjectSummary(r.value1(), r.value2(), r.value3(), Template.fromValue(r.value4()),
+                        Access.fromValue(r.value5()), r.value6(),
+                        new ProjectSummary.Lead(r.value7(), r.value8(), r.value9(), r.value10()), r.value11(),
+                        r.value12(), r.value13(), r.value14(),
+                        r.value15() == null ? null : r.value15().toInstant()));
     }
 
     public List<ProjectDetails.Status> statusesOf(UUID projectId) {

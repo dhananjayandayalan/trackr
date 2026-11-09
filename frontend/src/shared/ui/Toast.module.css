@@ -1,0 +1,55 @@
+@layer components {
+  /* the popover's own UA styles centre it with a border; reset to a corner stack */
+  .region {
+    inset: auto var(--space-4) var(--space-4) auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    inline-size: min(24rem, calc(100vw - var(--space-8)));
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    background: none;
+    border: 0;
+
+    &:not(:popover-open) {
+      display: none;
+    }
+  }
+
+  /* enter animation: @starting-style gives the values to transition FROM when the element first renders */
+  .toast {
+    --_bg: var(--color-paper);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+    color: var(--color-ink);
+    background: var(--_bg);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-4);
+    transition:
+      opacity var(--dur-lift) var(--ease-out),
+      translate var(--dur-lift) var(--ease-out);
+
+    @starting-style {
+      opacity: 0;
+      translate: 0 var(--space-2);
+    }
+
+    &[data-tone='success'] {
+      --_bg: var(--color-accent);
+    }
+
+    &[data-tone='error'] {
+      --_bg: var(--color-danger-soft);
+      border-color: var(--color-danger);
+    }
+  }
+
+  .text {
+    flex: 1;
+    font: var(--text-body);
+  }
+}

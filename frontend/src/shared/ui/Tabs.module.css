@@ -1,0 +1,55 @@
+@layer components {
+  .root {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    border-block-end: var(--border-strong);
+  }
+
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    block-size: var(--control-md);
+    padding-inline: var(--space-4);
+    margin-block-end: calc(-1 * var(--border-width));
+    font: var(--text-button);
+    white-space: nowrap;
+    color: var(--text-muted);
+    background: none;
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+
+    &:hover {
+      color: var(--text-color);
+      background: var(--surface-sunken);
+    }
+
+    /* the selected tab joins the panel: ink border on three sides, lime fill */
+    &[aria-selected='true'] {
+      color: var(--color-ink);
+      background: var(--color-accent);
+      border-color: var(--color-ink);
+    }
+  }
+
+  .count {
+    min-inline-size: var(--space-5);
+    padding-inline: var(--space-1);
+    font: var(--text-mono-sm);
+    text-align: center;
+    background: var(--color-paper);
+    border: var(--border-thin);
+    border-radius: var(--radius-sm);
+  }
+
+  .panel:focus-visible {
+    outline-offset: var(--space-1);
+  }
+}

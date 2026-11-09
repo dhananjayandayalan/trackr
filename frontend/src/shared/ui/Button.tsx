@@ -5,6 +5,12 @@ import styles from './Button.module.css'
 
 // BLOCK 1: props — every native <button> prop (onClick, disabled, aria-*, and in React 19 `ref` too: refs
 // are ordinary props now, no forwardRef), plus the VOLT ones
+/**
+ * For a link that should look like a button (navigation is a link, not a button): put this class and
+ * data-variant/data-size on a <Link>/<a>.
+ */
+export const buttonClass = styles.root
+
 export type ButtonProps = ComponentPropsWithRef<'button'> & {
   variant?: 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger'
   size?: 'sm' | 'md' | 'lg'

@@ -1,0 +1,21 @@
+@layer components {
+  .root {
+    position: relative;
+    display: block;
+  }
+
+  /* appearance: none drops the platform arrow; ours sits on top and lets clicks through */
+  .select {
+    appearance: none;
+    padding-inline-end: var(--space-8);
+    cursor: pointer;
+  }
+
+  .arrow {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-end: var(--space-3);
+    translate: 0 -50%;
+    pointer-events: none;
+  }
+}

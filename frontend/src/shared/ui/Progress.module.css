@@ -1,0 +1,17 @@
+@layer components {
+  .root {
+    block-size: var(--space-2);
+    background: var(--surface-sunken);
+    border: var(--border-thin);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .bar {
+    inline-size: var(--progress);
+    block-size: 100%;
+    background: var(--color-accent);
+    border-inline-end: var(--border-thin);
+    transition: --progress var(--dur-panel) var(--ease-out);
+  }
+}

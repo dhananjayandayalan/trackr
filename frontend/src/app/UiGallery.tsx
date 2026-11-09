@@ -7,8 +7,16 @@ import { Kbd } from '@/shared/ui/Kbd.tsx'
 import { Lozenge, type LozengeTone } from '@/shared/ui/Lozenge.tsx'
 import { PriorityIcon, type Priority } from '@/shared/ui/PriorityIcon.tsx'
 import { TypeIcon, type IssueType } from '@/shared/ui/TypeIcon.tsx'
-import { AppShell } from './AppShell.tsx'
-import { ShellPreview } from './ShellPreview.tsx'
+import { AvatarGroup } from '@/shared/ui/AvatarGroup.tsx'
+import { EmptyState } from '@/shared/ui/EmptyState.tsx'
+import { Field } from '@/shared/ui/Field.tsx'
+import { Progress } from '@/shared/ui/Progress.tsx'
+import { ProjectTile } from '@/shared/ui/ProjectTile.tsx'
+import { Segmented } from '@/shared/ui/Segmented.tsx'
+import { Select } from '@/shared/ui/Select.tsx'
+import { Tabs } from '@/shared/ui/Tabs.tsx'
+import { Textarea, TextInput } from '@/shared/ui/TextInput.tsx'
+import { showToast, Toaster } from '@/shared/ui/Toast.tsx'
 import styles from './UiGallery.module.css'
 
 const variants: NonNullable<ButtonProps['variant']>[] = ['primary', 'accent', 'secondary', 'ghost', 'danger']
@@ -24,6 +32,14 @@ const colors: AvatarColor[] = ['pink', 'cyan', 'lime', 'yellow', 'orange', 'viol
  */
 export function UiGallery() {
   const [pressed, setPressed] = useState(false)
+  const [tab, setTab] = useState<'one' | 'two' | 'three'>('one')
+  const [view, setView] = useState<'grid' | 'list'>('grid')
+  const people = (['pink', 'cyan', 'lime', 'yellow', 'orange'] as const).map((color, index) => ({
+    id: color,
+    displayName: `Person ${index + 1}`,
+    initials: `P${index + 1}`,
+    avatarColor: color,
+  }))
 
   return (
     <main className={styles.root}>
@@ -118,6 +134,80 @@ export function UiGallery() {
         </div>
       </Section>
 
+      <Section title="Field · TextInput · Select · Textarea">
+        <div className={styles.fields}>
+          <Field label="Name" hint="Shown on cards.">
+            {(control) => <TextInput {...control} placeholder="Marketing site" />}
+          </Field>
+          <Field label="Key" error="MAR is already used in this workspace.">
+            {(control) => <TextInput {...control} defaultValue="MAR" />}
+          </Field>
+          <Field label="Access">
+            {(control) => (
+              <Select {...control}>
+                <option>Limited</option>
+                <option>Open</option>
+              </Select>
+            )}
+          </Field>
+          <Field label="Disabled">{(control) => <TextInput {...control} disabled value="read only" />}</Field>
+          <Field label="Description">{(control) => <Textarea {...control} />}</Field>
+        </div>
+      </Section>
+
+      <Section title="Tabs · Segmented">
+        <Tabs
+          label="Example"
+          value={tab}
+          tabs={[
+            { value: 'one', label: 'Assigned to me', count: 12 },
+            { value: 'two', label: 'Worked on' },
+            { value: 'three', label: 'Starred' },
+          ]}
+          onChange={setTab}
+        >
+          <p>Panel {tab}</p>
+        </Tabs>
+        <Segmented
+          label="View"
+          value={view}
+          options={[
+            { value: 'grid', label: 'Grid', icon: 'dashboard' },
+            { value: 'list', label: 'List', icon: 'issues' },
+          ]}
+          onChange={setView}
+        />
+      </Section>
+
+      <Section title="Progress · AvatarGroup · ProjectTile · Toast">
+        <div className={styles.row}>
+          {[0, 18, 64, 100].map((value) => (
+            <span key={value} className={styles.progress}>
+              <Progress value={value} label={`${value}%`} />
+            </span>
+          ))}
+        </div>
+        <div className={styles.row}>
+          <AvatarGroup people={people} />
+          <AvatarGroup people={people.slice(0, 2)} size="md" />
+          <ProjectTile projectKey="MAR" color="pink" size="sm" />
+          <ProjectTile projectKey="OPS" color="cyan" />
+          <ProjectTile projectKey="BUG" color="orange" size="lg" />
+        </div>
+        <div className={styles.row}>
+          <Button onClick={() => showToast('Saved.', 'success')}>Success toast</Button>
+          <Button onClick={() => showToast("Couldn't move — reverted.", 'error')}>Error toast</Button>
+          <Button onClick={() => showToast('Creating issues arrives in phase 15.')}>Info toast</Button>
+        </div>
+        <Toaster />
+      </Section>
+
+      <Section title="EmptyState">
+        <EmptyState icon="issues" title="All clear" action={<Button variant="primary">Create issue</Button>}>
+          Nothing open is assigned to you.
+        </EmptyState>
+      </Section>
+
       <Section title="Icon">
         <ul role="list" className={styles.icons}>
           {(Object.keys(icons) as IconName[]).map((name) => (
@@ -127,14 +217,6 @@ export function UiGallery() {
             </li>
           ))}
         </ul>
-      </Section>
-
-      <Section title="AppShell · 40rem wide (container query: sidebar becomes a drawer)">
-        <div className={styles.narrow}>
-          <AppShell>
-            <ShellPreview />
-          </AppShell>
-        </div>
       </Section>
     </main>
   )

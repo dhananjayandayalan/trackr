@@ -1,0 +1,27 @@
+@layer components {
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .text {
+    font: var(--text-body-sm);
+  }
+
+  .time {
+    display: block;
+    font: var(--text-caption);
+    color: var(--text-muted);
+  }
+
+  .empty {
+    color: var(--text-muted);
+  }
+}

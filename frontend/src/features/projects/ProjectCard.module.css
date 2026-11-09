@@ -1,0 +1,108 @@
+@layer components {
+  .root {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    block-size: 100%;
+    padding: var(--space-4);
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-3);
+    transition:
+      translate var(--dur-lift) var(--ease-out),
+      box-shadow var(--dur-lift) var(--ease-out);
+
+    /* :has() — the card lifts when its link is hovered or focused */
+    &:has(.link:hover),
+    &:has(.link:focus-visible) {
+      translate: -2px -2px;
+      box-shadow: var(--shadow-5);
+    }
+  }
+
+  .header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .title {
+    flex: 1;
+    min-inline-size: 0;
+  }
+
+  .name {
+    font: var(--text-h3);
+  }
+
+  .link {
+    color: var(--text-color);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--text-color);
+    }
+
+    /* the stretched link: an invisible layer over the whole card */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+    }
+
+    &:focus-visible {
+      outline: none;
+
+      &::after {
+        outline: 2px solid var(--color-focus);
+        outline-offset: 3px;
+      }
+    }
+  }
+
+  /* above the stretched link, so the star gets its own clicks */
+  .star {
+    position: relative;
+    z-index: 1;
+
+    &[aria-pressed='true'] {
+      --_bg: transparent;
+      color: var(--prio-medium);
+
+      & svg {
+        fill: var(--color-yellow);
+      }
+    }
+  }
+
+  .meta,
+  .sprint {
+    font: var(--text-caption);
+    color: var(--text-muted);
+  }
+
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-block-start: auto;
+    font: var(--text-body-sm);
+  }
+
+  .lead {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .open {
+    color: var(--text-muted);
+
+    & strong {
+      color: var(--text-color);
+    }
+  }
+}
