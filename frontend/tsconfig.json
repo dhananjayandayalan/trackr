@@ -1,0 +1,6 @@
+{
+  // the root config compiles nothing itself: it points at one project per environment.
+  // `tsc -b` builds both; each has its own lib/types, so browser code can't use Node APIs and vice versa.
+  "files": [],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
+}

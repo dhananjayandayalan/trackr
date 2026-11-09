@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- the browser chrome (mobile address bar) in VOLT ink -->
+    <meta name="theme-color" content="#0E0E12" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>TRAKR</title>
+    <!-- the two weights almost every screen uses (body 500, buttons 700): fetched in parallel with the
+         JS instead of after the CSS is parsed. crossorigin is required for fonts, even same-origin. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Inter-500.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/Inter-700.woff2" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

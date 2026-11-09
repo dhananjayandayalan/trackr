@@ -1,0 +1,47 @@
+{
+  // the browser code: everything under src/
+  "compilerOptions": {
+    // BLOCK 1: target and lib — modern syntax as-is (Vite transpiles for the build target); DOM types
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+
+    // BLOCK 2: module system. TypeScript only type-checks (noEmit); Vite does the transpiling, one file at a time.
+    // bundler: resolve imports like Vite does (package "exports", no file extensions required).
+    // verbatimModuleSyntax: type-only imports must say `import type`, so a per-file transpiler can drop them
+    // without knowing the other files. isolatedModules: forbid what a per-file transpiler can't compile.
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+
+    // BLOCK 3: JSX — the automatic runtime: no `import React` in every file
+    "jsx": "react-jsx",
+
+    // BLOCK 4: strictness. noUncheckedIndexedAccess: columns[0] is `Column | undefined`, so an empty board
+    // is a compile error to forget, not a crash. exactOptionalPropertyTypes: `icon?: IconName` means
+    // "absent", not "may be undefined".
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "skipLibCheck": true,
+
+    // BLOCK 5: paths — `@/shared/ui/Button` instead of `../../../shared/ui/Button` (vite.config.ts has the
+    // same alias; TypeScript only checks, Vite resolves). No baseUrl: TypeScript 6 deprecates it, and
+    // paths resolve relative to this file without it.
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    // BLOCK 6: ambient types — import.meta.env, *.module.css, *.woff2 (vite/client)
+    "types": ["vite/client"]
+  },
+  "include": ["src"]
+}

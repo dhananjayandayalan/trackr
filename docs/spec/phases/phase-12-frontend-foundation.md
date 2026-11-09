@@ -111,6 +111,31 @@ Every component × every variant/state on one page at `/_ui` (dev only; routing 
 
 Blocks: ignores (`dist`, `src/shared/api/schema.d.ts`) · `js.configs.recommended` · `tseslint.configs.strictTypeChecked` with `parserOptions.projectService: true` · react-hooks recommended (includes the React Compiler rules in current versions — check) · jsx-a11y recommended · project rules (no default exports except route components; `@typescript-eslint/consistent-type-imports`).
 
+## Decisions taken while building it
+
+- **No design canvas in the repo:** TopNav, Sidebar and the 50-icon set (`icons.ts`, 24×24, 2px square-cap strokes)
+  are designed from the tokens and 00-product §3.13. `/_ui` shows them all.
+- **Versions:** pnpm 12 (installed; settings `saveExact`/`engineStrict` live in `pnpm-workspace.yaml`, pnpm 10+
+  ignores them in `.npmrc`). **TypeScript 6.0**, not 7: TS 7 (the Go port) has no JS compiler API, and
+  typescript-eslint's type-aware rules need it (`typescript <6.1`). **ESLint 9**: eslint-plugin-jsx-a11y doesn't
+  support ESLint 10 yet. `baseUrl` dropped (deprecated in TS 6; `paths` work without it).
+- **React Compiler:** plugin-react v6 no longer runs Babel; the compiler runs through `@rolldown/plugin-babel` with
+  `reactCompilerPreset()` (Babel 8). Checked in the build: the app chunk contains the compiler's memo cache.
+- **CSS Modules under Lightning CSS:** `css.modules.generateScopedName` is a postcss option and is ignored;
+  naming is `css.lightningcss.cssModules.pattern` (`[name]__[local]` in dev, `[hash]_[local]` in builds).
+  `container: false` and `grid: false` are required: by default Lightning CSS hashes container and grid-area
+  names per file, which silently broke every cross-file `@container shell` query and `grid-area`.
+- **Root font size:** the body text style is on `body`, not `html` — `font` on html makes 1rem = 14px and shrinks
+  every token and container breakpoint.
+- **Chunks:** `build.rolldownOptions.output.codeSplitting.groups` (Rolldown's name for manual chunks).
+- **Fonts:** Inter 400–800, Archivo 800/900, JetBrains Mono 700 from Fontsource (Latin subset, OFL files beside
+  them); preloaded Inter 500 and 700, the body and button weights the tokens actually use.
+- **Tokens added** beyond §2 (all derived from it): `--text-on-dark`, `--line-on-dark`, `--surface-dark(-raised)`,
+  `--avatar-violet` (light violet, ink text), `--text-button(-sm/-lg)`, `--control-xs`, `--icon-xs/sm/md`,
+  `--border-width`, `--border-thin`, `--shadow-5`, `--shadow-3-on-dark`, `--shadow-bar`, `--space-px`.
+- **Lint:** `<ul role="list">` is allowed on purpose (Safari drops list semantics with `list-style: none`).
+  No default exports except `*.route.tsx` and config files.
+
 ## Done when
 
 - `pnpm dev` shows the static shell looking like the canvas TopNav + Sidebar.

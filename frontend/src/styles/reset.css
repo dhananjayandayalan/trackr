@@ -1,0 +1,67 @@
+@layer reset {
+  /* BLOCK 1: sizes include padding and border — a 40px-high button is 40px, whatever its border */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  /* BLOCK 2: no default margins; components and layouts space themselves with gap and tokens */
+  * {
+    margin: 0;
+  }
+
+  body {
+    min-block-size: 100dvh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* BLOCK 3: media are blocks that never overflow their container */
+  img,
+  picture,
+  video,
+  canvas,
+  svg {
+    display: block;
+    max-inline-size: 100%;
+  }
+
+  /* BLOCK 4: form controls use the page's font and colour instead of the browser's.
+     Buttons are NOT `all: unset`: that would also remove the focus outline, the cursor and the
+     disabled styling — and nothing reminds you to put them back. */
+  input,
+  button,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  /* BLOCK 5: long words (issue keys, URLs) wrap instead of overflowing */
+  p,
+  h1,
+  h2,
+  h3,
+  h4 {
+    overflow-wrap: break-word;
+  }
+
+  ul[role='list'],
+  ol[role='list'] {
+    list-style: none;
+    padding: 0;
+  }
+
+  a {
+    color: inherit;
+  }
+}

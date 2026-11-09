@@ -1,0 +1,168 @@
+/* VOLT tokens (08-css-volt §2). Components use only these: change a value here and every screen follows.
+   Custom properties inherit, so a component can also re-set one for its subtree. */
+
+/* animatable tokens: registered with a type, so a transition interpolates 10% → 60% instead of jumping
+   (an unregistered custom property is just a string to the browser) */
+@property --progress {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+
+@layer tokens {
+  :root {
+    /* BLOCK 1: colour — core */
+    --color-ink: #0e0e12;
+    --color-paper: #ffffff;
+    --color-canvas: #f5f5f2;
+    --color-primary: #5b2eff;
+    --color-primary-hover: #4a1ff0;
+    --color-primary-press: #3a12d9;
+    --color-on-primary: #ffffff;
+    --color-accent: #c6ff3d;
+    --color-pink: #ff2e88;
+    --color-cyan: #00d1ff;
+    --color-yellow: #ffd600;
+    --color-orange: #ff7a1a;
+    --color-danger: #e8112d;
+    --color-danger-text: #c20e26;
+    --color-danger-soft: #fff0f2;
+    --color-focus: var(--color-primary);
+
+    /* BLOCK 2: colour — neutral ramp and semantic aliases */
+    --gray-900: #0e0e12;
+    --gray-800: #1e1e26;
+    --gray-700: #3d3d46;
+    --gray-600: #5c5c66;
+    --gray-500: #8c8c96;
+    --gray-400: #a8a89e;
+    --gray-300: #cfcfc6;
+    --gray-200: #eaeae4;
+    --gray-100: #f5f5f2;
+    --gray-0: #ffffff;
+    --text-color: #0e0e12;
+    --text-muted: var(--gray-600);
+    --text-on-dark: var(--color-paper);
+    --text-on-dark-muted: #a3a3ad;
+    --line: var(--gray-300);
+    --line-soft: #d6d6ce;
+    --line-on-dark: var(--gray-700);
+    --surface-sunken: var(--gray-200);
+    --surface-dark: var(--color-ink);
+    --surface-dark-raised: var(--gray-800);
+
+    /* BLOCK 3: colour — semantic sets. Text on any pop colour is ink; on primary and epic, white. */
+    --status-todo: #e4e4de;
+    --status-progress: #00d1ff;
+    --status-review: #ffd600;
+    --status-done: #c6ff3d;
+    --status-blocked: #ff3b3b;
+
+    --type-story: #c6ff3d;
+    --type-bug: #ff3b3b;
+    --type-task: #00d1ff;
+    --type-epic: #5b2eff;
+    --type-subtask: #7da2ff;
+
+    --prio-highest: #e8112d;
+    --prio-high: #e85d00;
+    --prio-medium: #b57a00;
+    --prio-low: #0086b3;
+    --prio-lowest: #6b6b75;
+
+    --avatar-pink: var(--color-pink);
+    --avatar-cyan: var(--color-cyan);
+    --avatar-lime: var(--color-accent);
+    --avatar-yellow: var(--color-yellow);
+    --avatar-orange: var(--color-orange);
+    --avatar-violet: #b9a3ff;
+
+    --chart-1: #5b2eff;
+    --chart-2: #ff2e88;
+    --chart-3: #008fb0;
+    --chart-reference: #8c8c96;
+
+    /* BLOCK 4: type — each --text-* is a whole `font` shorthand; display sizes have a tracking partner */
+    --font-display: 'Archivo', system-ui, sans-serif;
+    --font-ui: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    --text-display-xl: 900 4rem/1 var(--font-display);
+    --track-display-xl: -0.04em;
+    --text-display: 900 3rem/3.25rem var(--font-display);
+    --track-display: -0.03em;
+    --text-h1: 800 2rem/2.25rem var(--font-display);
+    --track-h1: -0.02em;
+    --text-h2: 800 1.5rem/1.75rem var(--font-display);
+    --track-h2: -0.02em;
+    --text-h3: 800 1.125rem/1.5rem var(--font-display);
+    --track-h3: 0;
+    --text-body-lg: 400 1rem/1.5rem var(--font-ui);
+    --text-body: 500 0.875rem/1.25rem var(--font-ui);
+    --text-body-sm: 500 0.8125rem/1.125rem var(--font-ui);
+    --text-label: 800 0.75rem/1rem var(--font-ui);
+    --track-label: 0.08em;
+    --text-caption: 400 0.75rem/1rem var(--font-ui);
+    --text-mono: 700 0.75rem/1rem var(--font-mono);
+    --text-mono-sm: 700 0.6875rem/0.875rem var(--font-mono);
+    --text-button: 700 0.875rem/1 var(--font-ui);
+    --text-button-sm: 700 0.8125rem/1 var(--font-ui);
+    --text-button-lg: 700 1rem/1 var(--font-ui);
+
+    /* BLOCK 5: space (4px base) and control heights */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    --space-px: 1px;
+
+    --control-xs: 1.5rem;
+    --control-sm: 2rem;
+    --control-md: 2.5rem;
+    --control-lg: 3rem;
+    --icon-xs: 0.75rem;
+    --icon-sm: 1rem;
+    --icon-md: 1.25rem;
+
+    /* BLOCK 6: radius, borders, shadows — corners stay nearly square, depth is a hard ink offset, never blur */
+    --radius-0: 0;
+    --radius-sm: 2px;
+    --radius-md: 4px;
+    --radius-round: 50%;
+
+    --border-width: 2px;
+    --border-thin: 1px solid var(--color-ink);
+    --border-line: 1px solid var(--line-soft);
+    --border-field: 1px solid var(--line);
+    --border-strong: var(--border-width) solid var(--color-ink);
+    --border-drop: var(--border-width) dashed var(--color-primary);
+
+    --shadow-2: 2px 2px 0 var(--color-ink);
+    --shadow-3: 3px 3px 0 var(--color-ink);
+    --shadow-4: 4px 4px 0 var(--color-ink);
+    --shadow-5: 5px 5px 0 var(--color-ink);
+    --shadow-6: 6px 6px 0 var(--color-ink);
+    --shadow-drag: 6px 6px 0 var(--color-primary);
+    --shadow-3-on-dark: 3px 3px 0 var(--color-paper);
+    --shadow-bar: 0 2px 0 var(--color-ink);
+    --shadow-modal: 10px 10px 0 var(--color-primary);
+
+    /* BLOCK 7: motion */
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --dur-press: 90ms;
+    --dur-lift: 120ms;
+    --dur-panel: 180ms;
+
+    /* BLOCK 8: layout */
+    --topnav-h: 4rem;
+    --sidebar-w: 15.5rem;
+    --content-max: 80rem;
+    --column-min: 17rem;
+  }
+}

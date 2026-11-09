@@ -1,0 +1,32 @@
+@layer components {
+  .root {
+    --_bg: var(--type-task);
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    inline-size: var(--icon-md);
+    block-size: var(--icon-md);
+    color: var(--color-ink);
+    background: var(--_bg);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+
+    &[data-type='story'] {
+      --_bg: var(--type-story);
+    }
+
+    &[data-type='bug'] {
+      --_bg: var(--type-bug);
+    }
+
+    /* epic: the only type with a white glyph (ink on violet would be too dark) */
+    &[data-type='epic'] {
+      --_bg: var(--type-epic);
+      color: var(--color-on-primary);
+    }
+
+    &[data-type='subtask'] {
+      --_bg: var(--type-subtask);
+    }
+  }
+}

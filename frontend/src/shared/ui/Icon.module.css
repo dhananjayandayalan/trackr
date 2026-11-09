@@ -1,0 +1,22 @@
+@layer components {
+  .root {
+    flex: none;
+    inline-size: var(--icon-md);
+    block-size: var(--icon-md);
+
+    &[data-size='xs'] {
+      inline-size: var(--icon-xs);
+      block-size: var(--icon-xs);
+    }
+
+    &[data-size='sm'] {
+      inline-size: var(--icon-sm);
+      block-size: var(--icon-sm);
+    }
+
+    &[data-size='lg'] {
+      inline-size: var(--space-6);
+      block-size: var(--space-6);
+    }
+  }
+}

@@ -1,0 +1,145 @@
+@layer components {
+  /* BLOCK 1: the dark column. Sticky below the top nav, so the links stay put while the page scrolls. */
+  .root {
+    grid-area: side;
+    position: sticky;
+    inset-block-start: var(--topnav-h);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    block-size: calc(100dvh - var(--topnav-h));
+    padding: var(--space-4);
+    overflow-y: auto;
+    color: var(--text-on-dark);
+    background: var(--surface-dark);
+  }
+
+  /* BLOCK 2: the project header */
+  .project {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .tile {
+    display: grid;
+    place-items: center;
+    flex: none;
+    inline-size: var(--control-md);
+    block-size: var(--control-md);
+    font: var(--text-mono);
+    color: var(--color-ink);
+    background: var(--color-pink);
+    border: var(--border-width) solid var(--color-paper);
+    border-radius: var(--radius-sm);
+  }
+
+  .projectText {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+  }
+
+  .projectName {
+    font: var(--text-body);
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .projectKind {
+    font: var(--text-caption);
+    color: var(--text-on-dark-muted);
+  }
+
+  /* BLOCK 3: groups and links. The current page: lime with ink text — "you are here" in VOLT. */
+  .nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .groupTitle {
+    padding-inline: var(--space-3);
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--text-on-dark-muted);
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    block-size: var(--control-md);
+    padding-inline: var(--space-3);
+    font: var(--text-button);
+    color: var(--text-on-dark);
+    text-decoration: none;
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius-sm);
+
+    &:hover {
+      color: var(--text-on-dark);
+      background: var(--surface-dark-raised);
+      border-color: var(--line-on-dark);
+    }
+
+    &[aria-current='page'] {
+      color: var(--color-ink);
+      background: var(--color-accent);
+      border-color: var(--color-ink);
+      box-shadow: var(--shadow-3-on-dark);
+    }
+
+    &:focus-visible {
+      outline-color: var(--color-accent);
+    }
+  }
+
+  .toggle {
+    display: none;
+  }
+
+  /* BLOCK 4: narrow — a bar on top of the page; the list opens below it when toggled */
+  @container shell (inline-size < 48rem) {
+    .root {
+      position: static;
+      block-size: auto;
+      gap: var(--space-4);
+      padding: var(--space-3) var(--space-4);
+      border-block-end: var(--border-strong);
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin-inline-start: auto;
+      block-size: var(--control-sm);
+      padding-inline: var(--space-3);
+      font: var(--text-button);
+      color: var(--color-ink);
+      background: var(--color-accent);
+      border: var(--border-width) solid var(--color-paper);
+      border-radius: var(--radius-sm);
+    }
+
+    .root:not([data-open]) .nav {
+      display: none;
+    }
+  }
+}

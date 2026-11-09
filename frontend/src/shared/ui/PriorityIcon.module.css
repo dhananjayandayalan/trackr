@@ -1,0 +1,21 @@
+@layer components {
+  .root {
+    color: var(--prio-medium);
+
+    &[data-priority='highest'] {
+      color: var(--prio-highest);
+    }
+
+    &[data-priority='high'] {
+      color: var(--prio-high);
+    }
+
+    &[data-priority='low'] {
+      color: var(--prio-low);
+    }
+
+    &[data-priority='lowest'] {
+      color: var(--prio-lowest);
+    }
+  }
+}

@@ -1,0 +1,122 @@
+/* 08-css-volt §4, the reference component. Variants only re-set the private --_ properties; the one
+   declaration block below turns them into a look. */
+@layer components {
+  .root {
+    --_bg: var(--color-paper);
+    --_fg: var(--color-ink);
+    --_shadow: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    block-size: var(--control-md);
+    padding-inline: var(--space-4);
+    font: var(--text-button);
+    white-space: nowrap;
+    background: var(--_bg);
+    color: var(--_fg);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--_shadow);
+    text-decoration: none;
+    transition:
+      transform var(--dur-lift) var(--ease-out),
+      box-shadow var(--dur-lift) var(--ease-out),
+      background-color var(--dur-lift) var(--ease-out);
+
+    /* BLOCK 1: variants */
+    &[data-variant='primary'] {
+      --_bg: var(--color-primary);
+      --_fg: var(--color-on-primary);
+      --_shadow: var(--shadow-3);
+    }
+
+    &[data-variant='accent'] {
+      --_bg: var(--color-accent);
+      --_shadow: var(--shadow-3);
+    }
+
+    &[data-variant='secondary'] {
+      --_shadow: var(--shadow-2);
+    }
+
+    &[data-variant='ghost'] {
+      --_bg: transparent;
+      border-color: transparent;
+    }
+
+    &[data-variant='danger'] {
+      --_bg: var(--color-danger);
+      --_fg: var(--color-on-primary);
+      --_shadow: var(--shadow-3);
+    }
+
+    /* BLOCK 2: sizes */
+    &[data-size='sm'] {
+      block-size: var(--control-sm);
+      padding-inline: var(--space-3);
+      font: var(--text-button-sm);
+      gap: var(--space-1);
+    }
+
+    &[data-size='lg'] {
+      block-size: var(--control-lg);
+      padding-inline: var(--space-6);
+      font: var(--text-button-lg);
+    }
+
+    &[data-icon-only] {
+      inline-size: var(--control-md);
+      padding-inline: 0;
+
+      &[data-size='sm'] {
+        inline-size: var(--control-sm);
+      }
+
+      &[data-size='lg'] {
+        inline-size: var(--control-lg);
+      }
+    }
+
+    /* BLOCK 3: interaction — lift on hover, press flat into the page */
+    &:hover:not(:disabled) {
+      transform: translate(-2px, -2px);
+      --_shadow: var(--shadow-5);
+    }
+
+    &[data-variant='ghost']:hover:not(:disabled) {
+      transform: none;
+      --_shadow: none;
+      --_bg: color-mix(in oklch, var(--color-ink) 8%, transparent);
+    }
+
+    &:active:not(:disabled) {
+      transform: translate(3px, 3px);
+      --_shadow: none;
+      transition-duration: var(--dur-press);
+    }
+
+    &[data-variant='primary']:active:not(:disabled) {
+      --_bg: var(--color-primary-press);
+    }
+
+    /* BLOCK 4: focus — the outline sits outside the hard shadow, so it stays visible on every variant */
+    &:focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 3px;
+    }
+
+    &:disabled {
+      --_bg: var(--status-todo);
+      --_fg: var(--gray-500);
+      --_shadow: none;
+      border-color: var(--line);
+    }
+
+    /* aria-pressed: a toggle button (quick filters) shows its "on" state in lime */
+    &[aria-pressed='true'] {
+      --_bg: var(--color-accent);
+      --_fg: var(--color-ink);
+    }
+  }
+}

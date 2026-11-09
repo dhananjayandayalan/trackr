@@ -1,0 +1,5 @@
+# pnpm reads its settings from here (pnpm 10+ no longer takes them from .npmrc)
+# exact versions in package.json ("19.3.1", not "^19.3.1"): upgrades are deliberate, never a side effect
+saveExact: true
+# refuse to install with a Node or pnpm older than package.json "engines" asks for
+engineStrict: true

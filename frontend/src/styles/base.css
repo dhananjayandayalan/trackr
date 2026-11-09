@@ -1,0 +1,82 @@
+@layer base {
+  /* BLOCK 1: the document — body text, ink on canvas. color-scheme tells form controls and scrollbars
+     which palette to use (light only for now; tokens are ready for light-dark() later).
+     The text style goes on body, not html: the `font` shorthand sets font-size too, and html's font-size
+     IS 1rem. On html it would turn 1rem into 14px and shrink every token and container breakpoint. */
+  html {
+    color-scheme: light;
+    color: var(--text-color);
+    background: var(--color-canvas);
+    text-size-adjust: none;
+  }
+
+  body {
+    font: var(--text-body);
+  }
+
+  /* BLOCK 2: focus — only for keyboard navigation (:focus-visible), never removed */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* BLOCK 3: headings and text. balance: a two-line heading splits evenly; pretty: no lone last word */
+  h1 {
+    font: var(--text-h1);
+    letter-spacing: var(--track-h1);
+  }
+
+  h2 {
+    font: var(--text-h2);
+    letter-spacing: var(--track-h2);
+  }
+
+  h3 {
+    font: var(--text-h3);
+    letter-spacing: var(--track-h3);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  code,
+  kbd,
+  samp {
+    font: var(--text-mono);
+  }
+
+  a {
+    color: var(--color-primary);
+    text-underline-offset: 0.2em;
+
+    &:hover {
+      color: var(--color-primary-hover);
+    }
+  }
+
+  /* BLOCK 4: selection in lime */
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-ink);
+  }
+
+  /* BLOCK 5: reduced motion — near-zero durations instead of none, so transitionend/animationend still fire.
+     The one !important in the code base: it must beat every component's own durations. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

@@ -1,0 +1,61 @@
+@layer components {
+  /* BLOCK 1: the container. A container query asks "how wide is THIS box?", a media query "how wide is the
+     window?". The shell will also be rendered inside a narrower box (the UI gallery, a side panel later),
+     and it should adapt to the space it actually has, not to the window. */
+  .frame {
+    container: shell / inline-size;
+  }
+
+  /* BLOCK 2: the grid — named areas read like a picture of the layout */
+  .root {
+    display: grid;
+    grid-template:
+      'top top' var(--topnav-h)
+      'side main' 1fr
+      / var(--sidebar-w) minmax(0, 1fr);
+    min-block-size: 100dvh;
+  }
+
+  .main {
+    grid-area: main;
+    min-inline-size: 0;
+    padding: var(--space-8);
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .skip {
+    position: absolute;
+    inset-block-start: var(--space-2);
+    inset-inline-start: var(--space-2);
+    z-index: 10;
+    padding: var(--space-2) var(--space-4);
+    font: var(--text-button);
+    color: var(--color-ink);
+    background: var(--color-accent);
+    border: var(--border-strong);
+    box-shadow: var(--shadow-3);
+    translate: 0 -200%;
+
+    &:focus-visible {
+      translate: 0 0;
+    }
+  }
+
+  /* BLOCK 3: narrow — one column; the sidebar becomes a drawer between the nav and the page */
+  @container shell (inline-size < 48rem) {
+    .root {
+      grid-template:
+        'top' var(--topnav-h)
+        'side' auto
+        'main' 1fr
+        / minmax(0, 1fr);
+    }
+
+    .main {
+      padding: var(--space-4);
+    }
+  }
+}

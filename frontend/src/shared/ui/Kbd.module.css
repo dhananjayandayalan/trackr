@@ -1,0 +1,15 @@
+@layer components {
+  .root {
+    display: inline-grid;
+    place-items: center;
+    min-inline-size: var(--control-xs);
+    block-size: var(--control-xs);
+    padding-inline: var(--space-1);
+    font: var(--text-mono-sm);
+    color: var(--color-ink);
+    background: var(--color-paper);
+    border: var(--border-thin);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-2);
+  }
+}

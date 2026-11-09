@@ -1,0 +1,33 @@
+@layer components {
+  .root {
+    --_bg: var(--status-todo);
+    display: inline-flex;
+    align-items: center;
+    block-size: var(--control-xs);
+    padding-inline: var(--space-2);
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--color-ink);
+    background: var(--_bg);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+
+    &[data-tone='progress'] {
+      --_bg: var(--status-progress);
+    }
+
+    &[data-tone='review'] {
+      --_bg: var(--status-review);
+    }
+
+    &[data-tone='done'] {
+      --_bg: var(--status-done);
+    }
+
+    &[data-tone='blocked'] {
+      --_bg: var(--status-blocked);
+    }
+  }
+}
