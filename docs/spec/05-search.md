@@ -61,6 +61,7 @@ notExpr     := NOT notExpr | atom
 atom        := '(' orExpr ')' | clause
 clause      := field op value
              | field (IN | NOT IN) '(' value (',' value)* ')'
+             | field (IN | NOT IN) function                   // sprint in openSprints()
              | field IS (NOT)? EMPTY
              | field '~' STRING                       // text contains
 op          := '=' | '!=' | '>' | '>=' | '<' | '<='

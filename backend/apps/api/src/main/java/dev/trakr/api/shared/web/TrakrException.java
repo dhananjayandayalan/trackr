@@ -1,6 +1,7 @@
 package dev.trakr.api.shared.web;
 
 import java.util.List;
+import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
 
@@ -41,6 +42,11 @@ public class TrakrException extends RuntimeException {
 
     public List<FieldMessage> errors() {
         return errors;
+    }
+
+    /** Extra members of the problem body (TQL errors add {@code position} and {@code expected}); none by default. */
+    public Map<String, Object> properties() {
+        return Map.of();
     }
 
     /** 404 — also when the caller may not see the thing, so its existence doesn't leak. */

@@ -34,7 +34,7 @@ Base URL: `/api/v1` (served by `apps/api` on :8080; the Vite dev server proxies 
 
 | HTTP | `code` examples                                                                          |
 | ---- | ---------------------------------------------------------------------------------------- |
-| 400  | `VALIDATION_FAILED` (with `errors[]`), `TQL_SYNTAX_ERROR` (with `position`)              |
+| 400  | `VALIDATION_FAILED` (with `errors[]`), `TQL_SYNTAX_ERROR` / `TQL_INVALID_QUERY` (with `position`, `expected[]`), `CURSOR_EXPIRED` |
 | 401  | `UNAUTHENTICATED`                                                                        |
 | 403  | `FORBIDDEN`, `CSRF_INVALID`                                                              |
 | 404  | `NOT_FOUND` (also used when the caller can't see the resource — don't leak existence)    |
@@ -137,7 +137,7 @@ Body HTML is sanitised server-side with an allow-list (p, br, strong, em, code, 
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `POST /search`                                    | `{tql, limit, cursor, fields?}` → `{total, items: SearchHit[], nextCursor, tookMs}`; SearchHit = IssueRow + `highlights` |
 | `GET /search/suggest?q=`                          | typeahead for the top-nav box: `{issues[≤6], projects[≤3], people[≤3]}`                                                  |
-| `GET /search/tql/complete?tql=&cursor=`           | autocomplete for the query editor: `{expected: [{kind: field\|operator\|value\|keyword, text}]}`                         |
+| `GET /search/tql/complete?tql=&cursor=`           | autocomplete for the query editor (`cursor` = caret offset): `{from, expected: [{kind: field\|operator\|value\|keyword, text}]}`; a picked `text` replaces `tql[from..cursor]` |
 | `POST /search/export`                             | same body as `/search`; returns `text/csv` (streamed, max 10k rows)                                                      |
 | `GET/POST /filters`, `PATCH/DELETE /filters/{id}` | saved filters                                                                                                            |
 

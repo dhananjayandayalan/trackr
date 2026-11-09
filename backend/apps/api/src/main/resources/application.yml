@@ -93,6 +93,9 @@ spring:
         # we configure the JSON serializer above; Modulith's own JSON message converter would turn the already
         # serialized bytes into a base64 string
         enable-json: false
+  # BLOCK 16: elasticsearch — Boot builds the ElasticsearchClient from this; search only reads the index
+  elasticsearch:
+    uris: ${TRAKR_ES_URIS:http://localhost:9200}
 
 # BLOCK 3: server
 server:
@@ -136,6 +139,9 @@ trakr:
     origin: ${TRAKR_APP_ORIGIN:http://localhost:5173}
   mail:
     from: ${TRAKR_MAIL_FROM:TRAKR <no-reply@trakr.local>}
+  search:
+    # the alias, never a concrete trakr-issues-v{n}: a reindex moves it without the api noticing
+    index: trakr-issues
 
 # BLOCK 12: OpenAPI — /v3/api-docs is always on (the frontend generates its types from it); the UI only in dev
 springdoc:

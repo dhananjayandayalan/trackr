@@ -1,0 +1,45 @@
+{
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "term": {
+            "projectKey": {
+              "value": "MAR"
+            }
+          }
+        },
+        {
+          "bool": {
+            "must_not": [
+              {
+                "term": {
+                  "statusName": {
+                    "value": "Done"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "priorityRank": {
+        "order": "desc"
+      }
+    },
+    {
+      "updatedAt": {
+        "order": "desc"
+      }
+    },
+    {
+      "id": {
+        "order": "asc"
+      }
+    }
+  ]
+}

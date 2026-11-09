@@ -1,0 +1,42 @@
+{
+  "query": {
+    "bool": {
+      "minimum_should_match": "1",
+      "should": [
+        {
+          "term": {
+            "type": {
+              "value": "bug"
+            }
+          }
+        },
+        {
+          "term": {
+            "type": {
+              "value": "task"
+            }
+          }
+        },
+        {
+          "term": {
+            "type": {
+              "value": "story"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "updatedAt": {
+        "order": "desc"
+      }
+    },
+    {
+      "id": {
+        "order": "asc"
+      }
+    }
+  ]
+}

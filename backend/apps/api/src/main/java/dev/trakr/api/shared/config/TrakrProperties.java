@@ -10,7 +10,8 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties("trakr")
-public record TrakrProperties(@Valid @NotNull App app, @Valid @NotNull Mail mail, @Valid @NotNull Events events) {
+public record TrakrProperties(@Valid @NotNull App app, @Valid @NotNull Mail mail, @Valid @NotNull Events events,
+        @Valid @NotNull Search search) {
 
     public record App(@NotNull URI origin) {
     }
@@ -21,5 +22,9 @@ public record TrakrProperties(@Valid @NotNull App app, @Valid @NotNull Mail mail
 
     /** {@code partitions}: how many Kafka partitions each topic gets when KafkaTopicsConfig creates it. */
     public record Events(@Min(1) int partitions) {
+    }
+
+    /** {@code index}: the alias search reads (workers points it at the current trakr-issues-v{n}). */
+    public record Search(@NotBlank String index) {
     }
 }

@@ -3,6 +3,8 @@ plugins {
     id("trakr.spring-app")
     // BLOCK 7: jOOQ codegen plugin
     alias(libs.plugins.jooq.codegen)
+    // BLOCK 15: TQL — generates the lexer and parser from src/main/antlr/**/*.g4
+    antlr
 }
 
 dependencies {
@@ -58,6 +60,26 @@ dependencies {
     integrationTestImplementation(libs.testcontainers.postgresql)
     integrationTestImplementation(libs.testcontainers.junit.jupiter)
     integrationTestImplementation(libs.testcontainers.kafka)
+
+    // BLOCK 15: search — the TQL parser (tool at build time, runtime in the jar) and the Elasticsearch client
+    antlr(libs.antlr.tool)
+    implementation(libs.antlr.runtime)
+    implementation(libs.spring.boot.starter.elasticsearch)
+    implementation(libs.elasticsearch.java)
+    integrationTestImplementation(libs.testcontainers.elasticsearch)
+}
+
+// BLOCK 15: the antlr plugin makes `api` extend `antlr`, which would ship the whole tool (and its own
+// dependencies) inside api.jar. The generated code needs only antlr4-runtime, declared above.
+configurations.api {
+    setExtendsFrom(extendsFrom.filterNot { it.name == "antlr" })
+}
+
+// The .g4 sits in the package's directory, so Gradle already writes the classes there; -package adds the
+// matching package declaration (the packageName property would nest the directories a second time).
+// A visitor (AstBuilder extends TqlBaseVisitor); no listener, we never walk the tree that way.
+tasks.generateGrammarSource {
+    arguments = arguments + listOf("-package", "dev.trakr.api.search.internal.tql.grammar", "-visitor", "-no-listener")
 }
 
 // BLOCK 8: codegen configuration
@@ -119,4 +141,8 @@ tasks.named<Test>("integrationTest") {
     systemProperty("snapshots.update", providers.gradleProperty("updateSnapshots").getOrElse("false"))
     systemProperty("perf", providers.gradleProperty("perf").getOrElse("false"))
     inputs.files(snapshots).withPropertyName("snapshots")
+    // BLOCK 15: workers owns the index mapping; the search tests create their index from that same file
+    val mapping = project(":apps:workers").layout.projectDirectory.file("src/main/resources/es/trakr-issues-v1.json")
+    inputs.file(mapping).withPropertyName("searchMapping")
+    systemProperty("trakr.search.mapping", mapping.asFile.absolutePath)
 }

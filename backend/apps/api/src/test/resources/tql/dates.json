@@ -1,0 +1,50 @@
+{
+  "query": {
+    "bool": {
+      "minimum_should_match": "1",
+      "should": [
+        {
+          "range": {
+            "createdAt": {
+              "gte": "2026-11-01||/d",
+              "lte": "2026-11-01||/d"
+            }
+          }
+        },
+        {
+          "range": {
+            "resolvedAt": {
+              "gt": "2026-11-01||/d"
+            }
+          }
+        },
+        {
+          "bool": {
+            "must_not": [
+              {
+                "range": {
+                  "updatedAt": {
+                    "gte": "2026-11-08T09:00:00Z||/d",
+                    "lte": "2026-11-08T09:00:00Z||/d"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "updatedAt": {
+        "order": "desc"
+      }
+    },
+    {
+      "id": {
+        "order": "asc"
+      }
+    }
+  ]
+}

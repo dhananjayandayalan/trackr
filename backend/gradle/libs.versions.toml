@@ -63,6 +63,9 @@ spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-star
 spring-boot-starter-elasticsearch = { module = "org.springframework.boot:spring-boot-starter-elasticsearch" }
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearch" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine" }
+# TQL: the ANTLR tool generates the parser at build time; only the small runtime ships in the jar
+antlr-tool = { module = "org.antlr:antlr4", version.ref = "antlr" }
+antlr-runtime = { module = "org.antlr:antlr4-runtime", version.ref = "antlr" }
 spring-boot-starter-security-test = { module = "org.springframework.boot:spring-boot-starter-security-test" }
 bcprov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 

@@ -1,0 +1,48 @@
+{
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "range": {
+            "priorityRank": {
+              "gte": 4.0
+            }
+          }
+        },
+        {
+          "bool": {
+            "minimum_should_match": "1",
+            "should": [
+              {
+                "term": {
+                  "flagged": {
+                    "value": true
+                  }
+                }
+              },
+              {
+                "range": {
+                  "dueDate": {
+                    "lte": "2026-11-15T23:59:59.999Z"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "updatedAt": {
+        "order": "desc"
+      }
+    },
+    {
+      "id": {
+        "order": "asc"
+      }
+    }
+  ]
+}

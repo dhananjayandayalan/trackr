@@ -1,0 +1,42 @@
+{
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "bool": {
+            "must_not": [
+              {
+                "exists": {
+                  "field": "assigneeId"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "bool": {
+            "must_not": [
+              {
+                "exists": {
+                  "field": "dueDate"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "updatedAt": {
+        "order": "desc"
+      }
+    },
+    {
+      "id": {
+        "order": "asc"
+      }
+    }
+  ]
+}

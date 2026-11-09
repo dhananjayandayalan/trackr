@@ -1,0 +1,50 @@
+{
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "terms": {
+            "type": [
+              "bug",
+              "task"
+            ]
+          }
+        },
+        {
+          "range": {
+            "createdAt": {
+              "gte": "2026-11-02T09:00:00Z"
+            }
+          }
+        }
+      ],
+      "must": [
+        {
+          "multi_match": {
+            "fields": [
+              "summary^3",
+              "descriptionText",
+              "commentsText"
+            ],
+            "fuzziness": "AUTO",
+            "operator": "and",
+            "query": "checkout crash",
+            "type": "best_fields"
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "_score": {
+        "order": "desc"
+      }
+    },
+    {
+      "id": {
+        "order": "asc"
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "terms": {
+            "labels": [
+              "frontend",
+              "ux"
+            ]
+          }
+        },
+        {
+          "range": {
+            "storyPoints": {
+              "gt": 3.0
+            }
+          }
+        },
+        {
+          "term": {
+            "epicId": {
+              "value": "00000000-0000-0000-0000-000000000064"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "updatedAt": {
+        "order": "desc"
+      }
+    },
+    {
+      "id": {
+        "order": "asc"
+      }
+    }
+  ]
+}

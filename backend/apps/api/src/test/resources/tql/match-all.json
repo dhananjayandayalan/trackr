@@ -1,0 +1,27 @@
+{
+  "query": {
+    "match_all": {}
+  },
+  "sort": [
+    {
+      "projectKey": {
+        "order": "asc"
+      }
+    },
+    {
+      "number": {
+        "order": "asc"
+      }
+    },
+    {
+      "summary.raw": {
+        "order": "desc"
+      }
+    },
+    {
+      "id": {
+        "order": "asc"
+      }
+    }
+  ]
+}

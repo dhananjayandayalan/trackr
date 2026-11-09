@@ -44,6 +44,7 @@ class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
         if (!ex.errors().isEmpty()) {
             problem.setProperty("errors", ex.errors());
         }
+        ex.properties().forEach(problem::setProperty);
         // BLOCK 4 (our half): a stale If-Match carries the current resource
         if (ex instanceof VersionMismatch mismatch && mismatch.current() != null) {
             problem.setProperty("current", mismatch.current());

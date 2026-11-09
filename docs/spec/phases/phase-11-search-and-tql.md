@@ -85,6 +85,40 @@ Parse the text up to the caret with a recording error strategy; collect expected
 - `SearchApiIT` (Postgres + Kafka + ES + workers' indexer running in-process or a pre-indexed fixture): queries from 05-search §3 return the expected keys; users never see issues from projects they can't access even with `project = OTHER`.
 - `CursorCodecTest`.
 
+## Decisions taken while building it
+
+- **Grammar:** `field (NOT)? IN valueList` where `valueList` is `( … )` **or a function** — the spec's own example
+  `sprint in openSprints()` needs it. `ERROR_CHAR : .` is the last lexer rule, so the lexer never fails and every
+  mistake is one parser error. The `.g4` sits in its package directory and Gradle gets `-package` (the
+  `packageName` property nested the directories twice); the `antlr` configuration is removed from `api`, so only
+  `antlr4-runtime` ships.
+- **Errors:** `Bail extends BailErrorStrategy` throws one exception carrying the offending token from both exits
+  (Bail's own `recoverInline` throws a `ParseCancellationException` without reporting to listeners).
+  `expected[]` is computed by trying every token type after the prefix (prefix + candidate + a sentinel token):
+  `parser.getExpectedTokens()` at the failure point only knows the state the parser stopped in (after
+  `project = MAR status` it says just EOF, not AND/OR/ORDER BY). Autocomplete reuses the same function.
+  Two codes: `TQL_SYNTAX_ERROR` (doesn't parse) and `TQL_INVALID_QUERY` (unknown field, operator, function or name);
+  both carry `position` (0-based offset) and `expected`. `TrakrException.properties()` puts them in the problem.
+- **Values:** names resolve inside the caller's workspaces / visible projects only (`assignee = "Ada Lovelace"` is
+  an error for someone outside Ada's workspace). Calendar dates mean the whole day via ES date math `D||/d`, rounded
+  by the range operator; `-7d` and functions are exact instants from the app `Clock` (UTC, weeks Monday–Sunday,
+  `m` = minutes). Extra functions: `endOfDay()`, `startOfWeek()`, `endOfMonth()`. Status names match
+  case-insensitively and resolve to the projects' spellings.
+- **Security filter:** `workspaceId in (mine) AND projectId in (visible, from ProjectVisibility) AND NOT deleted`,
+  computed from Postgres per request, side by side with the user's query in one `bool`.
+- **Paging:** PIT `keep_alive 1m`; the cursor is base64url JSON `{pit, after}`; the last page closes the PIT; an
+  expired PIT → 400 `CURSOR_EXPIRED`. Highlights use `encoder: html`, so fragments are safe to render.
+- **Responses:** `SearchHit` is built from the index alone (no `statusColor`: the index has no colour). Completions
+  return `{from, expected[]}` — `from` is where the word being typed starts. `fields?` of `/search` isn't implemented.
+- **Export:** `StreamingResponseBody`, 500 rows per PIT page, max 10k; cells starting with `= + - @` get a leading `'`
+  (CSV formula injection).
+- **Saved filters:** saving checks syntax, fields and operators but not values. No `If-Match` (the table has no
+  `version`); only the owner changes a filter, others see a shared one read-only.
+- **Tests:** the api ITs start Elasticsearch too; search reads alias `trakr-issues-api-it` (a `DynamicPropertyRegistrar`)
+  so a reused container never mixes with the workers tests' index. `SearchIndexFixture` builds documents from Postgres
+  into an index created from workers' `es/trakr-issues-v1.json` (path passed by Gradle). Every `SearchApiIT` query
+  is checked against the same condition in SQL.
+
 ## Done when
 
 - `project = MAR AND text ~ "checkout" ORDER BY priority DESC` returns highlighted results in < 200 ms.
