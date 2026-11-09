@@ -89,6 +89,28 @@ Mailer consumes notifications; immediate email for `mentioned`/`assigned`, other
 - `DeadLetterIT`: a poison message (invalid JSON) lands in `.dlt` without blocking later messages.
 - `ReindexIT`: wipe the index, run reindex, counts match Postgres.
 
+## Decisions taken while building it
+
+- **Kafka factories:** Boot's auto-configured consumer/producer factories, customised with
+  `DefaultKafkaConsumerFactoryCustomizer` / `DefaultKafkaProducerFactoryCustomizer` (our deserializer and a
+  `DelegatingByTypeSerializer`: `byte[]` for dead letters, Jackson for envelopes). Factories built by hand from
+  `KafkaProperties` ignore a Testcontainers service connection and quietly connect to localhost:9092.
+- **Deserializing `data`:** `EnvelopeDeserializer` reads the envelope's `type` and converts `data` with
+  `EventTypes.classOf(type)`; an unknown type throws `UnknownEventTypeException` (not retryable → DLT).
+- **Indexer:** one synchronous bulk request per poll (not the async `BulkIngester`, which would let offsets commit
+  before Elasticsearch had the documents). A poison record in a batch → `BatchListenerFailedException(index)`.
+  Deleted issues are deleted from the index (external-versioned), not flagged. Comment events: `CommentAdded`
+  appends to `commentsText` by script; full comment text comes from the comment table in phase 15.
+  Projects have no renamable field in the document; the `update_by_query` lesson is done with sprint renames.
+- **Contracts added now:** `CommentEvent` (added/edited/deleted, routed to `trakr.comments.v1` by the api from phase 15)
+  and `NotificationEvent.NotificationCreated`, so the rules, mailer and tests work before comments exist.
+- **Reindex** streams Postgres with a `JdbcTemplate` (fetch size 1000 in a read-only transaction = a server-side cursor),
+  since the workers have no jOOQ. `POST /admin/*` needs `X-Admin-Token`.
+- **Notifier → Kafka** sends inside the DB transaction and waits for the ack (no outbox in workers): at least once,
+  and the mailer dedupes by notification id. "Per-user mail preferences" have no table yet; everyone gets mail.
+- **Tests** apply the api's migrations with Flyway from `apps/api/src/main/resources/db/migration` (test classpath only).
+- Measured on the local stack: an edit reaches Elasticsearch in ~1 s, an assignment reaches `/me/stream` in ~250 ms.
+
 ## Done when
 
 - Create/move/edit issues in the api → documents appear in ES within ~1 s (`GET trakr-issues/_doc/<id>` in Kibana).

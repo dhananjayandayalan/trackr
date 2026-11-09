@@ -1,5 +1,8 @@
 package dev.trakr.contracts.events;
 
+import java.util.Map;
+import java.util.Optional;
+
 /**
  * Every CloudEvents {@code type} string in one place (04-events §4). Schema evolution: never change a
  * value; a breaking change gets a new {@code .v2} constant next to the old one.
@@ -25,7 +28,41 @@ public final class EventTypes {
     public static final String SPRINT_COMPLETED = "trakr.sprint.completed.v1";
     public static final String SPRINT_DELETED = "trakr.sprint.deleted.v1";
 
+    public static final String COMMENT_ADDED = "trakr.comment.added.v1";
+    public static final String COMMENT_EDITED = "trakr.comment.edited.v1";
+    public static final String COMMENT_DELETED = "trakr.comment.deleted.v1";
+
+    public static final String NOTIFICATION_CREATED = "trakr.notification.created.v1";
+
+    // which record a type's data is, for consumers that turn an envelope's data back into the event
+    private static final Map<String, Class<? extends TrakrEvent>> CLASSES = Map.ofEntries(
+            Map.entry(ISSUE_CREATED, IssueCreated.class),
+            Map.entry(ISSUE_UPDATED, IssueUpdated.class),
+            Map.entry(ISSUE_TRANSITIONED, IssueTransitioned.class),
+            Map.entry(ISSUE_MOVED, IssueMoved.class),
+            Map.entry(ISSUE_DELETED, IssueDeleted.class),
+            Map.entry(ISSUE_LINKED, IssueLinked.class),
+            Map.entry(ISSUE_WORK_LOGGED, WorkLogged.class),
+            Map.entry(PROJECT_CREATED, ProjectLifecycle.Created.class),
+            Map.entry(PROJECT_UPDATED, ProjectLifecycle.Updated.class),
+            Map.entry(PROJECT_ARCHIVED, ProjectLifecycle.Archived.class),
+            Map.entry(PROJECT_MEMBER_CHANGED, ProjectLifecycle.MemberChanged.class),
+            Map.entry(SPRINT_CREATED, SprintEvent.SprintCreated.class),
+            Map.entry(SPRINT_UPDATED, SprintEvent.SprintUpdated.class),
+            Map.entry(SPRINT_STARTED, SprintEvent.SprintStarted.class),
+            Map.entry(SPRINT_COMPLETED, SprintEvent.SprintCompleted.class),
+            Map.entry(SPRINT_DELETED, SprintEvent.SprintDeleted.class),
+            Map.entry(COMMENT_ADDED, CommentEvent.CommentAdded.class),
+            Map.entry(COMMENT_EDITED, CommentEvent.CommentEdited.class),
+            Map.entry(COMMENT_DELETED, CommentEvent.CommentDeleted.class),
+            Map.entry(NOTIFICATION_CREATED, NotificationEvent.NotificationCreated.class));
+
     private EventTypes() {
+    }
+
+    /** The record for a type; empty for a type this version doesn't know (a newer producer, or garbage). */
+    public static Optional<Class<? extends TrakrEvent>> classOf(String type) {
+        return Optional.ofNullable(CLASSES.get(type));
     }
 
     /** {@code trakr.issue.moved.v1} → {@code issue.moved}: the SSE event name (03-api §4). */

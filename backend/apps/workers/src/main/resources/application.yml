@@ -1,0 +1,60 @@
+# BLOCK 1: identity
+spring:
+  application:
+    name: trakr-workers
+  profiles:
+    default: dev
+  threads:
+    virtual:
+      enabled: true
+  # BLOCK 2: kafka — consumer and producer factories are built in KafkaConsumerConfig from these
+  kafka:
+    bootstrap-servers: ${TRAKR_KAFKA_BOOTSTRAP:localhost:9092}
+    consumer:
+      enable-auto-commit: false
+      isolation-level: read_committed
+      # a new worker group starts from the beginning of the topic: read models need every event, not just new ones
+      auto-offset-reset: earliest
+      # small polls for the record-at-a-time consumers; the indexer asks for 500 (04-events §5)
+      max-poll-records: 50
+    producer:
+      acks: all
+      properties:
+        enable.idempotence: true
+        linger.ms: 5
+  # BLOCK 3: elasticsearch — Boot builds the ElasticsearchClient from this
+  elasticsearch:
+    uris: ${TRAKR_ES_URIS:http://localhost:9200}
+  # BLOCK 4: the app only reads and writes rows; the api's Flyway owns the schema
+  sql:
+    init:
+      mode: never
+
+# BLOCK 5: only actuator and /admin on this port (01-architecture §2)
+server:
+  port: 8082
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    mail:
+      enabled: false
+
+# BLOCK 6: our properties
+trakr:
+  admin:
+    token: ${TRAKR_ADMIN_TOKEN}
+  app:
+    origin: ${TRAKR_APP_ORIGIN:http://localhost:5173}
+  mail:
+    from: ${TRAKR_MAIL_FROM:TRAKR <no-reply@trakr.local>}
+  events:
+    partitions: 3

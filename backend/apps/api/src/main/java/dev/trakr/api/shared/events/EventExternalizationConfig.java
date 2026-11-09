@@ -1,7 +1,9 @@
 package dev.trakr.api.shared.events;
 
+import dev.trakr.contracts.events.CommentEvent;
 import dev.trakr.contracts.events.EventEnvelope;
 import dev.trakr.contracts.events.IssueEvent;
+import dev.trakr.contracts.events.NotificationEvent;
 import dev.trakr.contracts.events.ProjectEvent;
 import dev.trakr.contracts.events.Topics;
 import dev.trakr.contracts.events.TrakrEvent;
@@ -31,13 +33,16 @@ class EventExternalizationConfig {
     EventExternalizationConfiguration eventExternalization() {
         return EventExternalizationConfiguration.externalizing()
                 // BLOCK 1: which events leave the process — the contracts' events, not in-process ones like ProjectCreated
-                .select(event -> event instanceof TrakrEvent)
+                .select(event -> event instanceof TrakrEvent && !(event instanceof NotificationEvent))
                 // BLOCK 2: routing, decided on the original event. The key picks the partition: same key, same
                 // partition, so one issue's (or one project's) events stay in order for every consumer.
                 .route(IssueEvent.class, event -> RoutingTarget.forTarget(Topics.ISSUES)
                         .andKey(event.aggregateId().toString()))
                 .route(ProjectEvent.class, event -> RoutingTarget.forTarget(Topics.PROJECTS)
                         .andKey(event.projectId().toString()))
+                // comments are keyed by their issue: an issue's comments stay in order (published from phase 15)
+                .route(CommentEvent.class, event -> RoutingTarget.forTarget(Topics.COMMENTS)
+                        .andKey(event.issueId().toString()))
                 // BLOCK 3: what is sent — the CloudEvents envelope around the event
                 .mapping(TrakrEvent.class, event -> EventEnvelope.wrap(event, SOURCE))
                 // BLOCK 4: headers, computed on what is sent (the envelope): consumers can route on ce_type without

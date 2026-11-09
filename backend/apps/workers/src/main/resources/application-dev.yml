@@ -1,0 +1,26 @@
+# dev profile: the local docker compose services (infra/docker-compose.yml)
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/trakr
+    # the trakr_workers role gets its grants in phase 18; until then the owner role, like the api
+    username: trakr
+    password: ${POSTGRES_PASSWORD:trakr}
+    hikari:
+      maximum-pool-size: 10
+      pool-name: trakr-workers
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  # Mailpit catches every email, UI on http://localhost:8025
+  mail:
+    host: localhost
+    port: 1025
+
+trakr:
+  admin:
+    token: dev-admin-token
+
+logging:
+  level:
+    dev.trakr: debug

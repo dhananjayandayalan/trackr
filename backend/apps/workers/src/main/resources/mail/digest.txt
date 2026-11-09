@@ -1,0 +1,9 @@
+Your TRAKR digest: {{count}} updates
+
+Hi {{userName}},
+
+Here is what happened on the issues you watch:
+
+{{lines}}
+
+-- TRAKR

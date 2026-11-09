@@ -1,0 +1,9 @@
+{{actorName}} mentioned you in {{issueKey}}
+
+Hi {{userName}},
+
+{{actorName}} mentioned you in a comment on {{issueKey}}: {{summary}}
+
+Open it: {{link}}
+
+-- TRAKR

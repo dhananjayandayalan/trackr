@@ -22,4 +22,4 @@ dependencyResolutionManagement {
 
 // BLOCK 4: the projects
 rootProject.name = "trakr"
-include("libs:kernel", "libs:contracts", "apps:api")
+include("libs:kernel", "libs:contracts", "apps:api", "apps:workers")

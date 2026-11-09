@@ -58,6 +58,11 @@ spring-boot-starter-session-data-redis = { module = "org.springframework.boot:sp
 spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail" }
 # Boot 4 keeps Kafka auto-configuration in its own module; the starter brings it and Spring for Apache Kafka
 spring-boot-starter-kafka = { module = "org.springframework.boot:spring-boot-starter-kafka" }
+# workers: plain JDBC (JdbcClient), the Elasticsearch Java client auto-configured by Boot, an in-memory cache
+spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc" }
+spring-boot-starter-elasticsearch = { module = "org.springframework.boot:spring-boot-starter-elasticsearch" }
+elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearch" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine" }
 spring-boot-starter-security-test = { module = "org.springframework.boot:spring-boot-starter-security-test" }
 bcprov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 
@@ -81,6 +86,7 @@ testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version
 testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }
 testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka" }
+testcontainers-elasticsearch = { module = "org.testcontainers:testcontainers-elasticsearch" }
 spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
 
 [bundles]

@@ -1,0 +1,9 @@
+{{actorName}} assigned {{issueKey}} to you
+
+Hi {{userName}},
+
+{{actorName}} assigned you {{issueKey}}: {{summary}}
+
+Open it: {{link}}
+
+-- TRAKR

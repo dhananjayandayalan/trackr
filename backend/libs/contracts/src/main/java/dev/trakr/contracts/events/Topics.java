@@ -12,6 +12,11 @@ public final class Topics {
     /** Key: user id; produced by workers (phase 10). */
     public static final String NOTIFICATIONS = "trakr.notifications.v1";
 
+    /** Where a consumer sends what it can't process, for a human to look at: {@code trakr.issues.v1.dlt}. */
+    public static String deadLetter(String topic) {
+        return topic + ".dlt";
+    }
+
     private Topics() {
     }
 }

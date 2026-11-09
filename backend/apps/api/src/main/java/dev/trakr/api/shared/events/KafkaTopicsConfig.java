@@ -41,6 +41,13 @@ class KafkaTopicsConfig {
         return topic(Topics.COMMENTS, WEEK);
     }
 
+    // produced by the workers; declared here too, because the api reads it for /me/stream — whichever app starts
+    // first creates it (KafkaAdmin leaves an existing topic alone)
+    @Bean
+    NewTopic notificationsTopic() {
+        return topic(Topics.NOTIFICATIONS, Duration.ofDays(3));
+    }
+
     // replication 1 locally; production overrides it with the broker default (phase 18)
     private NewTopic topic(String name, Duration retention) {
         return TopicBuilder.name(name)
