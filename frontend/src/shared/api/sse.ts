@@ -18,6 +18,7 @@ export const streamEventNames = [
   'issue.deleted',
   'issue.linked',
   'issue.work-logged',
+  'issue.description-changed',
   'comment.added',
   'comment.edited',
   'comment.deleted',

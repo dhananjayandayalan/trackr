@@ -21,12 +21,14 @@ import dev.trakr.api.project.ProjectAccess;
 import dev.trakr.api.project.ProjectAccess.Grant;
 import dev.trakr.api.project.ProjectRole;
 import dev.trakr.api.shared.web.CursorPage;
+import dev.trakr.api.shared.web.HtmlSanitizer;
 import dev.trakr.api.shared.web.TrakrException;
 import dev.trakr.api.shared.web.TrakrException.FieldMessage;
 import dev.trakr.api.workflow.WorkflowService;
 import dev.trakr.api.workflow.WorkflowStatusView;
 import dev.trakr.contracts.events.IssueCreated;
 import dev.trakr.contracts.events.IssueDeleted;
+import dev.trakr.contracts.events.IssueDescriptionChanged;
 import dev.trakr.contracts.events.IssueLinked;
 import dev.trakr.contracts.events.IssueMoved;
 import dev.trakr.contracts.events.IssueSnapshot;
@@ -35,6 +37,7 @@ import dev.trakr.contracts.events.IssueUpdated;
 import dev.trakr.contracts.events.WorkLogged;
 import dev.trakr.kernel.Rank;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -47,6 +50,8 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -68,6 +73,10 @@ public class IssueService {
 
     private static final Pattern ISSUE_KEY = Pattern.compile("^([A-Z]{2,6})-([1-9][0-9]{0,17})$");
     private static final int HISTORY_PAGE = 50;
+    /** 09-security §4: description HTML up to 200 kB. */
+    private static final int MAX_DESCRIPTION_HTML = 200 * 1024;
+    private static final Duration DESCRIPTION_HISTORY_WINDOW = Duration.ofMinutes(10);
+    private static final Logger log = LoggerFactory.getLogger(IssueService.class);
 
     private final IssueRepository issues;
     private final IssueLinkRepository links;
@@ -498,6 +507,42 @@ public class IssueService {
     @Transactional
     public void recordComment(UUID issueId, UUID actorId, UUID commentId) {
         issues.findById(issueId).ifPresent(issue -> history.commented(issue, actorId, commentId));
+    }
+
+    // BLOCK: collaborative editing (phase 16) — the description from a collab snapshot
+
+    /**
+     * Stores the description a collab snapshot carries (06-collab §4 step 5), called by DescriptionSnapshotConsumer.
+     * The HTML comes from a browser, so it is sanitised with the same allow-list as comments, and the text is taken
+     * from the sanitised HTML rather than from the snapshot's own text: what search finds is exactly what the page
+     * shows. Unchanged → nothing written, no version bump, no event.
+     *
+     * <p>No access check: collab checked the user's role when the socket opened, and only members are ever asked
+     * for snapshots. Not a REST path, so no If-Match either — the CRDT already merged everyone's edits.
+     */
+    @Transactional
+    public void applyDescriptionSnapshot(UUID issueId, UUID actorId, String html) {
+        Issue issue = issues.findById(issueId).filter(candidate -> !candidate.isDeleted()).orElse(null);
+        if (issue == null) {
+            return;
+        }
+        String sanitized = HtmlSanitizer.sanitize(html);
+        String text = HtmlSanitizer.text(sanitized);
+        if (sanitized.length() > MAX_DESCRIPTION_HTML) {
+            log.warn("description snapshot for {} is {} characters after sanitising; not stored", issue.key(),
+                    sanitized.length());
+            return;
+        }
+        // an emptied editor still produces "<p></p>": no text means no description
+        String newHtml = text.isEmpty() ? null : sanitized;
+        String newText = text.isEmpty() ? null : text;
+        String oldText = issue.descriptionText();
+        if (!issue.replaceDescription(newHtml, newText, clock)) {
+            return;
+        }
+        issues.flush();
+        history.descriptionEdited(issue, actorId, oldText, newText, DESCRIPTION_HISTORY_WINDOW);
+        events.publishEvent(IssueDescriptionChanged.of(clock.instant(), actorId, newText, newHtml, issue.snapshot()));
     }
 
     private static IssueHandle handle(Grant grant, Issue issue) {

@@ -58,6 +58,9 @@ export default defineConfig(({ command }) => ({
   build: {
     target: 'baseline-widely-available',
     sourcemap: true,
+    // the `editor` chunk (Tiptap + ProseMirror + Yjs, phase 16) is ~530 kB minified, ~170 kB gzipped. It is
+    // already split off and only loads when an issue opens, so the default 500 kB warning has nothing left to say.
+    chunkSizeWarningLimit: 600,
     cssMinify: 'lightningcss',
     rolldownOptions: {
       output: {

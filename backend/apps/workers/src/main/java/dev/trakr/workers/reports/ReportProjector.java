@@ -1,9 +1,11 @@
 package dev.trakr.workers.reports;
 
+import dev.trakr.contracts.events.CollabEvent;
 import dev.trakr.contracts.events.CommentEvent;
 import dev.trakr.contracts.events.EventEnvelope;
 import dev.trakr.contracts.events.IssueCreated;
 import dev.trakr.contracts.events.IssueDeleted;
+import dev.trakr.contracts.events.IssueDescriptionChanged;
 import dev.trakr.contracts.events.IssueLinked;
 import dev.trakr.contracts.events.IssueMoved;
 import dev.trakr.contracts.events.IssueTransitioned;
@@ -74,9 +76,12 @@ class ReportProjector {
             case IssueDeleted e -> recomputeAll(sprintOf(e.issueId()));
             case IssueLinked e -> { }
             case WorkLogged e -> { }
+            // the description is in no report
+            case IssueDescriptionChanged e -> { }
             case ProjectLifecycle e -> { }
             case CommentEvent e -> { }
             case NotificationEvent e -> { }
+            case CollabEvent e -> { }
         }
     }
 

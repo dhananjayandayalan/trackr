@@ -22,6 +22,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.security.web.authentication.SpringSessionRememberMeServices;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -123,6 +124,10 @@ class AuthController {
             session.setMaxInactiveInterval((int) REMEMBER_ME.toSeconds());
             request.setAttribute(SpringSessionRememberMeServices.REMEMBER_ME_LOGIN_ATTR, true);
         }
+
+        // 4. the user id as a plain string attribute: the collab app reads it from Redis to know who opened a socket,
+        // without deserialising the SecurityContext (06-collab §5). Spring Session also indexes the session by it.
+        session.setAttribute(FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME, authentication.getName());
 
         // 2. without saveContext the login would only last for this one request
         SecurityContext context = securityContextHolderStrategy.createEmptyContext();

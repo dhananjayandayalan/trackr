@@ -83,7 +83,8 @@ Topics are declared as `NewTopic` beans in the producing app (`TopicBuilder.name
 | `trakr.sprint.started.v1` / `.completed.v1` / `.updated.v1` / `.created.v1` | projects      | `SprintSnapshot` (+ `report` on completed)                          |
 | `trakr.sprint.deleted.v1` (added in phase 08)                               | projects      | `SprintSnapshot` of the deleted planned sprint                      |
 | `trakr.notification.created.v1`                                             | notifications | `{notificationId,userId,kind,issueKey,actorName,summary}`           |
-| `trakr.collab.update.v1`                                                    | collab        | `{issueId, update: base64, originInstance, clientId}`               |
+| `trakr.collab.update.v1`                                                    | collab        | `{issueId, update: base64, originInstance, clientId, updateId}`     |
+| `trakr.collab.awareness.v1`                                                 | collab        | `{issueId, awareness: base64, originInstance}` (relay only)         |
 | `trakr.collab.snapshot.v1`                                                  | collab        | `{issueId, text, html, uptoUpdateId}`                               |
 
 `IssueSnapshot` = every field the search index and board need (see 05-search §2). Snapshots make consumers simple: they never call back into the api.

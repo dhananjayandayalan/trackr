@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.session.FindByIndexNameSessionRepository;
 
 /**
  * Where the browser lands after an OAuth2 login. The SPA starts the flow with
@@ -45,6 +46,8 @@ final class OAuthRedirects {
         Object next = session == null ? null : session.getAttribute(NEXT);
         if (session != null) {
             session.removeAttribute(NEXT);
+            // the user id as a plain attribute, for the collab app (like AuthController.startSession)
+            session.setAttribute(FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME, authentication.getName());
         }
         response.sendRedirect(next instanceof String path && isSameOriginPath(path) ? path : "/");
     }

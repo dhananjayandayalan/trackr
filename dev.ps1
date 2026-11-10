@@ -3,11 +3,11 @@
   Runs the whole TRAKR dev stack with one command.
 
 .DESCRIPTION
-  .\dev.ps1            start containers, api, workers and Vite; Ctrl+C stops all of them
+  .\dev.ps1            start containers, api, collab, workers and Vite; Ctrl+C stops all of them
   .\dev.ps1 stop       stop everything (e.g. after the window was closed instead of Ctrl+C)
 
   Containers are stopped, never removed: Postgres, Kafka and Elasticsearch data survive.
-  App logs go to .dev-logs\ (api.log, workers.log, web.log).
+  App logs go to .dev-logs\ (api.log, collab.log, workers.log, web.log).
 
 .PARAMETER KeepInfra
   Leave the containers running on exit, so the next start is faster.
@@ -26,7 +26,7 @@ $infra    = Join-Path $root 'infra'
 $backend  = Join-Path $root 'backend'
 $frontend = Join-Path $root 'frontend'
 $logs     = Join-Path $root '.dev-logs'
-$appPorts = 8080, 8082, 5173
+$appPorts = 8080, 8081, 8082, 5173
 $apps     = New-Object System.Collections.ArrayList
 
 # BLOCK 1: helpers
@@ -45,7 +45,7 @@ function Get-StackProcess {
   $vite = Join-Path $frontend 'node_modules\.bin\*\vite\bin\vite.js'
   Get-CimInstance Win32_Process -Filter "Name='java.exe' or Name='node.exe'" | Where-Object {
     $_.CommandLine -and (
-      $_.CommandLine -match 'dev\.trakr\.(api\.ApiApplication|workers\.WorkersApplication)\b' -or
+      $_.CommandLine -match 'dev\.trakr\.(api\.ApiApplication|collab\.CollabApplication|workers\.WorkersApplication)\b' -or
       $_.CommandLine -like "*$vite*")
   }
 }
@@ -133,6 +133,9 @@ try {
   # the api runs the Flyway migrations, so it must be up before the workers read the schema
   $api = Start-App 'api' $backend "$gradlew :apps:api:bootRun --console=plain" 8080
   Wait-App $api 600
+  # collab reads the issue tables the api's migrations create (and the api's sessions in Redis)
+  $collab = Start-App 'collab' $backend "$gradlew :apps:collab:bootRun --console=plain" 8081
+  Wait-App $collab 600
   if (-not $NoWorkers) {
     $workers = Start-App 'workers' $backend "$gradlew :apps:workers:bootRun --console=plain" 8082
     Wait-App $workers 600
@@ -145,6 +148,7 @@ try {
   Write-Host '  UI gallery       http://localhost:5173/_ui'
   Write-Host '  Swagger UI       http://localhost:8080/swagger-ui.html'
   Write-Host '  API health       http://localhost:8080/actuator/health'
+  Write-Host '  Collab health    http://localhost:8081/actuator/health'
   if (-not $NoWorkers) { Write-Host '  Workers health   http://localhost:8082/actuator/health' }
   Write-Host '  Mailpit          http://localhost:8025'
   Write-Host '  Elasticsearch    http://localhost:9200'

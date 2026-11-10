@@ -1,0 +1,67 @@
+# BLOCK 1: identity
+spring:
+  application:
+    name: trakr-collab
+  profiles:
+    default: dev
+  # every WebSocket frame is handled on a Tomcat worker; with this on, those are virtual threads, so a frame
+  # waiting on Postgres parks cheaply instead of holding a platform thread
+  threads:
+    virtual:
+      enabled: true
+  # BLOCK 2: kafka. Values are the CloudEvents envelope as JSON, like every other producer (04-events §3).
+  # The consumer takes raw bytes: CollabRelay routes on the ce_type header and parses only what it needs.
+  kafka:
+    bootstrap-servers: ${TRAKR_KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      compression-type: zstd
+      properties:
+        enable.idempotence: true
+        linger.ms: 5
+        # never block a socket's thread for long when Kafka is down: a relay message is worth 5 s at most
+        max.block.ms: 5000
+        spring.json.add.type.headers: false
+    consumer:
+      enable-auto-commit: false
+      isolation-level: read_committed
+      # a relay group is new on every start (its name has the instance id): only what happens from now on matters
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+      max-poll-records: 50
+    listener:
+      ack-mode: record
+  # BLOCK 3: the app only reads and writes rows; the api's Flyway owns the schema
+  sql:
+    init:
+      mode: never
+
+# BLOCK 4: server. WebSockets upgrade from plain HTTP on this port; actuator shares it (01-architecture §2)
+server:
+  port: 8081
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+# BLOCK 5: our properties (CollabProperties)
+trakr:
+  app:
+    # browsers on other origins can't open a socket: the handshake's Origin header must be one of these
+    origin: ${TRAKR_APP_ORIGIN:http://localhost:5173}
+  session:
+    # the api's session cookie and Redis namespace (apps/api application.yml): one login for REST, SSE and here
+    cookie-name: TRAKR_SESSION
+    namespace: trakr:session
+  events:
+    partitions: 3

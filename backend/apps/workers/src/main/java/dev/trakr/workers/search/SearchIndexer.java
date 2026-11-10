@@ -7,10 +7,12 @@ import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
 import co.elastic.clients.json.JsonData;
+import dev.trakr.contracts.events.CollabEvent;
 import dev.trakr.contracts.events.CommentEvent;
 import dev.trakr.contracts.events.EventEnvelope;
 import dev.trakr.contracts.events.IssueCreated;
 import dev.trakr.contracts.events.IssueDeleted;
+import dev.trakr.contracts.events.IssueDescriptionChanged;
 import dev.trakr.contracts.events.IssueLinked;
 import dev.trakr.contracts.events.IssueMoved;
 import dev.trakr.contracts.events.IssueSnapshot;
@@ -95,6 +97,8 @@ class SearchIndexer {
                 case IssueUpdated e -> upserts.add(e.snapshot());
                 case IssueTransitioned e -> upserts.add(e.snapshot());
                 case IssueMoved e -> upserts.add(e.snapshot());
+                // a collab snapshot changed the description: its snapshot has the new descriptionText (phase 16)
+                case IssueDescriptionChanged e -> upserts.add(e.snapshot());
                 case IssueDeleted e -> deletes.add(e);
                 // no snapshot, and nothing the index shows changed; the next snapshot event carries everything
                 case IssueLinked e -> { }
@@ -107,6 +111,8 @@ class SearchIndexer {
                 case ProjectLifecycle e -> { }
                 case SprintEvent e -> sprints.put(e.snapshot().id(), e.snapshot());
                 case NotificationEvent e -> { }
+                // collab's relay traffic is on its own topic, which the indexer doesn't read
+                case CollabEvent e -> { }
             }
         }
 

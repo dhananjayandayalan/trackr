@@ -122,6 +122,8 @@ export function projectHandlers(
     'issue.updated': onIssue,
     'issue.moved': onIssue,
     'issue.transitioned': onIssue,
+    // a collab snapshot was stored (phase 16): an open issue page refetches, which is what turns "Saving…" into "Saved"
+    'issue.description-changed': onIssue,
     'issue.deleted': (data) => {
       const event = deletedEvent.safeParse(data)
       if (event.success) {

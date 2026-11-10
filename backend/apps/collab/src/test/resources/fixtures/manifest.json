@@ -1,0 +1,37 @@
+{
+  "varUints": [
+    0,
+    127,
+    128,
+    300,
+    4294967296
+  ],
+  "varString": "Grüße aus MAR-131 ✓",
+  "awarenessTwoClients": [
+    {
+      "clientId": 1001,
+      "clock": 1,
+      "json": "{\"user\":{\"name\":\"Ada Lovelace\",\"avatar\":\"violet\"}}"
+    },
+    {
+      "clientId": 2002,
+      "clock": 1,
+      "json": "{\"user\":{\"name\":\"Grace Hopper\",\"avatar\":\"cyan\"}}"
+    }
+  ],
+  "awarenessLeft": [
+    {
+      "clientId": 2002,
+      "clock": 1,
+      "json": "null"
+    }
+  ],
+  "checkpoint": {
+    "uptoUpdateId": 42
+  },
+  "snapshot": {
+    "uptoUpdateId": 42,
+    "text": "Hello world",
+    "html": "<p>Hello world</p>"
+  }
+}

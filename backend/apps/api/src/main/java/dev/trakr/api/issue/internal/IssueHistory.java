@@ -3,6 +3,7 @@ package dev.trakr.api.issue.internal;
 import dev.trakr.api.issue.internal.IssueEventRecord.Kind;
 import dev.trakr.api.workflow.WorkflowStatusView;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,21 @@ public class IssueHistory {
         created.put("type", issue.type().value());
         created.put("summary", issue.summary());
         save(issue, actorId, Kind.CREATED, null, null, created);
+    }
+
+    /**
+     * The description changed through the collaborative editor. A snapshot arrives every few seconds of typing, and a
+     * row for each would bury everything else in the History tab, so at most one row per user per 10 minutes
+     * (06-collab §4 step 5): old = the text before that user's first change in the window, new = the text then.
+     * History stays append-only (issue_event is immutable); later edits in the window show in the description itself.
+     */
+    public void descriptionEdited(Issue issue, UUID actorId, @Nullable String oldText, @Nullable String newText,
+            Duration window) {
+        boolean recent = events.existsByIssueIdAndActorIdAndKindAndFieldAndOccurredAtAfter(issue.id(), actorId,
+                Kind.FIELD_CHANGED.value(), "description", clock.instant().minus(window));
+        if (!recent) {
+            save(issue, actorId, Kind.FIELD_CHANGED, "description", oldText, newText);
+        }
     }
 
     /** One row per changed field, so the History tab can show "Priority: Medium → High". */

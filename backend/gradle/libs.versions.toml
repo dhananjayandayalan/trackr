@@ -63,6 +63,8 @@ spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-star
 spring-boot-starter-elasticsearch = { module = "org.springframework.boot:spring-boot-starter-elasticsearch" }
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearch" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine" }
+# collab (phase 16): WebSocket endpoints on the servlet stack (Tomcat), plus Spring's WebSocket client for its tests
+spring-boot-starter-websocket = { module = "org.springframework.boot:spring-boot-starter-websocket" }
 # TQL: the ANTLR tool generates the parser at build time; only the small runtime ships in the jar
 antlr-tool = { module = "org.antlr:antlr4", version.ref = "antlr" }
 antlr-runtime = { module = "org.antlr:antlr4-runtime", version.ref = "antlr" }

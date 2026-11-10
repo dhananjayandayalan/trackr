@@ -1,0 +1,130 @@
+@layer components {
+  /* BLOCK 1: the frame — looks like the read-only description until you click into it */
+  .editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .empty {
+    font: var(--text-body-sm);
+    color: var(--text-muted);
+  }
+
+  .status {
+    min-block-size: 1rem;
+    font: var(--text-caption);
+    color: var(--text-muted);
+
+    &[data-state='offline'] {
+      color: var(--color-danger-text);
+    }
+  }
+
+  /* BLOCK 2: the editable area (ProseMirror's root gets this class through editorProps) */
+  .content {
+    min-block-size: var(--control-lg);
+    padding: var(--space-2) var(--space-3);
+    margin-inline: calc(-1 * var(--space-3));
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius-md);
+    outline: none;
+
+    .editor[data-editable='true'] &:hover {
+      border-color: var(--line);
+    }
+
+    &:focus-visible {
+      border-color: var(--color-focus);
+      box-shadow: var(--shadow-2);
+    }
+  }
+
+  /* carets: a 2px bar in the person's colour, their name above it */
+  .caret {
+    position: relative;
+    margin-inline: -1px;
+    border-inline-start: 1px solid var(--caret-color);
+    border-inline-end: 1px solid var(--caret-color);
+    word-break: normal;
+    pointer-events: none;
+  }
+
+  .caretLabel {
+    position: absolute;
+    inset-block-end: 100%;
+    inset-inline-start: -1px;
+    padding: 0 var(--space-1);
+    font: var(--text-mono-sm);
+    color: var(--color-ink);
+    white-space: nowrap;
+    user-select: none;
+    background: var(--caret-color);
+    border-radius: var(--radius-sm) var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  .selection {
+    background: color-mix(in oklch, var(--caret-color) 30%, transparent);
+  }
+}
+
+/* BLOCK 3: what is typed, only inside the editor: @scope keeps these element rules from reaching anything else on
+   the page (a `p` here is not every `p`), without inventing a class for each element */
+@layer components {
+  @scope (.editor) {
+    p,
+    ul,
+    ol,
+    pre {
+      font: var(--text-body);
+      overflow-wrap: anywhere;
+    }
+
+    :where(p, ul, ol, pre) + :where(p, ul, ol, pre) {
+      margin-block-start: var(--space-2);
+    }
+
+    ul,
+    ol {
+      padding-inline-start: var(--space-6);
+    }
+
+    ul {
+      list-style: disc;
+    }
+
+    ol {
+      list-style: decimal;
+    }
+
+    code,
+    pre {
+      font: var(--text-mono-sm);
+      background: var(--surface-sunken);
+      border-radius: var(--radius-sm);
+    }
+
+    code {
+      padding-inline: var(--space-1);
+    }
+
+    pre {
+      padding: var(--space-2) var(--space-3);
+      white-space: pre-wrap;
+
+      & code {
+        padding: 0;
+        background: none;
+      }
+    }
+
+    a {
+      color: var(--color-primary);
+      text-decoration: underline;
+    }
+
+    strong {
+      font-weight: 800;
+    }
+  }
+}

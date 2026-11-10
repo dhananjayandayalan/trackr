@@ -48,6 +48,12 @@ class KafkaTopicsConfig {
         return topic(Topics.NOTIFICATIONS, Duration.ofDays(3));
     }
 
+    // produced by collab (phase 16); declared here too because the api consumes its snapshots
+    @Bean
+    NewTopic collabTopic() {
+        return topic(Topics.COLLAB, Duration.ofHours(1));
+    }
+
     // replication 1 locally; production overrides it with the broker default (phase 18)
     private NewTopic topic(String name, Duration retention) {
         return TopicBuilder.name(name)

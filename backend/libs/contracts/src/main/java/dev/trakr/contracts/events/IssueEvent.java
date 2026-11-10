@@ -5,7 +5,8 @@ package dev.trakr.contracts.events;
  * event about one issue goes to the same partition, so consumers see them in the order they happened.
  */
 public sealed interface IssueEvent extends TrakrEvent
-        permits IssueCreated, IssueUpdated, IssueTransitioned, IssueMoved, IssueDeleted, IssueLinked, WorkLogged {
+        permits IssueCreated, IssueUpdated, IssueTransitioned, IssueMoved, IssueDeleted, IssueLinked, WorkLogged,
+        IssueDescriptionChanged {
 
     @Override
     default String subject() {

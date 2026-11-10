@@ -11,6 +11,8 @@ public final class Topics {
     public static final String COMMENTS = "trakr.comments.v1";
     /** Key: user id; produced by workers (phase 10). */
     public static final String NOTIFICATIONS = "trakr.notifications.v1";
+    /** Key: issue id; produced by collab (phase 16): the cross-instance relay and description snapshots. */
+    public static final String COLLAB = "trakr.collab.v1";
 
     /** Where a consumer sends what it can't process, for a human to look at: {@code trakr.issues.v1.dlt}. */
     public static String deadLetter(String topic) {

@@ -317,7 +317,25 @@ public class Issue {
         }
     }
 
-    // the description arrives as plain text until the collaborative editor (phase 16) sends sanitised HTML
+    /**
+     * The description from a collaborative-editing snapshot (phase 16): HTML the api already sanitised, and the text
+     * of that HTML. Returns false when both equal what is stored — then nothing is written and the version stays.
+     */
+    public boolean replaceDescription(@Nullable String html, @Nullable String text, Clock clock) {
+        if (Objects.equals(html, descriptionHtml) && Objects.equals(text, descriptionText)) {
+            return false;
+        }
+        descriptionHtml = html;
+        descriptionText = text;
+        touch(clock);
+        return true;
+    }
+
+    public @Nullable String descriptionText() {
+        return descriptionText;
+    }
+
+    // a description from the create dialog or PATCH arrives as plain text; the collaborative editor sends HTML
     private void setDescription(@Nullable String text) {
         descriptionText = descriptionOf(text);
         descriptionHtml = descriptionText == null ? null : PlainTextHtml.of(descriptionText);

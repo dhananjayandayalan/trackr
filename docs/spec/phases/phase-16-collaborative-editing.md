@@ -16,12 +16,12 @@
 
 0. api migration `V012__collab.sql` (collab_update, collab_snapshot — 02-data-model §5)
 1. `settings.gradle.kts` → `include("apps:collab")`
-2. `apps/collab/build.gradle.kts`: spring-app plugin; WebSocket starter; JDBC starter + postgresql; Spring Session Data Redis + Data Redis (read the shared session); Spring Kafka; Actuator; contracts
+2. `apps/collab/build.gradle.kts`: spring-app plugin; WebSocket starter; JDBC starter + postgresql; Data Redis (reads the shared session's hash directly — no Spring Session dependency); Spring Kafka; Actuator; contracts
 3. `CollabApplication.java`, `application.yml` (port 8081, same Redis session namespace as api, `trakr.app.origin`)
 4. `protocol/Lib0Decoder.java`, `protocol/Lib0Encoder.java` + tests against fixtures
 5. `protocol/Messages.java` — constants and small records for parsed messages (`SyncStep1`, `SyncStep2`, `Update`, `Awareness`, `QueryAwareness`, `TrakrSnapshot`) + `MessageReader` (bytes → message) and `MessageWriter` (message → bytes)
 6. `protocol/AwarenessCodec.java` — decode client ids/clocks; encode "client left" (`null` state)
-7. `security/SessionAuthHandshakeInterceptor.java` — resolve `TRAKR_SESSION` via `FindByIndexNameSessionRepository`/`SessionRepository`, read the `SecurityContext` from session attributes, check origin, load issue + membership via `JdbcClient`
+7. `security/SessionAuthHandshakeInterceptor.java` — resolve `TRAKR_SESSION` in Redis (`security/SessionReader.java`: the session hash's user-id attribute, which the api sets at login, not the `SecurityContext` — see 06-collab §5), Origin checked by `setAllowedOrigins`, issue + membership via `JdbcClient` (`security/IssueAccess.java`)
 8. `store/CollabStore.java` (`appendUpdate`, `loadSnapshot`, `loadUpdatesAfter`, `saveSnapshotAndCompact`)
 9. `room/Room.java`, `room/RoomRegistry.java`, `room/CheckpointScheduler.java`
 10. `ws/CollabWebSocketHandler.java` (`BinaryWebSocketHandler`) + `ws/WebSocketConfig.java` (`/collab/issues/{issueKey}`, allowed origins, max binary message size 1 MiB)

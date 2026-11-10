@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { useState, type SubmitEvent } from 'react'
+import { lazy, Suspense, useState, type SubmitEvent } from 'react'
 import { projectQuery } from '@/features/projects/queries.ts'
 import type { IssueDetails } from '@/shared/api/types.ts'
 import { focusOnMount } from '@/shared/lib/focus.ts'
@@ -18,6 +18,12 @@ import { StatusButton } from './StatusButton.tsx'
 import { Subtasks } from './Subtasks.tsx'
 import { TimeTracking } from './TimeTracking.tsx'
 import styles from './IssueView.module.css'
+
+// Tiptap + Yjs are big and only needed here: a separate chunk (vite.config `editor` group), fetched when an issue
+// opens. React.lazy wants a default export; our modules export by name, so the import maps it.
+const DescriptionEditor = lazy(() =>
+  import('@/features/collab/DescriptionEditor.tsx').then((module) => ({ default: module.DescriptionEditor })),
+)
 
 /**
  * The issue, wherever it is shown: the side panel over the board (IssuePanel) and the full page (IssuePage)
@@ -43,12 +49,18 @@ export function IssueView({ issueKey, onClose }: { issueKey: string; onClose?: (
             <h3 id={`${issue.key}-description`} className={styles.sectionTitle}>
               Description
             </h3>
-            {/* read-only until phase 16 makes it a collaborative editor */}
-            {issue.descriptionHtml ? (
-              <SafeHtml html={issue.descriptionHtml} />
-            ) : (
-              <p className={styles.muted}>No description.</p>
-            )}
+            {/* the stored HTML while the editor's chunk loads, then the live shared document (phase 16) */}
+            <Suspense
+              fallback={
+                issue.descriptionHtml ? (
+                  <SafeHtml html={issue.descriptionHtml} />
+                ) : (
+                  <p className={styles.muted}>No description.</p>
+                )
+              }
+            >
+              <DescriptionEditor key={issue.key} issue={issue} canEdit={canEdit} />
+            </Suspense>
           </section>
           <Attachments issue={issue} canEdit={canEdit} isAdmin={isAdmin} />
           <Subtasks issue={issue} canEdit={canEdit} />

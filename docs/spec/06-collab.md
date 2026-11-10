@@ -32,6 +32,9 @@ All messages are **binary WebSocket frames** encoded with lib0 encoding:
 | 3 `queryAwareness`           | —                         | —                                                                         | "Send me everyone's awareness"                                               |
 | 101 `trakrCheckpoint` (ours) | —                         | varUint uptoUpdateId                                                      | Server asks this client for a snapshot (§4)                                  |
 | 102 `trakrSnapshot` (ours)   | —                         | varUint uptoUpdateId, varUint8Array state, varString text, varString html | Client's reply                                                               |
+| 103 `trakrSeed` (ours)       | —                         | —                                                                         | Server → one member: "this document is new, fill it from the issue's HTML"  |
+
+`trakrSeed` (added in phase 16): an issue whose description was written before collaborative editing has no Yjs document. The first member to join a room with nothing stored (no snapshot, no updates) gets this message after step 3; if its document is still empty it calls `editor.commands.setContent(issue.descriptionHtml)`, which becomes an ordinary update for everyone else. Exactly one client per room is chosen (released again if it leaves before anything was stored), so the old description is never inserted twice.
 
 Awareness update payload: `varUint count`, then per entry `varUint clientId`, `varUint clock`, `varString json` (`"null"` means "this client left").
 
@@ -43,6 +46,7 @@ On open (after auth, §5):
 2. Load `collab_snapshot.state` (or the empty update `0x00 0x00` if none) and send it as `sync/syncStep2` → the client becomes _synced_.
 3. Send every `collab_update` with `id > snapshot.upto_update_id`, in id order, as `sync/update`.
 4. Send `awareness` for all other connected clients in this room.
+5. If the stored updates reach past the snapshot (everyone left before a checkpoint, or collab restarted) and the newcomer is a member, schedule a checkpoint (§4) — so the description reaches the api without waiting for the next edit.
 
 On message:
 
@@ -70,6 +74,7 @@ Late-arriving or duplicated snapshot with `upto ≤ current snapshot.upto` → i
 ## 5. Security
 
 - The WebSocket handshake carries the `TRAKR_SESSION` cookie. collab reads the session from the **same Redis** (Spring Session) — no tokens in URLs.
+  At every login the api stores the user id as the plain string attribute `FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME`. collab reads only `lastAccessedTime`, `maxInactiveInterval` and that attribute from the session hash (`trakr:session:sessions:<id>`, the cookie value is the id in base64), deserialising them with an `ObjectInputFilter` that admits String/Long/Integer only. It never loads the SecurityContext: that would need the api's `TrakrPrincipal`, Spring Security and OAuth2 classes on collab's classpath.
 - Origin check: allow only the configured app origin(s).
 - After auth, check `project_member` for the issue's project (read-only query). Viewers get read-only rooms: their update frames are dropped and they never receive checkpoints.
 - Per-connection limits: 30 update frames/s, 1 MiB per frame, 50 connections per user.
