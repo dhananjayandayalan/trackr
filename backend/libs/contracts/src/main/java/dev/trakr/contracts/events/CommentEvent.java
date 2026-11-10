@@ -63,6 +63,14 @@ public sealed interface CommentEvent extends TrakrEvent {
             mentionedUserIds = List.copyOf(mentionedUserIds);
         }
 
+        /** {@code version}: the comment's version after the edit. */
+        public static CommentEdited of(Instant occurredAt, UUID workspaceId, UUID projectId, UUID commentId,
+                UUID issueId, String issueKey, UUID authorId, String bodyText, List<UUID> mentionedUserIds,
+                long version) {
+            return new CommentEdited(Ids.newId(), occurredAt, authorId, workspaceId, projectId, commentId, issueId,
+                    issueKey, authorId, bodyText, mentionedUserIds, version);
+        }
+
         @Override
         public String type() {
             return EventTypes.COMMENT_EDITED;
@@ -75,6 +83,13 @@ public sealed interface CommentEvent extends TrakrEvent {
 
         public CommentDeleted {
             mentionedUserIds = List.copyOf(mentionedUserIds);
+        }
+
+        /** The actor may be a project admin removing someone else's comment; {@code authorId} stays the author. */
+        public static CommentDeleted of(Instant occurredAt, UUID actorId, UUID workspaceId, UUID projectId,
+                UUID commentId, UUID issueId, String issueKey, UUID authorId, long version) {
+            return new CommentDeleted(Ids.newId(), occurredAt, actorId, workspaceId, projectId, commentId, issueId,
+                    issueKey, authorId, "", List.of(), version);
         }
 
         @Override

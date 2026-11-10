@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { CreateIssueHost } from '@/features/issue/CreateIssueDialog.tsx'
 import { TopNav } from './TopNav.tsx'
 import styles from './AppShell.module.css'
 
@@ -21,6 +22,8 @@ export function AppShell({ sidebar, children }: { sidebar?: ReactNode; children:
         <main id="main" className={styles.main} tabIndex={-1}>
           {children}
         </main>
+        {/* one Create Issue dialog for every screen: the top nav's Create button and the c shortcut open it */}
+        <CreateIssueHost />
       </div>
     </div>
   )

@@ -1,14 +1,14 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { useId } from 'react'
 import { useLogout } from '@/features/auth/mutations.ts'
+import { openCreateIssue } from '@/features/issue/create-issue-store.ts'
 import { meQuery } from '@/features/auth/queries.ts'
 import { Avatar } from '@/shared/ui/Avatar.tsx'
 import { avatarColor } from '@/shared/ui/AvatarGroup.tsx'
 import { Button } from '@/shared/ui/Button.tsx'
 import { Icon } from '@/shared/ui/Icon.tsx'
 import { Kbd } from '@/shared/ui/Kbd.tsx'
-import { showToast } from '@/shared/ui/Toast.tsx'
 import styles from './TopNav.module.css'
 
 /** 00-product §3.13: Your work, Projects, Issues, Dashboards, Create, search, notifications, help, settings, profile. */
@@ -19,6 +19,7 @@ export function TopNav() {
   const menuId = useId()
   const logout = useLogout()
   const navigate = useNavigate()
+  const { projectKey } = useParams({ strict: false })
 
   return (
     <header className={styles.root}>
@@ -58,7 +59,10 @@ export function TopNav() {
         variant="primary"
         icon="plus"
         className={styles.create}
-        onClick={() => showToast('Creating issues arrives in phase 15.')}
+        aria-keyshortcuts="c"
+        onClick={() => {
+          openCreateIssue({ projectKey })
+        }}
       >
         Create
       </Button>

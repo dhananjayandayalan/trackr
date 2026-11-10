@@ -38,3 +38,22 @@ export type IssueDetails = Schemas['IssueDetails']
 export type MoveRequest = Schemas['MoveRequest']
 export type MoveResult = Schemas['MoveResult']
 export type IssueTypeValue = Schemas['CreateIssueRequest']['type']
+
+// issue detail, comments, attachments (phase 15)
+export type IssueRef = Schemas['IssueRef']
+export type LinkView = Schemas['LinkView']
+export type LinkType = LinkView['type']
+export type HistoryItem = Schemas['HistoryItem']
+export type WorklogView = Schemas['WorklogView']
+export type StatusView = Schemas['WorkflowStatusView']
+export type IssuePriority = IssueDetails['priority']
+export type CreateIssueRequest = Schemas['CreateIssueRequest']
+/**
+ * A merge patch (03-api §1): any subset of the editable fields. The generated record marks some fields
+ * required because the Java record documents the full shape; a patch sends only what changed.
+ */
+export type IssuePatch = Partial<Schemas['IssuePatchRequest']>
+export type Comment = Schemas['Comment']
+export type CommentPage = Schemas['CursorPageComment']
+export type Attachment = Schemas['Attachment']
+export type UploadTicket = Schemas['UploadTicket']

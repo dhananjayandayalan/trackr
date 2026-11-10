@@ -34,6 +34,12 @@ springdoc:
   swagger-ui:
     enabled: true
 
+# BLOCK 14: SeaweedFS's dev identity (infra/seaweedfs/s3.json)
+trakr:
+  s3:
+    access-key: ${S3_ACCESS_KEY:trakr-dev}
+    secret-key: ${S3_SECRET_KEY:change-me-dev-secret}
+
 logging:
   level:
     dev.trakr: debug

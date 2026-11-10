@@ -75,6 +75,11 @@ public class IssueHistory {
         save(issue, actorId, Kind.LINKED, label, oldLink, newLink);
     }
 
+    /** For "Worked on" and the activity feed; the comment itself lives in the comment module. */
+    public void commented(Issue issue, UUID actorId, UUID commentId) {
+        save(issue, actorId, Kind.COMMENTED, null, null, Map.of("commentId", commentId.toString()));
+    }
+
     public void loggedWork(Issue issue, UUID actorId, UUID worklogId, int minutes) {
         save(issue, actorId, Kind.LOGGED_WORK, null, null,
                 Map.of("worklogId", worklogId.toString(), "minutes", minutes));

@@ -101,10 +101,13 @@ function BoardCard({
       ref={ref}
       issueKey={card.key}
       title={
-        // draggable={false}: a link is draggable on its own, and would win over the card
+        // draggable={false}: a link is draggable on its own, and would win over the card.
+        // Same page, plus ?issue=KEY: the side panel slides in over the board (a view transition)
         <Link
-          to="/p/$projectKey/issues/$issueKey"
-          params={{ projectKey, issueKey: card.key }}
+          to="/p/$projectKey/board"
+          params={{ projectKey }}
+          search={(prev) => ({ ...prev, issue: card.key })}
+          viewTransition
           draggable={false}
         >
           {card.summary}

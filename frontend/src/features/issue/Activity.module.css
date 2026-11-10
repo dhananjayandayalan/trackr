@@ -1,0 +1,67 @@
+@layer components {
+  .root {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tab {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding-block-start: var(--space-4);
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-3);
+  }
+
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-inline-size: 0;
+  }
+
+  .meta {
+    font: var(--text-body-sm);
+
+    & time {
+      color: var(--text-muted);
+    }
+  }
+
+  .edited {
+    color: var(--text-muted);
+  }
+
+  .itemActions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font: var(--text-body-sm);
+  }
+
+  .sentence {
+    font: var(--text-body-sm);
+  }
+
+  .note {
+    margin-block-start: var(--space-1);
+    font: var(--text-body-sm);
+    color: var(--text-muted);
+  }
+
+  .muted {
+    font: var(--text-body-sm);
+    color: var(--text-muted);
+  }
+}

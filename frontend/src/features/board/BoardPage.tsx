@@ -2,6 +2,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { Link, getRouteApi } from '@tanstack/react-router'
 import { useRef, useState, type ReactNode } from 'react'
 import { meQuery } from '@/features/auth/queries.ts'
+import { IssuePanel } from '@/features/issue/IssuePanel.tsx'
 import { projectQuery } from '@/features/projects/queries.ts'
 import { buttonClass } from '@/shared/ui/Button.tsx'
 import { EmptyState } from '@/shared/ui/EmptyState.tsx'
@@ -22,6 +23,7 @@ export function BoardPage() {
   // BLOCK 1: data — all of it already cached by the route loaders, so this renders at once
   const { projectKey } = route.useParams()
   const search = route.useSearch()
+  const navigate = route.useNavigate()
   const { data: project } = useSuspenseQuery(projectQuery(projectKey))
   const { data: me } = useSuspenseQuery(meQuery())
   const query = boardQuery(projectKey, 'active', search.recent ?? false)
@@ -144,6 +146,15 @@ export function BoardPage() {
           <p className={styles.noMatch}>No cards match the filters.</p>
         )}
       </div>
+      {/* BLOCK 6: the side panel — ?issue=KEY over the board, which stays mounted under it */}
+      {search.issue && (
+        <IssuePanel
+          issueKey={search.issue}
+          onClose={() => {
+            void navigate({ search: (prev) => ({ ...prev, issue: undefined }), viewTransition: true })
+          }}
+        />
+      )}
     </div>
   )
 }

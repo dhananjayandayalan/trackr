@@ -34,6 +34,10 @@
       }
     }
 
+    &[data-size='lg'] {
+      inline-size: min(44rem, calc(100vw - 2 * var(--space-4)));
+    }
+
     &::backdrop {
       background: color-mix(in oklch, var(--color-ink) 45%, transparent);
     }

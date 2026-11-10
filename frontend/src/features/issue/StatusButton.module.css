@@ -1,0 +1,78 @@
+@layer components {
+  .trigger {
+    anchor-name: var(--_anchor);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1);
+    color: var(--text-color);
+    background: none;
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--line);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 2px;
+    }
+  }
+
+  .lozenge {
+    block-size: var(--control-sm);
+    padding-inline: var(--space-3);
+  }
+
+  /* the menu: top layer (popover), placed by anchor positioning — under the button, aligned to its start
+     edge and free to grow towards the end; flipped above it when the panel's bottom is too close */
+  .menu {
+    display: none;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-inline-size: 12rem;
+    margin: 0;
+    padding: var(--space-1);
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-4);
+
+    &:popover-open {
+      display: flex;
+    }
+
+    @supports (anchor-name: --a) {
+      position-anchor: var(--_anchor);
+      inset: auto;
+      position-area: block-end span-inline-end;
+      margin-block-start: var(--space-1);
+      position-try-fallbacks: flip-block;
+    }
+  }
+
+  .item {
+    display: flex;
+    align-items: center;
+    min-block-size: var(--control-sm);
+    padding-inline: var(--space-2);
+    background: none;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: color-mix(in oklch, var(--color-primary) 12%, var(--color-paper));
+      outline: none;
+    }
+  }
+
+  .empty {
+    padding: var(--space-2) var(--space-3);
+    font: var(--text-body-sm);
+    color: var(--text-muted);
+  }
+}

@@ -56,8 +56,10 @@ export function BacklogRow({
       <TypeIcon type={issueType(row.type)} />
       <span className={styles.key}>{row.key}</span>
       <Link
-        to="/p/$projectKey/issues/$issueKey"
-        params={{ projectKey, issueKey: row.key }}
+        to="/p/$projectKey/backlog"
+        params={{ projectKey }}
+        search={(prev) => ({ ...prev, issue: row.key })}
+        viewTransition
         className={styles.summary}
         draggable={false}
       >

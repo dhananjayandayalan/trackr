@@ -3,6 +3,7 @@ import { getRouteApi } from '@tanstack/react-router'
 import { useId, useState, type ReactNode } from 'react'
 import type { BacklogSearch } from '@/app/router.tsx'
 import { LiveIndicator } from '@/features/board/LiveIndicator.tsx'
+import { IssuePanel } from '@/features/issue/IssuePanel.tsx'
 import { projectQuery } from '@/features/projects/queries.ts'
 import type { SprintView } from '@/shared/api/types.ts'
 import { dayLabel } from '@/shared/lib/dates.ts'
@@ -181,6 +182,14 @@ export function BacklogPage() {
           {section(backlog.backlog, null, { title: 'Backlog' })}
         </div>
       </div>
+      {search.issue && (
+        <IssuePanel
+          issueKey={search.issue}
+          onClose={() => {
+            void navigate({ search: (prev) => ({ ...prev, issue: undefined }), viewTransition: true })
+          }}
+        />
+      )}
     </div>
   )
 }

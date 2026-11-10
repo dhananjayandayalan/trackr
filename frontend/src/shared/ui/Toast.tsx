@@ -6,10 +6,17 @@ import styles from './Toast.module.css'
 // BLOCK 1: the store — a module-level list plus subscribers. It lives outside React on purpose: the query
 // cache's error hook (not a component) must be able to show a toast too. Components read it with
 // useSyncExternalStore, React's hook for "state that someone else owns".
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 export interface ToastMessage {
   id: number
   text: string
   tone: 'info' | 'success' | 'error'
+  /** one button in the toast, e.g. "View" after creating an issue; clicking it also dismisses the toast */
+  action?: ToastAction | undefined
 }
 
 let toasts: readonly ToastMessage[] = []
@@ -23,10 +30,10 @@ function emit() {
   }
 }
 
-export function showToast(text: string, tone: ToastMessage['tone'] = 'info'): number {
+export function showToast(text: string, tone: ToastMessage['tone'] = 'info', action?: ToastAction): number {
   const id = nextId++
   // a new array each time: useSyncExternalStore compares snapshots by identity
-  toasts = [...toasts, { id, text, tone }]
+  toasts = [...toasts, { id, text, tone, action }]
   emit()
   setTimeout(() => {
     dismissToast(id)
@@ -78,6 +85,17 @@ export function Toaster() {
         <div key={toast.id} className={styles.toast} data-tone={toast.tone}>
           <Icon name={toast.tone === 'error' ? 'close' : 'check'} size="sm" />
           <p className={styles.text}>{toast.text}</p>
+          {toast.action && (
+            <Button
+              size="sm"
+              onClick={() => {
+                toast.action?.onClick()
+                dismissToast(toast.id)
+              }}
+            >
+              {toast.action.label}
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

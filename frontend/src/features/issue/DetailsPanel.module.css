@@ -1,0 +1,31 @@
+@layer components {
+  .root {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .inline {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .muted {
+    color: var(--text-muted);
+  }
+
+  .labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  .label {
+    padding-inline: var(--space-2);
+    font: var(--text-mono-sm);
+    background: var(--surface-sunken);
+    border: var(--border-line);
+    border-radius: var(--radius-sm);
+  }
+}

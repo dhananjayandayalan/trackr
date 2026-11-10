@@ -12,6 +12,7 @@ import { meQuery } from '@/features/auth/queries.ts'
 import { backlogQuery } from '@/features/backlog/queries.ts'
 import { boardQuery } from '@/features/board/queries.ts'
 import { activityQuery, statsQuery, workQuery, workTabs } from '@/features/home/queries.ts'
+import { issueQuery, transitionsQuery } from '@/features/issue/queries.ts'
 import { projectQuery, projectsQuery } from '@/features/projects/queries.ts'
 import { isApiError } from '@/shared/api/errors.ts'
 import { safeNext } from '@/shared/lib/urls.ts'
@@ -147,6 +148,19 @@ const projectIndexRoute = createRoute({
   },
 })
 
+/**
+ * The side panel (phase 15): `?issue=MAR-12` on the board or backlog. Its data loads with the page's, so the
+ * panel slides in already filled; hovering a card's link preloads it (defaultPreload: 'intent').
+ */
+function loadIssue(queryClient: QueryClient, issueKey: string | undefined) {
+  return issueKey === undefined
+    ? undefined
+    : Promise.all([
+        queryClient.query({ ...issueQuery(issueKey), staleTime: 'static' }),
+        queryClient.query({ ...transitionsQuery(issueKey), staleTime: 'static' }),
+      ])
+}
+
 // one route each (not a .map over a list): each keeps its own literal path, so its params are typed exactly —
 // a link to /p/$projectKey/board needs projectKey and nothing else
 // The board's filters live in the URL (shareable, survive reload). Only `recent` is sent to the api, so it is
@@ -158,6 +172,7 @@ const boardSearch = z.object({
   recent: z.boolean().optional().catch(undefined),
   assignee: z.array(z.string()).optional().catch(undefined),
   group: z.enum(['none', 'assignee', 'epic']).optional().catch(undefined),
+  issue: z.string().optional().catch(undefined),
 })
 export type BoardSearch = z.infer<typeof boardSearch>
 
@@ -165,9 +180,12 @@ const boardRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: 'board',
   validateSearch: boardSearch,
-  loaderDeps: ({ search }) => ({ recent: search.recent ?? false }),
+  loaderDeps: ({ search }) => ({ recent: search.recent ?? false, issue: search.issue }),
   loader: ({ context: { queryClient }, params, deps }) =>
-    queryClient.query({ ...boardQuery(params.projectKey, 'active', deps.recent), staleTime: 'static' }),
+    Promise.all([
+      queryClient.query({ ...boardQuery(params.projectKey, 'active', deps.recent), staleTime: 'static' }),
+      loadIssue(queryClient, deps.issue),
+    ]),
   component: lazyRouteComponent(() => import('@/features/board/BoardPage.tsx'), 'BoardPage'),
 })
 
@@ -175,6 +193,7 @@ const backlogSearch = z.object({
   q: z.string().optional().catch(undefined),
   type: z.enum(['story', 'bug', 'task']).optional().catch(undefined),
   epic: z.string().optional().catch(undefined),
+  issue: z.string().optional().catch(undefined),
 })
 export type BacklogSearch = z.infer<typeof backlogSearch>
 
@@ -182,8 +201,12 @@ const backlogRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: 'backlog',
   validateSearch: backlogSearch,
-  loader: ({ context: { queryClient }, params }) =>
-    queryClient.query({ ...backlogQuery(params.projectKey), staleTime: 'static' }),
+  loaderDeps: ({ search }) => ({ issue: search.issue }),
+  loader: ({ context: { queryClient }, params, deps }) =>
+    Promise.all([
+      queryClient.query({ ...backlogQuery(params.projectKey), staleTime: 'static' }),
+      loadIssue(queryClient, deps.issue),
+    ]),
   component: lazyRouteComponent(() => import('@/features/backlog/BacklogPage.tsx'), 'BacklogPage'),
 })
 const timelineRoute = createRoute({
@@ -204,7 +227,8 @@ const settingsRoute = createRoute({
 const issueRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: 'issues/$issueKey',
-  component: () => <ComingSoon title="Issue" phase={15} />,
+  loader: ({ context: { queryClient }, params }) => loadIssue(queryClient, params.issueKey),
+  component: lazyRouteComponent(() => import('@/features/issue/IssuePage.tsx'), 'IssuePage'),
 })
 
 export const routeTree = rootRoute.addChildren([

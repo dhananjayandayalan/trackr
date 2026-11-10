@@ -474,6 +474,36 @@ public class IssueService {
         return queries.worklogs(load(grant(userId, key, ProjectRole.VIEWER), key).id());
     }
 
+    // BLOCK: for the comment and attachment modules — the access check they need, and the history they add to
+
+    /** The issue behind a key, if the caller has at least {@code minimum} in its project; 404 otherwise. */
+    @Transactional(readOnly = true)
+    public IssueHandle require(UUID userId, String key, ProjectRole minimum) {
+        Grant grant = grant(userId, key, minimum);
+        return handle(grant, load(grant, key));
+    }
+
+    /** The same for things that store only the issue id (a comment, an attachment). */
+    @Transactional(readOnly = true)
+    public IssueHandle require(UUID userId, UUID issueId, ProjectRole minimum) {
+        Issue issue = issues.findById(issueId).filter(candidate -> !candidate.isDeleted())
+                .orElseThrow(() -> new TrakrException.NotFound("No such issue."));
+        return handle(grant(userId, issue.key(), minimum), issue);
+    }
+
+    /**
+     * A comment was added: a history row, so "Worked on" and the activity feed see it. Not a change to the
+     * issue itself — its version stays, so an open issue page's If-Match is still good.
+     */
+    @Transactional
+    public void recordComment(UUID issueId, UUID actorId, UUID commentId) {
+        issues.findById(issueId).ifPresent(issue -> history.commented(issue, actorId, commentId));
+    }
+
+    private static IssueHandle handle(Grant grant, Issue issue) {
+        return new IssueHandle(issue.id(), issue.key(), grant.projectId(), grant.workspaceId(), grant.role());
+    }
+
     // the project from the key's prefix; 404 "No issue …" also when the project is invisible, like a missing key
     private Grant grant(UUID userId, String issueKey, ProjectRole minimum) {
         var matcher = ISSUE_KEY.matcher(issueKey);

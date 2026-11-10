@@ -1,6 +1,7 @@
 package dev.trakr.api.issue.internal;
 
 import static dev.trakr.jooq.Tables.APP_USER;
+import static dev.trakr.jooq.Tables.ATTACHMENT;
 import static dev.trakr.jooq.Tables.ISSUE;
 import static dev.trakr.jooq.Tables.ISSUE_EVENT;
 import static dev.trakr.jooq.Tables.ISSUE_LINK;
@@ -12,6 +13,7 @@ import static dev.trakr.jooq.Tables.WORKLOG;
 
 import dev.trakr.api.issue.HistoryItem;
 import dev.trakr.api.issue.IssueDetails;
+import dev.trakr.api.issue.IssueDetails.AttachmentView;
 import dev.trakr.api.issue.IssueDetails.IssueRef;
 import dev.trakr.api.issue.IssueDetails.LinkView;
 import dev.trakr.api.issue.IssueDetails.SprintRef;
@@ -73,6 +75,7 @@ public class IssueQueries {
         // BLOCK 2: nested lists
         Field<List<IssueRef>> subtasks = subtasksOf(ISSUE.ID);
         Field<List<LinkView>> links = linksOf(ISSUE.ID, viewerId);
+        Field<List<AttachmentView>> attachments = attachmentsOf(ISSUE.ID);
         Field<Boolean> watching = DSL.field(DSL.exists(DSL.selectOne().from(WATCHER)
                 .where(WATCHER.ISSUE_ID.eq(ISSUE.ID), WATCHER.USER_ID.eq(viewerId))));
         Field<Integer> watcherCount = DSL.field(DSL.selectCount().from(WATCHER).where(WATCHER.ISSUE_ID.eq(ISSUE.ID)));
@@ -86,7 +89,7 @@ public class IssueQueries {
                 assignee.DISPLAY_NAME, assignee.INITIALS, assignee.AVATAR_COLOR,
                 parent.ID, parent.KEY, parent.SUMMARY, parent.TYPE, parent.STATUS_CATEGORY, parentStatus.NAME,
                 SPRINT.NAME, SPRINT.STATE,
-                subtasks, links, watching, watcherCount, starred));
+                subtasks, links, watching, watcherCount, starred, attachments));
 
         return dsl.select(fields)
                 .from(ISSUE)
@@ -132,7 +135,7 @@ public class IssueQueries {
                         r.get(watching),
                         r.get(watcherCount),
                         r.get(starred),
-                        List.of(),
+                        r.get(attachments),
                         instant(r.get(ISSUE.RESOLVED_AT)),
                         r.get(ISSUE.VERSION),
                         instant(r.get(ISSUE.CREATED_AT)),
@@ -183,6 +186,21 @@ public class IssueQueries {
                 }).stream()
                         .sorted(Comparator.comparing(LinkView::label).thenComparing(link -> link.issue().key()))
                         .toList());
+    }
+
+    // the files on the issue, oldest first (the order they were added in)
+    private Field<List<AttachmentView>> attachmentsOf(Field<UUID> issueId) {
+        var uploader = APP_USER.as("uploader");
+        return DSL.multiset(DSL.select(ATTACHMENT.ID, ATTACHMENT.FILE_NAME, ATTACHMENT.CONTENT_TYPE,
+                                ATTACHMENT.SIZE_BYTES, uploader.ID, uploader.DISPLAY_NAME, uploader.INITIALS,
+                                uploader.AVATAR_COLOR, ATTACHMENT.CREATED_AT)
+                        .from(ATTACHMENT)
+                        .join(uploader).on(uploader.ID.eq(ATTACHMENT.UPLOADER_ID))
+                        .where(ATTACHMENT.ISSUE_ID.eq(issueId), ATTACHMENT.DELETED_AT.isNull())
+                        .orderBy(ATTACHMENT.CREATED_AT, ATTACHMENT.ID))
+                .as("attachments")
+                .convertFrom(rows -> rows.map(r -> new AttachmentView(r.value1(), r.value2(), r.value3(), r.value4(),
+                        new UserRef(r.value5(), r.value6(), r.value7(), r.value8()), instant(r.value9()))));
     }
 
     /** One issue as a parent or link shows it; deleted issues are not found. */

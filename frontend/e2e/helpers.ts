@@ -137,21 +137,22 @@ export async function restoreCard(page: Page, place: CardPlace) {
 }
 
 // the page's session cookie, plus the CSRF header the api wants on a POST (the app's client does the same)
-async function apiCall<T = unknown>(
+export async function apiCall<T = unknown>(
   page: Page,
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
   path: string,
   body?: unknown,
+  headers: Record<string, string> = {},
 ): Promise<T> {
   const cookies = await page.context().cookies()
   const xsrf = cookies.find((cookie) => cookie.name === 'XSRF-TOKEN')?.value
   const response = await page.request.fetch(path, {
     method,
     ...(body === undefined ? {} : { data: body }),
-    headers: xsrf ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrf) } : {},
+    headers: { ...(xsrf ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrf) } : {}), ...headers },
   })
   if (!response.ok()) throw new Error(`${method} ${path}: ${response.status()} ${await response.text()}`)
-  return (await response.json()) as T
+  return (response.status() === 204 ? undefined : await response.json()) as T
 }
 
 /**

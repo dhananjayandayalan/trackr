@@ -9,6 +9,9 @@ interface DialogProps {
   title: string
   /** one line under the title */
   description?: ReactNode
+  /** lg: room for a two-column form (Create issue) */
+  size?: 'md' | 'lg'
+
   children: ReactNode
 }
 
@@ -17,7 +20,7 @@ interface DialogProps {
  * layer (no z-index), a ::backdrop, focus moved into the dialog and kept there (the rest of the page is
  * inert), Esc to close, and focus returned to whatever opened it. Controlled: the `open` prop decides.
  */
-export function Dialog({ open, onClose, title, description, children }: DialogProps) {
+export function Dialog({ open, onClose, title, description, size = 'md', children }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const descriptionId = useId()
@@ -43,6 +46,7 @@ export function Dialog({ open, onClose, title, description, children }: DialogPr
     <dialog
       ref={ref}
       className={styles.root}
+      data-size={size}
       aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
       onClose={onClose}

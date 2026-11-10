@@ -142,6 +142,16 @@ trakr:
   search:
     # the alias, never a concrete trakr-issues-v{n}: a reindex moves it without the api noticing
     index: trakr-issues
+  # attachments (phase 15): the S3 bucket. The endpoint is also what the browser uploads to, so it must be the
+  # address the browser can reach; the keys have dev defaults in application-dev.yml only
+  s3:
+    endpoint: ${TRAKR_S3_ENDPOINT:http://localhost:8333}
+    bucket: trakr-attachments
+    region: us-east-1
+    access-key: ${S3_ACCESS_KEY}
+    secret-key: ${S3_SECRET_KEY}
+    # the CORS rule on the bucket: the frontend's origin may PUT and GET
+    allowed-origins: ${trakr.app.origin}
 
 # BLOCK 12: OpenAPI — /v3/api-docs is always on (the frontend generates its types from it); the UI only in dev
 springdoc:

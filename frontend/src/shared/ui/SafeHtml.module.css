@@ -1,0 +1,55 @@
+@layer components {
+  /* rich text from the allow-list: paragraphs, lists, code, links, mentions */
+  .root {
+    font: var(--text-body);
+    overflow-wrap: anywhere;
+
+    & > * + * {
+      margin-block-start: var(--space-2);
+    }
+
+    & ul,
+    & ol {
+      padding-inline-start: var(--space-6);
+    }
+
+    & ul {
+      list-style: disc;
+    }
+
+    & ol {
+      list-style: decimal;
+    }
+
+    & code,
+    & pre {
+      font: var(--text-mono-sm);
+      background: var(--surface-sunken);
+      border-radius: var(--radius-sm);
+    }
+
+    & code {
+      padding-inline: var(--space-1);
+    }
+
+    & pre {
+      padding: var(--space-2) var(--space-3);
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+
+    & a {
+      color: var(--color-primary);
+      text-decoration: underline;
+    }
+
+    /* a mention: the person's name as a chip */
+    & span[data-mention-id] {
+      padding-inline: var(--space-1);
+      font-weight: 600;
+      color: var(--color-ink);
+      background: color-mix(in oklch, var(--color-primary) 18%, var(--color-paper));
+      border-radius: var(--radius-sm);
+    }
+  }
+}

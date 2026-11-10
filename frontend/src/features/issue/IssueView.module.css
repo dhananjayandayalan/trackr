@@ -1,0 +1,164 @@
+@layer components {
+  /* BLOCK 1: the container — the panel and the page give it different widths */
+  .root {
+    container: issue / inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .breadcrumb ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1);
+    font: var(--text-body-sm);
+
+    & li + li::before {
+      content: '/';
+      margin-inline-end: var(--space-1);
+      color: var(--text-muted);
+    }
+
+    & a {
+      color: var(--text-muted);
+
+      &:hover {
+        color: var(--text-color);
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .crumbKey {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font: var(--text-mono-sm);
+  }
+
+  .headerActions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  /* BLOCK 2: summary */
+  .summary {
+    font: var(--text-h2);
+    letter-spacing: var(--track-h2);
+    text-wrap: balance;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .summaryButton {
+    padding: 0 var(--space-1);
+    margin-inline-start: calc(-1 * var(--space-1));
+    font: inherit;
+    letter-spacing: inherit;
+    text-align: start;
+    color: inherit;
+    background: none;
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: text;
+
+    &:hover {
+      background: var(--surface-sunken);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 2px;
+    }
+  }
+
+  .summaryInput {
+    block-size: auto;
+    padding-block: var(--space-1);
+    font: var(--text-h2);
+  }
+
+  /* BLOCK 3: narrow (the side panel) — details first, then the content, one column */
+  .layout {
+    display: grid;
+    grid-template-areas:
+      'side'
+      'main';
+    gap: var(--space-6);
+  }
+
+  .main {
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    min-inline-size: 0;
+  }
+
+  .side {
+    grid-area: side;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: var(--space-4);
+
+    & > * {
+      align-self: stretch;
+    }
+
+    & > :first-child {
+      align-self: start;
+    }
+  }
+
+  /* BLOCK 4: wide (the full page) — content on the left, a details column on the right */
+  @container issue (inline-size >= 56rem) {
+    .layout {
+      grid-template-areas: 'main side';
+      grid-template-columns: minmax(0, 1fr) 20rem;
+    }
+
+    .side {
+      position: sticky;
+      inset-block-start: var(--space-4);
+      align-self: start;
+      padding: var(--space-4);
+      border: var(--border-line);
+      border-radius: var(--radius-sm);
+    }
+  }
+
+  .description {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .sectionTitle {
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+  }
+
+  .muted {
+    font: var(--text-body-sm);
+    color: var(--text-muted);
+  }
+
+  .stamps {
+    font: var(--text-caption);
+    color: var(--text-muted);
+  }
+}

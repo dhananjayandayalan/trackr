@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * One row of the History tab. {@code kind}: created, field_changed, transitioned, linked,
- * logged_work, deleted (moved and commented arrive with phases 08 and 15). The values are JSON as
+ * moved, commented, logged_work, deleted. The values are JSON as
  * stored: a string, number, list or object, or null.
  */
 public record HistoryItem(long id, String kind, @Nullable String field, @Nullable Object oldValue,

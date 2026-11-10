@@ -39,8 +39,7 @@ public record IssueDetails(
         boolean watching,
         int watcherCount,
         boolean starred,
-        // attachments arrive in phase 15; the field is here now so the response shape doesn't change then
-        List<Object> attachments,
+        List<AttachmentView> attachments,
         @Nullable Instant resolvedAt,
         long version,
         Instant createdAt,
@@ -68,6 +67,16 @@ public record IssueDetails(
             return new TimeTracking(originalEstimateMin, timeSpentMin,
                     originalEstimateMin == null ? null : Math.max(0, originalEstimateMin - timeSpentMin));
         }
+    }
+
+    /**
+     * A file on the issue. The issue module reads the attachment table (read-only, like the workflow tables) so
+     * the page needs one request; the attachment module owns the rows and returns the same record when it adds
+     * one. The bytes: GET /attachments/{id}/content.
+     */
+    @Schema(name = "Attachment")
+    public record AttachmentView(UUID id, String fileName, String contentType, long sizeBytes, UserRef uploader,
+            Instant createdAt) {
     }
 
     /** {@code label} reads from this issue: "blocks" when it's the source, "is blocked by" when it's the target. */

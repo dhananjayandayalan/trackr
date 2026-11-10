@@ -1,0 +1,86 @@
+@layer components {
+  /* a file is being dragged over the section */
+  .dropzone[data-dropping] {
+    outline: var(--border-drop);
+    outline-offset: var(--space-1);
+    border-radius: var(--radius-sm);
+  }
+
+  /* tiles fill the row: as many 14rem columns as fit, at least one */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
+    gap: var(--space-2);
+  }
+
+  .tile {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: var(--border-line);
+    border-radius: var(--radius-sm);
+  }
+
+  .preview {
+    display: grid;
+    place-items: center;
+    inline-size: 3rem;
+    block-size: 3rem;
+    overflow: hidden;
+    color: var(--text-muted);
+    background: var(--surface-sunken);
+    border-radius: var(--radius-sm);
+  }
+
+  .image {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .meta {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+  }
+
+  .name {
+    overflow: hidden;
+    font: var(--text-body-sm);
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: inherit;
+  }
+
+  .details {
+    font: var(--text-caption);
+    color: var(--text-muted);
+  }
+
+  .uploads {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .upload {
+    display: grid;
+    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-3);
+    font: var(--text-body-sm);
+  }
+
+  .uploadName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .uploadError {
+    color: var(--color-danger-text);
+  }
+}

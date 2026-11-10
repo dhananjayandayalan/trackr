@@ -4,8 +4,10 @@ import { z } from 'zod'
 import { applyBacklogIssue, removeBacklogIssue, type LiveBacklog } from '@/features/backlog/backlog-cache.ts'
 import { statusLookup } from '@/features/backlog/mutations.ts'
 import { backlogKeys } from '@/features/backlog/queries.ts'
+import { issueKeys } from '@/features/issue/queries.ts'
 import { projectKeys } from '@/features/projects/queries.ts'
 import { fromSnapshot, issueSnapshotSchema, type IssueState } from '@/shared/api/issue-state.ts'
+import type { IssueDetails } from '@/shared/api/types.ts'
 import { openStream, type StreamHandlers, type StreamStatus } from '@/shared/api/sse.ts'
 import { applyRemoteIssue, removeIssue, type LiveBoard } from './board-cache.ts'
 import { hasPendingMove } from './mutations.ts'
@@ -15,6 +17,7 @@ import { boardKeys } from './queries.ts'
 const issueEvent = z.looseObject({ sequence: z.number(), snapshot: issueSnapshotSchema })
 const deletedEvent = z.looseObject({ key: z.string(), sequence: z.number() })
 const presenceEvent = z.object({ userIds: z.array(z.string()) })
+const commentEvent = z.looseObject({ issueKey: z.string() })
 
 export interface ProjectLive {
   status: StreamStatus
@@ -38,6 +41,19 @@ function patchIssue(queryClient: QueryClient, projectKey: string, issue: IssueSt
     { queryKey: backlogKeys.project(projectKey) },
     (view) => view && applyBacklogIssue(view, issue, statusLookup(queryClient, projectKey), { flash: now }),
   )
+  refreshOpenIssue(queryClient, issue.key, issue.version)
+}
+
+/**
+ * An issue page or panel that is open (its detail cached) and older than the event: refetch it. The event's
+ * snapshot has the issue's own columns but not what the page shows around them (names, subtasks, links), so
+ * a refetch is simpler than a patch. Our own edits arrive here too, already applied: same version, skipped.
+ */
+function refreshOpenIssue(queryClient: QueryClient, key: string, version: number) {
+  const cached = queryClient.getQueryData<IssueDetails>(issueKeys.detail(key))
+  if (cached && cached.version < version) {
+    void queryClient.invalidateQueries({ queryKey: issueKeys.detail(key) })
+  }
 }
 
 function dropIssue(queryClient: QueryClient, projectKey: string, key: string) {
@@ -73,6 +89,12 @@ export function projectHandlers(
       patchIssue(queryClient, projectKey, fromSnapshot(event.data.snapshot))
     }
   }
+  const onComment = (data: unknown) => {
+    const event = commentEvent.safeParse(data)
+    if (event.success) {
+      void queryClient.invalidateQueries({ queryKey: issueKeys.comments(event.data.issueKey) })
+    }
+  }
   const onSprint = () => {
     refresh(queryClient, projectKey)
     void queryClient.invalidateQueries({ queryKey: projectKeys.list() })
@@ -106,6 +128,10 @@ export function projectHandlers(
         dropIssue(queryClient, projectKey, event.data.key)
       }
     },
+    // comments: whoever has the issue open sees new ones arrive (the event names the issue by key)
+    'comment.added': onComment,
+    'comment.edited': onComment,
+    'comment.deleted': onComment,
     'sprint.created': onSprint,
     'sprint.updated': onSprint,
     'sprint.started': onSprint,

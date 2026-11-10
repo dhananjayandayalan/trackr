@@ -1,0 +1,55 @@
+@layer components {
+  /* BLOCK 1: the panel — fixed to the right edge under the top nav, over the page (which stays usable) */
+  .panel {
+    position: fixed;
+    inset-block: var(--topnav-h) 0;
+    inset-inline-end: 0;
+    z-index: 5;
+    inline-size: min(44rem, 100vw);
+    padding: var(--space-5) var(--space-6) var(--space-8);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--color-paper);
+    border-inline-start: var(--border-strong);
+    box-shadow: var(--shadow-6);
+
+    /* BLOCK 2: its own name in view transitions: the browser snapshots it separately from the page */
+    view-transition-name: issue-panel;
+  }
+
+  .loading {
+    font: var(--text-body-sm);
+    color: var(--text-muted);
+  }
+}
+
+/* BLOCK 3: the transition. ::view-transition-new is the panel after the change, -old before it. Opening has
+   only a "new" (it slides in), closing only an "old" (it slides out); switching issues has both, and the
+   default cross-fade between them is what we want. */
+@keyframes panel-in {
+  from {
+    translate: 100% 0;
+  }
+}
+
+@keyframes panel-out {
+  to {
+    translate: 100% 0;
+  }
+}
+
+::view-transition-new(issue-panel):only-child {
+  animation: panel-in var(--dur-panel) var(--ease-out);
+}
+
+::view-transition-old(issue-panel):only-child {
+  animation: panel-out var(--dur-panel) var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
+}

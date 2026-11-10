@@ -85,6 +85,12 @@ springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openap
 jooq-meta-extensions = { module = "org.jooq:jooq-meta-extensions", version.ref = "jooq" }
 
 # integration tests: real services in containers
+# attachments (phase 15): the AWS SDK v2 S3 client and presigner against SeaweedFS; one version for the family via its BOM
+aws-sdk-bom = { module = "software.amazon.awssdk:bom", version.ref = "awsSdk" }
+aws-sdk-s3 = { module = "software.amazon.awssdk:s3" }
+# comments: allow-list HTML sanitising (09-security §4)
+owasp-html-sanitizer = { module = "com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer", version.ref = "owaspSanitizer" }
+
 testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }

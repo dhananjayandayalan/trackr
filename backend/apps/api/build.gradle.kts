@@ -67,6 +67,14 @@ dependencies {
     implementation(libs.spring.boot.starter.elasticsearch)
     implementation(libs.elasticsearch.java)
     integrationTestImplementation(libs.testcontainers.elasticsearch)
+
+    // BLOCK 16: comments and attachments — allow-list sanitising, and S3 (SeaweedFS) for the files
+    implementation(libs.owasp.html.sanitizer)
+    implementation(platform(libs.aws.sdk.bom))
+    implementation(libs.aws.sdk.s3) {
+        // the async (Netty) HTTP client: we only use the synchronous S3Client, which runs on the Apache client
+        exclude(group = "software.amazon.awssdk", module = "netty-nio-client")
+    }
 }
 
 // BLOCK 15: the antlr plugin makes `api` extend `antlr`, which would ship the whole tool (and its own
@@ -145,4 +153,8 @@ tasks.named<Test>("integrationTest") {
     val mapping = project(":apps:workers").layout.projectDirectory.file("src/main/resources/es/trakr-issues-v1.json")
     inputs.file(mapping).withPropertyName("searchMapping")
     systemProperty("trakr.search.mapping", mapping.asFile.absolutePath)
+    // BLOCK 16: the SeaweedFS test container reads the same identity file as infra/docker-compose.yml
+    val s3Config = rootProject.layout.projectDirectory.file("../infra/seaweedfs/s3.json")
+    inputs.file(s3Config).withPropertyName("s3Config")
+    systemProperty("trakr.s3.config", s3Config.asFile.absolutePath)
 }

@@ -260,6 +260,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/issues/{key}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listComments"];
+        put?: never;
+        post: operations["addComment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/issues/{key}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirmAttachment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/issues/{key}/attachments/uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["presignAttachmentUpload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/issues/bulk": {
         parameters: {
             query?: never;
@@ -434,6 +482,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["updateFilter"];
+        trace?: never;
+    };
+    "/api/v1/comments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteComment"];
+        options?: never;
+        head?: never;
+        patch: operations["editComment"];
         trace?: never;
     };
     "/api/v1/search/tql/complete": {
@@ -644,6 +708,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/attachments/{id}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["downloadAttachment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/_diag/thread": {
         parameters: {
             query?: never;
@@ -671,6 +751,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["unlinkIssue"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attachments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteAttachment"];
         options?: never;
         head?: never;
         patch?: never;
@@ -841,6 +937,17 @@ export interface components {
             dueDate?: string | null;
             labels?: string[] | null;
         };
+        Attachment: {
+            /** Format: uuid */
+            id: string;
+            fileName: string;
+            contentType: string;
+            /** Format: int64 */
+            sizeBytes: number;
+            uploader: components["schemas"]["UserRef"];
+            /** Format: date-time */
+            createdAt: string;
+        };
         IssueDetails: {
             /** Format: uuid */
             id: string;
@@ -874,7 +981,7 @@ export interface components {
             /** Format: int32 */
             watcherCount: number;
             starred: boolean;
-            attachments: unknown[];
+            attachments: components["schemas"]["Attachment"][];
             /** Format: date-time */
             resolvedAt?: string | null;
             /** Format: int64 */
@@ -971,6 +1078,42 @@ export interface components {
             targetKey: string;
             /** @enum {string} */
             type: "blocks" | "relates" | "duplicates";
+        };
+        CommentRequest: {
+            bodyHtml: string;
+        };
+        Comment: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            issueId: string;
+            author: components["schemas"]["UserRef"];
+            bodyHtml: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            editedAt?: string | null;
+            /** Format: int64 */
+            version: number;
+        };
+        ConfirmRequest: {
+            /** Format: uuid */
+            uploadId: string;
+        };
+        UploadRequest: {
+            fileName: string;
+            contentType: string;
+            /** Format: int64 */
+            sizeBytes: number;
+        };
+        UploadTicket: {
+            /** Format: uuid */
+            uploadId: string;
+            objectKey: string;
+            url: string;
+            headers: {
+                [key: string]: string;
+            };
         };
         BulkArgs: {
             /** Format: uuid */
@@ -1406,6 +1549,10 @@ export interface components {
             actor: components["schemas"]["UserRef"];
             /** Format: date-time */
             occurredAt: string;
+        };
+        CursorPageComment: {
+            items: components["schemas"]["Comment"][];
+            nextCursor?: string | null;
         };
         ThreadInfo: {
             name: string;
@@ -1933,6 +2080,108 @@ export interface operations {
             };
         };
     };
+    listComments: {
+        parameters: {
+            query?: {
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursorPageComment"];
+                };
+            };
+        };
+    };
+    addComment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Comment"];
+                };
+            };
+        };
+    };
+    confirmAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Attachment"];
+                };
+            };
+        };
+    };
+    presignAttachmentUpload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UploadTicket"];
+                };
+            };
+        };
+    };
     bulkIssues: {
         parameters: {
             query?: never;
@@ -2385,6 +2634,56 @@ export interface operations {
             };
         };
     };
+    deleteComment: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    editComment: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Comment"];
+                };
+            };
+        };
+    };
     completeTql: {
         parameters: {
             query?: {
@@ -2681,6 +2980,26 @@ export interface operations {
             };
         };
     };
+    downloadAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     thread: {
         parameters: {
             query?: never;
@@ -2702,6 +3021,26 @@ export interface operations {
         };
     };
     unlinkIssue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteAttachment: {
         parameters: {
             query?: never;
             header?: never;

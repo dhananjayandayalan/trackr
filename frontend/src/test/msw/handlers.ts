@@ -4,6 +4,7 @@ import type {
   BacklogView,
   BoardCard,
   BoardView,
+  CreateIssueRequest,
   IssueDetails,
   IssueRow,
   Me,
@@ -11,6 +12,7 @@ import type {
   ProjectDetails,
   ProjectSummary,
   Stats,
+  StatusView,
 } from '@/shared/api/types.ts'
 
 // MSW intercepts fetch at the network layer: the app's real client, middleware and parsing all run, only the
@@ -302,6 +304,39 @@ export function moveAnswer(key: string, body: MoveRequest, rank = 'Z') {
   }
 }
 
+/** The workflow statuses as /transitions answers them; from To do, MAR may go to In progress or Done. */
+export function statusView(id: string): StatusView {
+  const status = marketing.statuses.find((s) => s.id === id)
+  if (!status) throw new Error(`no status ${id}`)
+  return {
+    id: status.id,
+    name: status.name,
+    category: status.category,
+    color: status.color,
+    position: status.position,
+  }
+}
+
+export function allowedFrom(statusId: string): StatusView[] {
+  return marketing.transitions
+    .filter((t) => t.fromStatusId === statusId || t.fromStatusId == null)
+    .map((t) => statusView(t.toStatusId))
+}
+
+/** POST /issues: the issue as created — MAR-99, version 0, from what was sent. */
+export function createdIssue(body: CreateIssueRequest): IssueDetails {
+  return issueDetails('MAR-99', {
+    type: body.type,
+    summary: body.summary,
+    priority: body.priority ?? 'medium',
+    storyPoints: body.storyPoints ?? null,
+    labels: body.labels ?? [],
+    sprint: null,
+    rank: 'zz',
+    version: 0,
+  })
+}
+
 /** An RFC 9457 problem response, the way the api sends errors. */
 export function problem(status: number, code: string, detail: string, extra: Record<string, unknown> = {}) {
   return HttpResponse.json(
@@ -325,6 +360,15 @@ export const handlers = [
   http.get('/api/v1/projects/MAR/backlog', () => HttpResponse.json(marBacklog())),
   http.post('/api/v1/issues/:key/move', async ({ params, request }) =>
     HttpResponse.json(moveAnswer(String(params.key), (await request.json()) as MoveRequest)),
+  ),
+  // the issue page / side panel (phase 15)
+  http.get('/api/v1/issues/:key', ({ params }) => HttpResponse.json(issueDetails(String(params.key)))),
+  http.get('/api/v1/issues/:key/transitions', () => HttpResponse.json(allowedFrom('st-todo'))),
+  http.get('/api/v1/issues/:key/comments', () => HttpResponse.json({ items: [], nextCursor: null })),
+  http.get('/api/v1/issues/:key/history', () => HttpResponse.json({ items: [], nextCursor: null })),
+  http.get('/api/v1/issues/:key/worklogs', () => HttpResponse.json([])),
+  http.post('/api/v1/issues', async ({ request }) =>
+    HttpResponse.json(createdIssue((await request.json()) as CreateIssueRequest), { status: 201 }),
   ),
   http.get('/api/v1/projects/key-suggestion', ({ request }) => {
     const name = new URL(request.url).searchParams.get('name') ?? ''
