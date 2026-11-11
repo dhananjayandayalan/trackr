@@ -17,6 +17,7 @@ import dev.trakr.contracts.events.SprintReport;
 import dev.trakr.contracts.events.Topics;
 import dev.trakr.contracts.events.TrakrEvent;
 import dev.trakr.contracts.events.WorkLogged;
+import dev.trakr.contracts.events.WorkflowChanged;
 import dev.trakr.workers.kafka.ProcessedEvents;
 import java.sql.Timestamp;
 import java.time.Clock;
@@ -79,6 +80,8 @@ class ReportProjector {
             // the description is in no report
             case IssueDescriptionChanged e -> { }
             case ProjectLifecycle e -> { }
+            // a status changed category, or issues moved off a deleted one: the active sprint's numbers changed
+            case WorkflowChanged e -> recomputeAll(activeSprintOf(e.projectId()));
             case CommentEvent e -> { }
             case NotificationEvent e -> { }
             case CollabEvent e -> { }
@@ -136,6 +139,11 @@ class ReportProjector {
                 .param("incompleteIds", report.incompleteIssueIds().toArray(UUID[]::new))
                 .param("closedAt", Timestamp.from(report.closedAt()))
                 .update();
+    }
+
+    private Stream<UUID> activeSprintOf(UUID projectId) {
+        return jdbc.sql("SELECT id FROM sprint WHERE project_id = :project AND state = 'active'")
+                .param("project", projectId).query(UUID.class).list().stream();
     }
 
     // a list, not optional(): the column may be NULL (a backlog issue), and an Optional can't hold null

@@ -1,14 +1,17 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
-import { useId } from 'react'
+import { useId, useRef, type SubmitEvent } from 'react'
 import { useLogout } from '@/features/auth/mutations.ts'
 import { openCreateIssue } from '@/features/issue/create-issue-store.ts'
 import { meQuery } from '@/features/auth/queries.ts'
+import { NotificationsPopover } from '@/features/notifications/NotificationsPopover.tsx'
 import { Avatar } from '@/shared/ui/Avatar.tsx'
 import { avatarColor } from '@/shared/ui/AvatarGroup.tsx'
 import { Button } from '@/shared/ui/Button.tsx'
 import { Icon } from '@/shared/ui/Icon.tsx'
 import { Kbd } from '@/shared/ui/Kbd.tsx'
+import { text as formText } from '@/shared/lib/forms.ts'
+import { useShortcut } from './keyboard.ts'
 import styles from './TopNav.module.css'
 
 /** 00-product §3.13: Your work, Projects, Issues, Dashboards, Create, search, notifications, help, settings, profile. */
@@ -20,6 +23,11 @@ export function TopNav() {
   const logout = useLogout()
   const navigate = useNavigate()
   const { projectKey } = useParams({ strict: false })
+  const searchInput = useRef<HTMLInputElement>(null)
+  // "/" focuses the search box (00-product §3.13); the keymap ignores it while typing elsewhere
+  useShortcut('/', () => {
+    searchInput.current?.focus()
+  })
 
   return (
     <header className={styles.root}>
@@ -67,20 +75,38 @@ export function TopNav() {
         Create
       </Button>
 
-      {/* BLOCK 2: search — a real form with role search, so it is a landmark; "/" will focus it (phase 17) */}
-      <form role="search" className={styles.search} onSubmit={(event) => event.preventDefault()}>
+      {/* BLOCK 2: search — a real form with role search, so it is a landmark; "/" focuses it, Enter searches the
+          issues page with the text (Ctrl/Cmd+K jumps straight to an issue instead) */}
+      <form
+        role="search"
+        className={styles.search}
+        onSubmit={(event: SubmitEvent<HTMLFormElement>) => {
+          event.preventDefault()
+          const text = formText(new FormData(event.currentTarget), 'q').trim()
+          void navigate({ to: '/issues', search: text ? { mode: 'basic', text } : {} })
+          searchInput.current?.blur()
+        }}
+      >
         <label htmlFor={searchId} className="visually-hidden">
           Search issues
         </label>
         <Icon name="search" size="sm" className={styles.searchIcon} />
-        <input id={searchId} type="search" placeholder="Search" className={styles.searchInput} />
+        <input
+          ref={searchInput}
+          id={searchId}
+          name="q"
+          type="search"
+          placeholder="Search"
+          className={styles.searchInput}
+          aria-keyshortcuts="/"
+        />
         <Kbd aria-label="Shortcut: slash">/</Kbd>
       </form>
 
       {/* BLOCK 3: icon buttons, then the profile menu. popoverTarget wires the button to the popover with no
           JavaScript of ours: click toggles it, Esc and a click outside close it (popover="auto"). */}
       <div className={styles.actions}>
-        <Button variant="ghost" icon="bell" aria-label="Notifications" />
+        <NotificationsPopover />
         <Button variant="ghost" icon="help" aria-label="Help" />
         <button
           type="button"

@@ -78,8 +78,12 @@ test('two people co-edit a description; it converges, persists and is searchable
     .toBe(true)
 
   // BLOCK 4: each sees the other's caret, labelled with their name
-  await expect(grace.getByText(ADA.name, { exact: true }).and(grace.locator('[class*="caretLabel"]'))).toBeVisible()
-  await expect(ada.getByText(GRACE.name, { exact: true }).and(ada.locator('[class*="caretLabel"]'))).toBeVisible()
+  await expect(
+    grace.getByText(ADA.name, { exact: true }).and(grace.locator('[class*="caretLabel"]')),
+  ).toBeVisible()
+  await expect(
+    ada.getByText(GRACE.name, { exact: true }).and(ada.locator('[class*="caretLabel"]')),
+  ).toBeVisible()
 
   // BLOCK 5: a checkpoint stored it — the api's SSE event refetched the issue and the indicator says so
   await expect(ada.getByText('Saved', { exact: true })).toBeVisible({ timeout: 15_000 })

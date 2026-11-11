@@ -32,6 +32,9 @@ export const streamEventNames = [
   'project.member-changed',
   'workflow.changed',
   'board.changed',
+  // the user's own stream, /me/stream (phase 17)
+  'notification',
+  'unread-count',
 ] as const
 
 export type StreamEventName = (typeof streamEventNames)[number]

@@ -14,9 +14,18 @@ import { boardQuery } from '@/features/board/queries.ts'
 import { activityQuery, statsQuery, workQuery, workTabs } from '@/features/home/queries.ts'
 import { issueQuery, transitionsQuery } from '@/features/issue/queries.ts'
 import { projectQuery, projectsQuery } from '@/features/projects/queries.ts'
+import {
+  breakdownQuery,
+  burndownQuery,
+  sprintReportQuery,
+  velocityQuery,
+} from '@/features/reports/queries.ts'
+import { filtersQuery } from '@/features/search/queries.ts'
+import { membersQuery, workflowQuery } from '@/features/settings/queries.ts'
+import { timelineQuery } from '@/features/timeline/queries.ts'
 import { isApiError } from '@/shared/api/errors.ts'
 import { safeNext } from '@/shared/lib/urls.ts'
-import { AppLayout, ComingSoon, RootLayout, RouteError } from './layouts.tsx'
+import { AppLayout, RootLayout, RouteError } from './layouts.tsx'
 import { ProjectShell } from './ProjectShell.tsx'
 
 // BLOCK 1: the root route, with a typed context. Every route's beforeLoad and loader receives it: the query
@@ -118,16 +127,46 @@ const newProjectRoute = createRoute({
   ),
 })
 
+// Issues & filters (phase 17): everything that decides the results is in the URL. Basic mode keeps the pills as
+// arrays (?types=bug&types=task), query mode the TQL text (?q=…). The results load in the page (useSearch), not
+// here: a query with a typo must show its error under the editor, not the route's error screen.
+// one value or several: the router writes arrays as JSON, but a hand-typed ?types=bug arrives as a plain string
+const list = z
+  .union([z.array(z.string()), z.string().transform((value) => [value])])
+  .optional()
+  .catch(undefined)
+const issuesSearch = z.object({
+  mode: z.enum(['basic', 'query']).optional().catch(undefined),
+  q: z.string().optional().catch(undefined),
+  filter: z.string().optional().catch(undefined),
+  // plural names: the backlog's ?type= is a single enum, and search params of all routes share one namespace
+  projects: list,
+  types: list,
+  statuses: list,
+  assignees: list,
+  priorities: list,
+  text: z.string().optional().catch(undefined),
+  sort: z.string().optional().catch(undefined),
+})
+export type IssuesSearch = z.infer<typeof issuesSearch>
+
 const issuesRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'issues',
-  component: () => <ComingSoon title="Issues & filters" phase={17} />,
+  validateSearch: issuesSearch,
+  loader: ({ context: { queryClient } }) =>
+    Promise.all([
+      queryClient.query({ ...filtersQuery(), staleTime: 'static' }),
+      queryClient.query({ ...projectsQuery(), staleTime: 'static' }),
+    ]),
+  component: lazyRouteComponent(() => import('@/features/search/IssuesPage.tsx'), 'IssuesPage'),
 })
 
 const dashboardsRoute = createRoute({
   getParentRoute: () => appRoute,
   path: 'dashboards',
-  component: () => <ComingSoon title="Dashboards" phase={17} />,
+  loader: ({ context: { queryClient } }) => queryClient.query({ ...projectsQuery(), staleTime: 'static' }),
+  component: lazyRouteComponent(() => import('@/features/reports/DashboardsPage.tsx'), 'DashboardsPage'),
 })
 
 // BLOCK 5: project routes — the shell with the project sidebar and the project's live stream
@@ -212,17 +251,42 @@ const backlogRoute = createRoute({
 const timelineRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: 'timeline',
-  component: () => <ComingSoon title="Timeline" phase={17} />,
+  loader: ({ context: { queryClient }, params }) =>
+    queryClient.query({ ...timelineQuery(params.projectKey), staleTime: 'static' }),
+  component: lazyRouteComponent(() => import('@/features/timeline/TimelinePage.tsx'), 'TimelinePage'),
 })
+
+// Reports: the cards load on their own (a Kanban project's burndown is a 404 the card shows), so the loader only
+// starts the requests (errors swallowed: the cards show them) and the page renders while they run.
 const reportsRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: 'reports',
-  component: () => <ComingSoon title="Reports" phase={17} />,
+  validateSearch: z.object({ sprint: z.string().optional().catch(undefined) }),
+  loaderDeps: ({ search }) => ({ sprint: search.sprint }),
+  loader: ({ context: { queryClient }, params, deps }) => {
+    const ignore = () => undefined
+    queryClient.query({ ...burndownQuery(params.projectKey, deps.sprint), staleTime: 'static' }).catch(ignore)
+    queryClient.query({ ...velocityQuery(params.projectKey), staleTime: 'static' }).catch(ignore)
+    queryClient
+      .query({ ...sprintReportQuery(params.projectKey, deps.sprint), staleTime: 'static' })
+      .catch(ignore)
+    queryClient
+      .query({ ...breakdownQuery(params.projectKey, deps.sprint), staleTime: 'static' })
+      .catch(ignore)
+  },
+  component: lazyRouteComponent(() => import('@/features/reports/ReportsPage.tsx'), 'ReportsPage'),
 })
+
 const settingsRoute = createRoute({
   getParentRoute: () => projectRoute,
   path: 'settings/$section',
-  component: () => <ComingSoon title="Settings" phase={17} />,
+  loader: ({ context: { queryClient }, params }) =>
+    params.section === 'workflow'
+      ? queryClient.query({ ...workflowQuery(params.projectKey), staleTime: 'static' })
+      : params.section === 'people'
+        ? queryClient.query({ ...membersQuery(params.projectKey), staleTime: 'static' })
+        : undefined,
+  component: lazyRouteComponent(() => import('@/features/settings/SettingsPage.tsx'), 'SettingsPage'),
 })
 const issueRoute = createRoute({
   getParentRoute: () => projectRoute,

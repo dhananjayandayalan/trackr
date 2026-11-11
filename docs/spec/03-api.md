@@ -85,6 +85,8 @@ Legend: 🔒 any signed-in user · P:viewer / P:member / P:admin = project role 
 | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GET /projects/{key}/workflow` P:viewer                                         | `{statuses[], transitions[]}`                                                                                                                                                     |
 | `PUT /projects/{key}/workflow` P:admin                                          | full replacement with `If-Match`; statuses in use cannot be deleted unless `remapTo` given                                                                                        |
+
+Workflow body (phase 17): `{statuses: [{id, name, category, color?, wipLimit?}], transitions: [{fromStatusId|null, toStatusId}], remapTo: {deletedStatusId: targetStatusId}}`. Statuses are in their new order; an id the project already has is that status, any other id is a new status (the browser makes the UUID, so transitions can name it). A project status missing from the list is deleted. 409 `STATUS_IN_USE` (with `errors[]` per status) when a deleted status still has issues and no `remapTo`; 412 with the current workflow in `current`. The board follows: deleted statuses leave their columns (an empty column goes), a new status gets its own last column, a one-status column takes the status's WIP limit and its rename.
 | `GET /projects/{key}/board?sprint=active\|{id}&assignee&type&recent&q` P:viewer | `BoardView {board, sprint, columns:[{id,name,statusIds,wipLimit,count,overLimit,cards:Card[]}], epics:{id:{name,color}}, people:{id:{initials,color,name}}}` — **one jOOQ query** |
 | `PUT /projects/{key}/board/columns` P:admin                                     | column names, mapping, WIP limits                                                                                                                                                 |
 
@@ -143,16 +145,16 @@ Body HTML is sanitised server-side with an allow-list (p, br, strong, em, code, 
 
 ### 3.9 Timeline & reports
 
-`GET /projects/{key}/timeline?from&to` → epics with `startDate`, `dueDate`, `progressPct`, `children[]`.
+`GET /projects/{key}/timeline?from&to` → `{epics: [{id, key, summary, statusCategory, startDate, dueDate, childCount, doneCount, progressPct, version, children: [{id, key, summary, type, statusCategory, startDate, dueDate, assigneeId, version}]}]}`; with `from`/`to`, epics whose dates touch the window plus the undated ones.
 `PATCH /issues/{key}` with `startDate`/`dueDate` moves bars.
-`GET /projects/{key}/reports/burndown?sprintId` → `{days:[{day, remaining, ideal, scopeChange}], committed}`.
+`GET /projects/{key}/reports/burndown?sprintId` → `{sprintId, sprintName, state, startsOn, endsOn, committed, days:[{day, remaining, ideal, scopeChange}]}` — working days Mon–Fri; `remaining` null after today; `scopeChange` null when the scope didn't change. Without `sprintId` (all reports): the active sprint, else the last closed one; 404 when there is neither (Kanban).
 `GET /projects/{key}/reports/velocity?last=5` → `[{sprintId,name,committed,completed}]`.
-`GET /projects/{key}/reports/sprint?sprintId` → `SprintReport`.
-`GET /projects/{key}/reports/breakdown?sprintId` → `{byStatus[], byAssignee[]}`.
+`GET /projects/{key}/reports/sprint?sprintId` → `SprintReportView {…points, completed[], notCompleted[], added[]}` (stored report for a closed sprint, computed now for the active one).
+`GET /projects/{key}/reports/breakdown?sprintId` → `{sprintId, byStatus[], byAssignee[]}` (`sprintId` null = the whole project; `byAssignee` counts open work only).
 
 ### 3.10 Notifications
 
-`GET /notifications?cursor&unread` · `POST /notifications/read {ids[] | all:true}` · `GET /notifications/unread-count`.
+`GET /notifications?cursor&unread` · `POST /notifications/read {ids[] | all:true}` → `{count}` (the new unread count) · `GET /notifications/unread-count` → `{count}`.
 
 ## 4. Server-Sent Events
 

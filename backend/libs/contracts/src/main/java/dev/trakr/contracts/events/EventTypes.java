@@ -23,6 +23,8 @@ public final class EventTypes {
     public static final String PROJECT_UPDATED = "trakr.project.updated.v1";
     public static final String PROJECT_ARCHIVED = "trakr.project.archived.v1";
     public static final String PROJECT_MEMBER_CHANGED = "trakr.project.member-changed.v1";
+    /** The workflow editor saved a project's whole workflow (phase 17). */
+    public static final String WORKFLOW_CHANGED = "trakr.workflow.changed.v1";
 
     public static final String SPRINT_CREATED = "trakr.sprint.created.v1";
     public static final String SPRINT_UPDATED = "trakr.sprint.updated.v1";
@@ -55,6 +57,7 @@ public final class EventTypes {
             Map.entry(PROJECT_UPDATED, ProjectLifecycle.Updated.class),
             Map.entry(PROJECT_ARCHIVED, ProjectLifecycle.Archived.class),
             Map.entry(PROJECT_MEMBER_CHANGED, ProjectLifecycle.MemberChanged.class),
+            Map.entry(WORKFLOW_CHANGED, WorkflowChanged.class),
             Map.entry(SPRINT_CREATED, SprintEvent.SprintCreated.class),
             Map.entry(SPRINT_UPDATED, SprintEvent.SprintUpdated.class),
             Map.entry(SPRINT_STARTED, SprintEvent.SprintStarted.class),

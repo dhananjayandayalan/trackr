@@ -1,0 +1,121 @@
+@layer components {
+  .root {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  /* BLOCK 1: the input over its mirror. Both are the same box with the same font and padding, so the mirror's
+     <mark> sits exactly under the letters the parser stopped at. */
+  .field {
+    position: relative;
+    anchor-name: var(--_anchor);
+    background: var(--color-paper);
+    border: var(--border-field);
+    border-radius: var(--radius-sm);
+
+    &:focus-within {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 1px;
+    }
+
+    &[data-invalid] {
+      border-color: var(--color-danger);
+    }
+  }
+
+  .input,
+  .mirror {
+    box-sizing: border-box;
+    inline-size: 100%;
+    block-size: var(--control-md);
+    padding-inline: var(--space-3);
+    font: var(--text-mono);
+    line-height: var(--control-md);
+    white-space: pre;
+  }
+
+  .input {
+    position: relative;
+    color: var(--text-color);
+    background: transparent;
+    border: 0;
+    outline: none;
+  }
+
+  .mirror {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    color: transparent;
+    pointer-events: none;
+  }
+
+  .squiggle {
+    color: transparent;
+    background: color-mix(in oklch, var(--color-danger) 12%, transparent);
+    text-decoration: underline wavy var(--color-danger);
+    text-decoration-skip-ink: none;
+    text-underline-offset: 4px;
+  }
+
+  .error {
+    font: var(--text-body-sm);
+    color: var(--color-danger-text);
+  }
+
+  /* BLOCK 2: suggestions — a popover anchored under the input, as wide as it */
+  .list {
+    display: none;
+    flex-direction: column;
+    max-block-size: 18rem;
+    margin: 0;
+    padding: var(--space-1);
+    overflow-y: auto;
+    list-style: none;
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-4);
+
+    &:popover-open {
+      display: flex;
+    }
+
+    @supports (anchor-name: --a) {
+      position-anchor: var(--_anchor);
+      inset: auto;
+      position-area: block-end span-inline-end;
+      inline-size: anchor-size(inline);
+      margin-block-start: var(--space-1);
+      position-try-fallbacks: flip-block;
+    }
+  }
+
+  .option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+    min-block-size: var(--control-sm);
+    padding-inline: var(--space-3);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+
+    &[aria-selected='true'],
+    &:hover {
+      background: color-mix(in oklch, var(--color-primary) 12%, var(--color-paper));
+    }
+  }
+
+  .text {
+    font: var(--text-mono-sm);
+  }
+
+  .kind {
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+}

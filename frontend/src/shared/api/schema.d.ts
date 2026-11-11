@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/projects/{key}/workflow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWorkflow"];
+        put: operations["replaceWorkflow"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{key}/star": {
         parameters: {
             query?: never;
@@ -174,6 +190,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["archiveProject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markNotificationsRead"];
         delete?: never;
         options?: never;
         head?: never;
@@ -532,6 +564,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/projects/{key}/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getTimeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/projects/{key}/stream": {
         parameters: {
             query?: never;
@@ -540,6 +588,70 @@ export interface paths {
             cookie?: never;
         };
         get: operations["streamProject"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{key}/reports/velocity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getVelocity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{key}/reports/sprint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSprintReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{key}/reports/burndown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getBurndown"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{key}/reports/breakdown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getBreakdown"];
         put?: never;
         post?: never;
         delete?: never;
@@ -588,6 +700,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["suggestProjectKey"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["unreadNotificationCount"];
         put?: never;
         post?: never;
         delete?: never;
@@ -776,6 +920,45 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ReplaceWorkflowRequest: {
+            statuses: components["schemas"]["StatusRequest"][];
+            transitions: components["schemas"]["TransitionView"][];
+            remapTo?: {
+                [key: string]: string;
+            } | null;
+        };
+        StatusRequest: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            category: string;
+            color?: string | null;
+            /** Format: int32 */
+            wipLimit?: number | null;
+        };
+        TransitionView: {
+            /** Format: uuid */
+            fromStatusId?: string | null;
+            /** Format: uuid */
+            toStatusId: string;
+        };
+        WorkflowStatusView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            category: string;
+            /** Format: int32 */
+            position: number;
+            color: string;
+            /** Format: int32 */
+            wipLimit?: number | null;
+        };
+        WorkflowView: {
+            statuses: components["schemas"]["WorkflowStatusView"][];
+            transitions: components["schemas"]["TransitionView"][];
+            /** Format: int64 */
+            version: number;
+        };
         StartSprintRequest: {
             name: string;
             goal?: string | null;
@@ -918,6 +1101,14 @@ export interface components {
             avatarColor: string;
             /** @enum {string} */
             role: "viewer" | "member" | "admin";
+        };
+        MarkReadRequest: {
+            ids?: string[] | null;
+            all?: boolean | null;
+        };
+        UnreadCount: {
+            /** Format: int32 */
+            count: number;
         };
         CreateIssueRequest: {
             projectKey: string;
@@ -1350,9 +1541,125 @@ export interface components {
             /** Format: uuid */
             toStatusId: string;
         };
+        TimelineChild: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            summary: string;
+            type: string;
+            statusCategory: string;
+            /** Format: date */
+            startDate?: string | null;
+            /** Format: date */
+            dueDate?: string | null;
+            /** Format: uuid */
+            assigneeId?: string | null;
+            /** Format: int64 */
+            version: number;
+        };
+        TimelineEpic: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            summary: string;
+            statusCategory: string;
+            /** Format: date */
+            startDate?: string | null;
+            /** Format: date */
+            dueDate?: string | null;
+            /** Format: int32 */
+            childCount: number;
+            /** Format: int32 */
+            doneCount: number;
+            /** Format: int32 */
+            progressPct: number;
+            /** Format: int64 */
+            version: number;
+            children: components["schemas"]["TimelineChild"][];
+        };
+        TimelineView: {
+            epics: components["schemas"]["TimelineEpic"][];
+        };
         SseEmitter: {
             /** Format: int64 */
             timeout?: number;
+        };
+        VelocityEntry: {
+            /** Format: uuid */
+            sprintId: string;
+            name: string;
+            committed: number;
+            completed: number;
+        };
+        ReportIssue: {
+            key: string;
+            summary: string;
+            type: string;
+            storyPoints?: number | null;
+            statusName: string;
+            statusCategory: string;
+        };
+        SprintReportView: {
+            /** Format: uuid */
+            sprintId: string;
+            name: string;
+            state: string;
+            /** Format: date */
+            startsOn?: string | null;
+            /** Format: date */
+            endsOn?: string | null;
+            committedPoints: number;
+            completedPoints: number;
+            addedPoints: number;
+            removedPoints: number;
+            completed: components["schemas"]["ReportIssue"][];
+            notCompleted: components["schemas"]["ReportIssue"][];
+            added: components["schemas"]["ReportIssue"][];
+        };
+        Burndown: {
+            /** Format: uuid */
+            sprintId: string;
+            sprintName: string;
+            state: string;
+            /** Format: date */
+            startsOn: string;
+            /** Format: date */
+            endsOn: string;
+            committed: number;
+            days: components["schemas"]["BurndownDay"][];
+        };
+        BurndownDay: {
+            /** Format: date */
+            day: string;
+            remaining?: number | null;
+            ideal: number;
+            scopeChange?: number | null;
+        };
+        AssigneeSlice: {
+            /** Format: uuid */
+            userId?: string | null;
+            name: string;
+            initials?: string | null;
+            avatarColor?: string | null;
+            /** Format: int32 */
+            issues: number;
+            points: number;
+        };
+        Breakdown: {
+            /** Format: uuid */
+            sprintId?: string | null;
+            byStatus: components["schemas"]["StatusSlice"][];
+            byAssignee: components["schemas"]["AssigneeSlice"][];
+        };
+        StatusSlice: {
+            /** Format: uuid */
+            statusId: string;
+            name: string;
+            category: string;
+            color: string;
+            /** Format: int32 */
+            issues: number;
+            points: number;
         };
         BoardCard: {
             key: string;
@@ -1481,6 +1788,22 @@ export interface components {
             key: string;
             available: boolean;
         };
+        CursorPageNotificationView: {
+            items: components["schemas"]["NotificationView"][];
+            nextCursor?: string | null;
+        };
+        NotificationView: {
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            issueKey: string;
+            summary: string;
+            actorName: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            readAt?: string | null;
+        };
         CursorPageIssueRow: {
             items: components["schemas"]["IssueRow"][];
             nextCursor?: string | null;
@@ -1524,17 +1847,6 @@ export interface components {
             /** Format: date-time */
             occurredAt: string;
         };
-        WorkflowStatusView: {
-            /** Format: uuid */
-            id: string;
-            name: string;
-            category: string;
-            /** Format: int32 */
-            position: number;
-            color: string;
-            /** Format: int32 */
-            wipLimit?: number | null;
-        };
         CursorPageHistoryItem: {
             items: components["schemas"]["HistoryItem"][];
             nextCursor?: string | null;
@@ -1567,6 +1879,56 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowView"];
+                };
+            };
+        };
+    };
+    replaceWorkflow: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceWorkflowRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WorkflowView"];
+                };
+            };
+        };
+    };
     starProject: {
         parameters: {
             query?: never;
@@ -1927,6 +2289,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    markNotificationsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkReadRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UnreadCount"];
+                };
             };
         };
     };
@@ -2729,6 +3115,31 @@ export interface operations {
             };
         };
     };
+    getTimeline: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TimelineView"];
+                };
+            };
+        };
+    };
     streamProject: {
         parameters: {
             query?: never;
@@ -2749,6 +3160,102 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": components["schemas"]["SseEmitter"];
+                };
+            };
+        };
+    };
+    getVelocity: {
+        parameters: {
+            query?: {
+                last?: number;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VelocityEntry"][];
+                };
+            };
+        };
+    };
+    getSprintReport: {
+        parameters: {
+            query?: {
+                sprintId?: string;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SprintReportView"];
+                };
+            };
+        };
+    };
+    getBurndown: {
+        parameters: {
+            query?: {
+                sprintId?: string;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Burndown"];
+                };
+            };
+        };
+    };
+    getBreakdown: {
+        parameters: {
+            query?: {
+                sprintId?: string;
+            };
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Breakdown"];
                 };
             };
         };
@@ -2825,6 +3332,49 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["KeySuggestion"];
+                };
+            };
+        };
+    };
+    listNotifications: {
+        parameters: {
+            query?: {
+                unread?: boolean;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursorPageNotificationView"];
+                };
+            };
+        };
+    };
+    unreadNotificationCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UnreadCount"];
                 };
             };
         };

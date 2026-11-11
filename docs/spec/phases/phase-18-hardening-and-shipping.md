@@ -26,7 +26,7 @@ Files: catalog (`micrometer-tracing-bridge-otel`, `opentelemetry-exporter-otlp`,
 
 ## 2. Security hardening
 
-1. `V013__row_level_security.sql` — enable RLS + policies on tenant tables (wrap in `-- [jooq ignore start/stop]`); grants for `trakr_api`, `trakr_workers`, `trakr_collab` per 02-data-model §6.
+1. `V014__row_level_security.sql` (V013 became phase 17's workflow version) — enable RLS + policies on tenant tables (wrap in `-- [jooq ignore start/stop]`); grants for `trakr_api`, `trakr_workers`, `trakr_collab` per 02-data-model §6.
 2. `shared/security/TenantTransactionListener.java` — sets `app.workspace_id` with `set_config(..., true)` at transaction begin (hook via a custom `JpaTransactionManager` subclass's `doBegin` or a `TransactionSynchronization` + `DataSourceUtils` — research both, implement one, explain the choice).
 3. Switch datasource credentials to the per-app roles; run the full IT suite → anything failing shows a missing grant or tenant setting.
 4. `shared/web/RateLimitFilter.java` + `src/main/resources/redis/token_bucket.lua` (09-security §8).

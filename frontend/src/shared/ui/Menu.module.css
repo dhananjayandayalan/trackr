@@ -72,6 +72,23 @@
     }
   }
 
+  /* the tick of a menuitemcheckbox: a fixed box, so the labels line up whether ticked or not */
+  .check {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 1rem;
+    block-size: 1rem;
+    font: var(--text-caption);
+    border: var(--border-thin);
+    border-radius: var(--radius-sm);
+  }
+
+  .item[aria-checked='true'] .check {
+    color: var(--color-on-primary);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
   .group {
     display: flex;
     flex-direction: column;

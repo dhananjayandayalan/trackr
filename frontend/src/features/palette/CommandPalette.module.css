@@ -1,0 +1,106 @@
+@layer components {
+  /* BLOCK 1: the dialog — high on the page like a search bar, not centred like a form */
+  .dialog {
+    inline-size: min(36rem, calc(100vw - 2rem));
+    margin: 12dvh auto auto;
+    padding: 0;
+    color: var(--text-color);
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-modal);
+    opacity: 1;
+    translate: 0 0;
+    transition:
+      opacity var(--dur-lift) var(--ease-out),
+      translate var(--dur-lift) var(--ease-out),
+      display var(--dur-lift) allow-discrete,
+      overlay var(--dur-lift) allow-discrete;
+
+    &[open] {
+      @starting-style {
+        opacity: 0;
+        translate: 0 calc(-1 * var(--space-2));
+      }
+    }
+
+    &::backdrop {
+      background: color-mix(in oklch, var(--color-ink) 35%, transparent);
+    }
+  }
+
+  .palette {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .input {
+    block-size: 3.25rem;
+    padding-inline: var(--space-4);
+    font: var(--text-body-lg);
+    color: inherit;
+    background: none;
+    border: 0;
+    border-block-end: var(--border-strong);
+    outline: none;
+  }
+
+  /* BLOCK 2: results */
+  .list {
+    display: flex;
+    flex-direction: column;
+    max-block-size: 22rem;
+    margin: 0;
+    padding: var(--space-2);
+    overflow-y: auto;
+    list-style: none;
+  }
+
+  .group {
+    padding: var(--space-2) var(--space-2) var(--space-1);
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3);
+    min-block-size: var(--control-md);
+    padding-inline: var(--space-3);
+    font: var(--text-body-sm);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+
+    &[aria-selected='true'] {
+      color: var(--color-on-primary);
+      background: var(--color-primary);
+
+      & .hint {
+        color: inherit;
+      }
+    }
+  }
+
+  .hint {
+    font: var(--text-caption);
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .empty {
+    padding: var(--space-4);
+    font: var(--text-body-sm);
+    color: var(--text-muted);
+  }
+
+  .footer {
+    padding: var(--space-2) var(--space-4);
+    font: var(--text-caption);
+    color: var(--text-muted);
+    border-block-start: var(--border-line);
+  }
+}

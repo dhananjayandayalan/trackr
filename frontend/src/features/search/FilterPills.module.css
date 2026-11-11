@@ -1,0 +1,44 @@
+@layer components {
+  .root {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .none {
+    padding: var(--space-2) var(--space-3);
+    font: var(--text-body-sm);
+    color: var(--text-muted);
+  }
+
+  .search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    inline-size: min(18rem, 100%);
+  }
+
+  .searchIcon {
+    position: absolute;
+    inset-inline-start: var(--space-3);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .searchInput {
+    inline-size: 100%;
+    block-size: var(--control-sm);
+    padding-inline: calc(var(--space-3) + var(--icon-sm) + var(--space-2)) var(--space-3);
+    font: var(--text-body-sm);
+    color: var(--text-color);
+    background: var(--color-paper);
+    border: var(--border-field);
+    border-radius: var(--radius-sm);
+
+    &:focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 1px;
+    }
+  }
+}

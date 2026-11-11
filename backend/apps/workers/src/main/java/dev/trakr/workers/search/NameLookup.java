@@ -73,6 +73,11 @@ public class NameLookup {
         return users.get(userId, id -> new Named(name("SELECT display_name FROM app_user WHERE id = ?", id))).name();
     }
 
+    /** A workflow save may rename any of a project's statuses (phase 17). */
+    public void evictStatuses(Iterable<UUID> statusIds) {
+        statuses.invalidateAll(statusIds);
+    }
+
     public void evictSprint(UUID sprintId) {
         sprints.invalidate(sprintId);
     }

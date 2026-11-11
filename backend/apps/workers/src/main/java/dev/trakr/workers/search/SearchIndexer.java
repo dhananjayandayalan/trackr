@@ -25,6 +25,7 @@ import dev.trakr.contracts.events.SprintSnapshot;
 import dev.trakr.contracts.events.Topics;
 import dev.trakr.contracts.events.TrakrEvent;
 import dev.trakr.contracts.events.WorkLogged;
+import dev.trakr.contracts.events.WorkflowChanged;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -66,11 +67,13 @@ class SearchIndexer {
     private final ElasticsearchClient client;
     private final NameLookup names;
     private final IndexTargets targets;
+    private final IssueRows rows;
 
-    SearchIndexer(ElasticsearchClient client, NameLookup names, IndexTargets targets) {
+    SearchIndexer(ElasticsearchClient client, NameLookup names, IndexTargets targets, IssueRows rows) {
         this.client = client;
         this.names = names;
         this.targets = targets;
+        this.rows = rows;
     }
 
     // BLOCK 1: listener — a fixed group: the workers instances share the work, each event is indexed once
@@ -81,6 +84,7 @@ class SearchIndexer {
         List<IssueDeleted> deletes = new ArrayList<>();
         List<CommentEvent.CommentAdded> comments = new ArrayList<>();
         Map<UUID, SprintSnapshot> sprints = new LinkedHashMap<>();
+        Map<UUID, WorkflowChanged> workflows = new LinkedHashMap<>();
 
         for (int i = 0; i < records.size(); i++) {
             ConsumerRecord<String, EventEnvelope<TrakrEvent>> record = records.get(i);
@@ -110,6 +114,8 @@ class SearchIndexer {
                 // the document has no project field that can change (the key is permanent)
                 case ProjectLifecycle e -> { }
                 case SprintEvent e -> sprints.put(e.snapshot().id(), e.snapshot());
+                // status names, categories or ids changed for many issues at once (phase 17)
+                case WorkflowChanged e -> workflows.put(e.projectId(), e);
                 case NotificationEvent e -> { }
                 // collab's relay traffic is on its own topic, which the indexer doesn't read
                 case CollabEvent e -> { }
@@ -154,7 +160,41 @@ class SearchIndexer {
                                 .params("state", JsonData.of(sprint.state()))));
             }
         }
+        for (WorkflowChanged workflow : workflows.values()) {
+            reindexProject(workflow);
+        }
         log.debug("indexed records={} upserts={} deletes={}", records.size(), upserts.size(), deletes.size());
+    }
+
+    /**
+     * A workflow save changes status names and categories (and moves issues off deleted statuses) without an
+     * event per issue. The project's issues are read again from Postgres and indexed with {@code external_gte}:
+     * an issue whose version didn't change (a rename only) is written again at the same version, which plain
+     * {@code external} would refuse as "not newer".
+     */
+    private void reindexProject(WorkflowChanged workflow) throws IOException {
+        names.evictStatuses(workflow.statuses().stream().map(WorkflowChanged.Status::id).toList());
+        names.evictStatuses(workflow.remapped().keySet());
+        List<IssueSnapshot> batch = new ArrayList<>();
+        rows.forEachInProject(workflow.projectId(), batch::add);
+        for (int from = 0; from < batch.size(); from += 500) {
+            List<IssueSnapshot> chunk = batch.subList(from, Math.min(from + 500, batch.size()));
+            Map<UUID, IssueContext> contexts = names.contextsFor(chunk);
+            List<BulkOperation> operations = new ArrayList<>();
+            for (String index : targets.current()) {
+                for (IssueSnapshot snapshot : chunk) {
+                    IssueDocument document = IssueDocumentMapper.toDocument(snapshot, contexts.get(snapshot.id()));
+                    operations.add(BulkOperation.of(o -> o.index(op -> op.index(index).id(snapshot.id().toString())
+                            .routing(snapshot.projectId().toString())
+                            .version(snapshot.version()).versionType(VersionType.ExternalGte)
+                            .document(document))));
+                }
+            }
+            if (!operations.isEmpty()) {
+                check(client.bulk(b -> b.operations(operations)));
+            }
+        }
+        log.info("reindexed project after workflow change projectId={} issues={}", workflow.projectId(), batch.size());
     }
 
     static BulkOperation indexOperation(String index, IssueSnapshot snapshot, IssueContext context) {

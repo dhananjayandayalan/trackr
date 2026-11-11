@@ -45,7 +45,9 @@ export function Menu({
   const anchor = { '--_anchor': `--menu-${id.replace(/[^a-zA-Z0-9]/g, '-')}` } as CSSProperties
 
   const items = () => [
-    ...(popover.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') ?? []),
+    ...(popover.current?.querySelectorAll<HTMLElement>(
+      '[role="menuitem"]:not(:disabled), [role="menuitemcheckbox"]:not(:disabled)',
+    ) ?? []),
   ]
 
   // BLOCK 2: popover → React. The toggle event fires on every open and close, however it happened.
@@ -135,6 +137,38 @@ export function MenuItem({
       disabled={disabled}
       onClick={onSelect}
     >
+      {children}
+    </button>
+  )
+}
+
+/**
+ * An on/off choice (filter pills, phase 17). role="menuitemcheckbox" + aria-checked; the menu stays open on click
+ * (only plain menuitems close it), so several can be ticked in one visit.
+ */
+export function MenuCheckbox({
+  checked,
+  onChange,
+  children,
+}: {
+  checked: boolean
+  onChange: (checked: boolean) => void
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitemcheckbox"
+      aria-checked={checked}
+      tabIndex={-1}
+      className={styles.item}
+      onClick={() => {
+        onChange(!checked)
+      }}
+    >
+      <span className={styles.check} aria-hidden="true">
+        {checked ? '✓' : ''}
+      </span>
       {children}
     </button>
   )

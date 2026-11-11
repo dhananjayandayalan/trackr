@@ -1,0 +1,279 @@
+@layer components {
+  /* BLOCK 1: SVG charts — the viewBox scales, the CSS colours. Only chart tokens (08-css-volt §2). */
+  .figure {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin: 0;
+  }
+
+  .svg {
+    inline-size: 100%;
+    block-size: auto;
+    overflow: visible;
+  }
+
+  .grid line {
+    stroke: var(--line-soft);
+    stroke-width: 1;
+  }
+
+  .axisLabel {
+    font: var(--text-caption);
+    font-size: 11px;
+    fill: var(--text-muted);
+  }
+
+  .value {
+    font: var(--text-caption);
+    font-size: 11px;
+    fill: var(--text-color);
+  }
+
+  .ideal {
+    fill: none;
+    stroke: var(--chart-reference);
+    stroke-width: 2;
+    stroke-dasharray: 6 5;
+  }
+
+  .remaining {
+    fill: none;
+    stroke: var(--chart-1);
+    stroke-width: 3;
+    stroke-linejoin: miter;
+  }
+
+  .point {
+    fill: var(--color-paper);
+    stroke: var(--chart-1);
+    stroke-width: 2;
+  }
+
+  .scope {
+    & line {
+      stroke: var(--chart-2);
+      stroke-width: 1.5;
+      stroke-dasharray: 2 3;
+    }
+
+    & text {
+      font: var(--text-caption);
+      font-size: 11px;
+      font-weight: 700;
+      fill: var(--chart-2);
+    }
+  }
+
+  .bar {
+    stroke: var(--color-ink);
+    stroke-width: 1.5;
+
+    &[data-series='committed'] {
+      fill: var(--gray-200);
+    }
+
+    &[data-series='completed'] {
+      fill: var(--chart-1);
+    }
+  }
+
+  /* BLOCK 2: the legend — a swatch per series drawn like the series itself (solid, dashed, filled) */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    font: var(--text-body-sm);
+  }
+
+  .key {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+
+    &::before {
+      content: '';
+      inline-size: 1.5rem;
+      block-size: 0;
+      border-block-start: 3px solid var(--chart-1);
+    }
+
+    &[data-series='ideal']::before {
+      border-block-start: 2px dashed var(--chart-reference);
+    }
+
+    &[data-series='scope']::before {
+      border-block-start: 2px dotted var(--chart-2);
+    }
+
+    &[data-series='committed']::before,
+    &[data-series='completed']::before {
+      inline-size: 0.875rem;
+      block-size: 0.875rem;
+      border: 1.5px solid var(--color-ink);
+      background: var(--gray-200);
+    }
+
+    &[data-series='completed']::before {
+      background: var(--chart-1);
+    }
+  }
+
+  .data {
+    font: var(--text-body-sm);
+
+    & summary {
+      inline-size: fit-content;
+      color: var(--color-primary);
+      cursor: pointer;
+    }
+  }
+
+  .table {
+    margin-block-start: var(--space-2);
+    border-collapse: collapse;
+
+    & th,
+    & td {
+      padding: var(--space-1) var(--space-3);
+      text-align: end;
+      border-block-end: var(--border-line);
+    }
+
+    & th[scope='row'],
+    & thead th:first-child {
+      text-align: start;
+    }
+  }
+
+  /* BLOCK 3: flex bars — width from --share, set per row from the data */
+  .bars {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .barRow {
+    display: grid;
+    grid-template-columns: minmax(7rem, 10rem) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-3);
+    font: var(--text-body-sm);
+  }
+
+  .barLabel {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .track {
+    block-size: 0.75rem;
+    background: var(--surface-sunken);
+    border: var(--border-thin);
+    border-radius: var(--radius-sm);
+  }
+
+  .fill {
+    display: block;
+    inline-size: var(--share, 0%);
+    block-size: 100%;
+    background: var(--chart-1);
+    transition: inline-size var(--dur-panel) var(--ease-out);
+
+    &[data-tone='todo'] {
+      background: var(--status-todo);
+    }
+
+    &[data-tone='progress'] {
+      background: var(--status-progress);
+    }
+
+    &[data-tone='review'] {
+      background: var(--status-review);
+    }
+
+    &[data-tone='done'] {
+      background: var(--status-done);
+    }
+  }
+
+  .barValue {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .muted {
+    font: var(--text-body-sm);
+    color: var(--text-muted);
+  }
+
+  /* BLOCK 4: sprint report */
+  .report {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .totals {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-2);
+
+    & div {
+      padding: var(--space-2) var(--space-3);
+      background: var(--surface-sunken);
+      border-radius: var(--radius-sm);
+    }
+
+    & dt {
+      font: var(--text-label);
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    & dd {
+      margin: 0;
+      font: var(--text-h3);
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .section summary {
+    font: var(--text-body-sm);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .issues {
+    display: flex;
+    flex-direction: column;
+    margin-block-start: var(--space-2);
+  }
+
+  .issue {
+    display: grid;
+    grid-template-columns: auto 5rem minmax(0, 1fr) 7rem 2.5rem;
+    align-items: center;
+    gap: var(--space-2);
+    padding-block: var(--space-1);
+    font: var(--text-body-sm);
+    border-block-end: var(--border-line);
+  }
+
+  .issueKey {
+    font: var(--text-mono-sm);
+  }
+
+  .issueSummary {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

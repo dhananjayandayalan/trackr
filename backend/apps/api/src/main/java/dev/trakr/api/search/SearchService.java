@@ -253,8 +253,11 @@ public class SearchService {
             return new Suggestions(List.of(), List.of(), List.of());
         }
         Scope scope = security.of(userId);
-        // "MAR-13" matches MAR-13, MAR-130…; "check" matches "Fix checkout flow" (search_as_you_type)
+        // "MAR-13" matches MAR-13, MAR-130…; "check" matches "Fix checkout flow" (search_as_you_type).
+        // Every prefix hit scores the same, so the exact key gets its own clause: with ten or more MAR-13x
+        // issues it would otherwise be a coin toss whether MAR-13 makes the six shown.
         Query typed = Query.of(q1 -> q1.bool(b -> b
+                .should(s -> s.term(t -> t.field("key").value(text).caseInsensitive(true).boost(10f)))
                 .should(s -> s.match(m -> m.field("key.prefix").query(text).boost(3f)))
                 .should(s -> s.multiMatch(m -> m.query(text).type(TextQueryType.BoolPrefix)
                         .fields("summary.suggest", "summary.suggest._2gram", "summary.suggest._3gram")))

@@ -69,3 +69,12 @@ Colours only from the chart tokens; never colour alone — legends and labels al
 - The burndown matches numbers you compute by hand from the seed for one sprint.
 
 Commit: `phase-17: search ui, timeline, reports, settings, global ui`.
+
+## As built (notes from the implementation)
+
+- **Workflow version:** `V013__workflow_version.sql` adds a `workflow (project_id, version)` table (02-data-model); phase 18's RLS migration moves to V014. The PUT publishes an in-process `WorkflowReplaced` that the issue module (`WorkflowRemapper`: remap + category sync, versions bumped) and the board module (`ColumnSync`) handle inside the same transaction, then the Kafka `WorkflowChanged`. Workers: the search indexer re-reads the project's issues and indexes them with `external_gte`; the report projector recomputes the active sprint.
+- **Reports seed:** `db/dev/R__dev_seed_reports.sql` (a separate repeatable file, so an existing dev database gets it without a reset) has the sprint snapshots, sprint 1's report, epic dates and five notifications for Ada. Its header works the MAR Sprint 2 burndown out by hand; `ReportApiIT` checks the api gives exactly those numbers with a fixed `Clock` (`@TestBean`).
+- **Settings section** is a path param (`/settings/$section`, the route that already existed), not a search param.
+- **Issues URL:** pills are plural params (`?types=bug&projects=MAR`) — the backlog's `?type=` is a single enum and all routes share one search namespace.
+- **Extra files:** `features/search/tql.ts` (pillsToTql + ORDER BY rewriting), `features/settings/workflow-draft.ts` (the editor's pure state, tested), `features/timeline/grid.ts` (date → column math, tested), `features/palette/fuzzy.ts`, `features/notifications/*`, `app/GlobalShortcuts.tsx`. `shared/lib/shortcuts.ts` now delegates to `app/keyboard.ts`.
+- **Read-only in v1:** the Issue types, Notifications and Permissions settings tabs describe what v1 does; there is no backend for per-project type toggles or per-user email preferences yet.

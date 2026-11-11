@@ -227,7 +227,8 @@ class SearchApiIT {
     void quickSearchFindsIssuesProjectsAndPeople() {
         TestBrowser ada = TestBrowser.loggedIn(mvc, "ada@trakr.dev");
         assertThat(ada.get("/api/v1/search/suggest?q=MAR-13")).hasStatusOk().bodyJson()
-                .extractingPath("$.issues[*].key").asArray().isNotEmpty().contains("MAR-13")
+                // the exact key leads, however many MAR-13x issues other tests have made
+                .extractingPath("$.issues[*].key").asArray().isNotEmpty().startsWith("MAR-13")
                 .allSatisfy(key -> assertThat((String) key).startsWith("MAR-13"));
         assertThat(ada.get("/api/v1/search/suggest?q=market")).hasStatusOk().bodyJson()
                 .extractingPath("$.projects[*].key").asArray().containsExactly("MAR");

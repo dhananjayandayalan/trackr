@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import { CreateIssueHost } from '@/features/issue/CreateIssueDialog.tsx'
+import { CommandPalette } from '@/features/palette/CommandPalette.tsx'
+import { GlobalShortcuts } from './GlobalShortcuts.tsx'
 import { TopNav } from './TopNav.tsx'
 import styles from './AppShell.module.css'
 
@@ -24,6 +26,9 @@ export function AppShell({ sidebar, children }: { sidebar?: ReactNode; children:
         </main>
         {/* one Create Issue dialog for every screen: the top nav's Create button and the c shortcut open it */}
         <CreateIssueHost />
+        {/* Ctrl/Cmd+K, and the g-sequences (phase 17) */}
+        <CommandPalette />
+        <GlobalShortcuts />
       </div>
     </div>
   )

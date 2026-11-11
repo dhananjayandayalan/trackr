@@ -8,16 +8,19 @@ import dev.trakr.api.project.ProjectService;
 import dev.trakr.api.project.ProjectSummary;
 import dev.trakr.api.project.ProjectView;
 import dev.trakr.api.project.Template;
+import dev.trakr.api.project.TimelineView;
 import dev.trakr.api.shared.web.ETags;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -108,5 +111,14 @@ class ProjectController {
     ResponseEntity<Void> unstar(@AuthenticationPrincipal TrakrPrincipal principal, @PathVariable String key) {
         projects.unstar(principal.id(), key);
         return ResponseEntity.noContent().build();
+    }
+
+    /** 03-api §3.9; dragging a bar is a plain PATCH /issues/{key} with startDate/dueDate. */
+    @Operation(operationId = "getTimeline")
+    @GetMapping("/{key}/timeline")
+    TimelineView timeline(@AuthenticationPrincipal TrakrPrincipal principal, @PathVariable String key,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Nullable LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) @Nullable LocalDate to) {
+        return projects.timeline(principal.id(), key, from, to);
     }
 }

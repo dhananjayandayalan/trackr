@@ -378,6 +378,9 @@ export const handlers = [
       .toUpperCase()
     return HttpResponse.json({ key, available: true })
   }),
+  // the bell in the top nav (phase 17)
+  http.get('/api/v1/notifications/unread-count', () => HttpResponse.json({ count: 2 })),
+  http.get('/api/v1/notifications', () => HttpResponse.json({ items: [], nextCursor: null })),
   http.post('/api/v1/auth/login', () => HttpResponse.json(ada)),
   http.post('/api/v1/auth/signup', () => HttpResponse.json(ada, { status: 201 })),
 ]

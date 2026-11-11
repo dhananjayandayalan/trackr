@@ -1,0 +1,149 @@
+@layer components {
+  /* BLOCK 1: the frame — the bulk bar shows only while a row is checked: :has() asks the table itself, so the
+     bar needs no state of its own to appear */
+  .root {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+
+    & > :first-child:not(.scroller) {
+      display: none;
+    }
+
+    &:has(tbody input:checked) > :first-child:not(.scroller) {
+      display: flex;
+    }
+  }
+
+  .scroller {
+    max-block-size: max(24rem, calc(100dvh - 22rem));
+    overflow: auto;
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    transition: opacity var(--dur-lift) var(--ease-out);
+
+    &[data-stale] {
+      opacity: 0.6;
+    }
+  }
+
+  .table {
+    inline-size: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font: var(--text-body-sm);
+
+    & th,
+    & td {
+      padding: var(--space-2) var(--space-3);
+      text-align: start;
+      white-space: nowrap;
+      border-block-end: var(--border-line);
+    }
+
+    /* BLOCK 2: the header stays put while the rows scroll under it */
+    & thead th {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 1;
+      font: var(--text-label);
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: var(--color-canvas);
+      border-block-end: var(--border-strong);
+    }
+  }
+
+  .check {
+    inline-size: 2.5rem;
+  }
+
+  .sort {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--text-color);
+    }
+  }
+
+  .sortIcon {
+    opacity: 0;
+
+    &[data-active] {
+      opacity: 1;
+    }
+  }
+
+  /* BLOCK 3: rows — a checked row is tinted by :has(), no "selected" class to keep in sync */
+  .row {
+    block-size: 2.75rem;
+
+    &:hover {
+      background: color-mix(in oklch, var(--color-primary) 5%, var(--color-paper));
+    }
+
+    &:has(input:checked) {
+      background: color-mix(in oklch, var(--color-primary) 12%, var(--color-paper));
+    }
+  }
+
+  .spacer td {
+    padding: 0;
+    border: 0;
+  }
+
+  .keyCell {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .key {
+    font: var(--text-mono-sm);
+    color: var(--color-primary);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .summary {
+    max-inline-size: 28rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    & mark {
+      color: inherit;
+      background: var(--color-accent);
+    }
+  }
+
+  .priority {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    text-transform: capitalize;
+  }
+
+  .number {
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+  }
+
+  .muted {
+    color: var(--text-muted);
+  }
+}

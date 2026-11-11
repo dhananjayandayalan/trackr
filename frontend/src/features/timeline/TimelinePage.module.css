@@ -1,0 +1,203 @@
+@layer components {
+  .page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .eyebrow {
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .scroller {
+    overflow-x: auto;
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-3);
+  }
+
+  /* BLOCK 1: the grid — a 16rem name column, then one column per week. Every row repeats the same template, so
+     the columns line up from row to row. --weeks comes from the data. */
+  .timeline {
+    --label-w: 16rem;
+
+    position: relative;
+    min-inline-size: calc(var(--label-w) + var(--weeks) * 3.5rem);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: var(--label-w) repeat(var(--weeks), minmax(3.5rem, 1fr));
+    align-items: center;
+    min-block-size: 2.75rem;
+    border-block-end: var(--border-line);
+
+    &[data-head] {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 2;
+      min-block-size: 2.25rem;
+      background: var(--color-canvas);
+      border-block-end: var(--border-strong);
+    }
+
+    &[data-child] {
+      min-block-size: 2.25rem;
+      background: var(--surface-sunken);
+    }
+  }
+
+  .rows {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .label {
+    grid-column: 1;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-inline-size: 0;
+    padding-inline: var(--space-3);
+    font: var(--text-body-sm);
+    border-inline-end: var(--border-line);
+
+    [data-head] & {
+      font: var(--text-label);
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    [data-child] & {
+      padding-inline-start: calc(var(--space-3) + var(--control-xs) + var(--space-2));
+    }
+  }
+
+  .week {
+    grid-row: 1;
+    padding-inline: var(--space-2);
+    font: var(--text-caption);
+    color: var(--text-muted);
+    white-space: nowrap;
+    border-inline-start: var(--border-line);
+  }
+
+  .expand {
+    display: inline-grid;
+    place-items: center;
+    inline-size: var(--control-xs);
+    block-size: var(--control-xs);
+    padding: 0;
+    color: inherit;
+    background: none;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+
+    &:disabled {
+      visibility: hidden;
+    }
+  }
+
+  .key {
+    flex: none;
+    font: var(--text-mono-sm);
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .summary {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .progress {
+    flex: none;
+    inline-size: 3rem;
+    margin-inline-start: auto;
+  }
+
+  /* BLOCK 2: bars — placed by grid lines from the data; a handle on the end to drag */
+  .bar {
+    grid-column: var(--start) / var(--end);
+    grid-row: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-inline-size: 0;
+    block-size: 1.75rem;
+    margin-inline: 2px;
+    padding-inline: var(--space-2) var(--space-4);
+    background: var(--type-epic);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-2);
+
+    &[data-kind='child'] {
+      block-size: 1.25rem;
+      background: var(--chart-3);
+      box-shadow: none;
+    }
+
+    &[data-done] {
+      background: var(--status-done);
+    }
+
+    &[data-dragging] {
+      box-shadow: var(--shadow-drag);
+      opacity: 0.85;
+    }
+  }
+
+  .barText {
+    overflow: hidden;
+    font: var(--text-caption);
+    color: var(--color-ink);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .handle {
+    position: absolute;
+    inset-block: -2px;
+    inset-inline-end: -2px;
+    inline-size: 0.75rem;
+    padding: 0;
+    background: var(--color-ink);
+    border: 0;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    cursor: ew-resize;
+    touch-action: none;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 2px;
+    }
+  }
+
+  .undated {
+    grid-row: 1;
+    padding-inline: var(--space-3);
+    font: var(--text-caption);
+    color: var(--text-muted);
+  }
+
+  /* BLOCK 3: today — a line over every row, at --today of the week area */
+  .today {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: calc(var(--label-w) + (100% - var(--label-w)) * var(--today));
+    z-index: 1;
+    inline-size: 2px;
+    background: var(--color-pink);
+    pointer-events: none;
+  }
+}

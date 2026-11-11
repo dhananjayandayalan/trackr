@@ -79,7 +79,7 @@ Topics are declared as `NewTopic` beans in the producing app (`TopicBuilder.name
 | `trakr.comment.added.v1` / `.edited.v1` / `.deleted.v1`                     | comments      | `{commentId,issueId,issueKey,authorId,bodyText,mentionedUserIds[]}` |
 | `trakr.project.created.v1` / `.updated.v1` / `.archived.v1`                 | projects      | `ProjectSnapshot`                                                   |
 | `trakr.project.member-changed.v1`                                           | projects      | `{userId,role\|null}`                                               |
-| `trakr.workflow.changed.v1`                                                 | projects      | `{statuses[],transitions[]}`                                        |
+| `trakr.workflow.changed.v1`                                                 | projects      | `{version,statuses[],transitions[],remapped:{from:to}}` (sequence = workflow version) |
 | `trakr.sprint.started.v1` / `.completed.v1` / `.updated.v1` / `.created.v1` | projects      | `SprintSnapshot` (+ `report` on completed)                          |
 | `trakr.sprint.deleted.v1` (added in phase 08)                               | projects      | `SprintSnapshot` of the deleted planned sprint                      |
 | `trakr.notification.created.v1`                                             | notifications | `{notificationId,userId,kind,issueKey,actorName,summary}`           |

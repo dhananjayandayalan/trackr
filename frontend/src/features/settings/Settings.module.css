@@ -1,0 +1,301 @@
+@layer components {
+  .page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    max-inline-size: var(--content-max);
+  }
+
+  .eyebrow {
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .muted {
+    font: var(--text-body-sm);
+    color: var(--text-muted);
+  }
+
+  .error {
+    font: var(--text-body-sm);
+    color: var(--color-danger-text);
+  }
+
+  .fieldset {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .blockHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .blockTitle {
+    font: var(--text-h3);
+    letter-spacing: var(--track-h3);
+  }
+
+  .details {
+    max-inline-size: 36rem;
+  }
+
+  /* BLOCK 1: workflow — status rows */
+  .workflow {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .statusList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: 0;
+    list-style: none;
+  }
+
+  .statusRow {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 8rem minmax(8rem, 1fr) 9rem 8rem auto auto;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    background: var(--color-paper);
+    border: var(--border-strong);
+    border-radius: var(--radius-sm);
+
+    &[data-dragging] {
+      opacity: 0.4;
+    }
+
+    /* the drop line: above or below the row the pointer is over */
+    &[data-edge]::after {
+      content: '';
+      position: absolute;
+      inset-inline: 0;
+      block-size: 3px;
+      background: var(--color-primary);
+    }
+
+    &[data-edge='top']::after {
+      inset-block-start: calc(-1 * var(--space-1) - 2px);
+    }
+
+    &[data-edge='bottom']::after {
+      inset-block-end: calc(-1 * var(--space-1) - 2px);
+    }
+  }
+
+  .dragHandle {
+    display: inline-grid;
+    place-items: center;
+    inline-size: var(--control-sm);
+    block-size: var(--control-sm);
+    padding: 0;
+    color: var(--text-muted);
+    background: none;
+    border: 0;
+    cursor: grab;
+  }
+
+  .preview {
+    justify-self: start;
+    max-inline-size: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .inline {
+    display: flex;
+    min-inline-size: 0;
+
+    & > * {
+      flex: 1;
+    }
+  }
+
+  .textInput,
+  .numberInput {
+    inline-size: 100%;
+    block-size: var(--control-sm);
+    padding-inline: var(--space-2);
+    font: var(--text-body-sm);
+    background: var(--color-paper);
+    border: var(--border-field);
+    border-radius: var(--radius-sm);
+  }
+
+  .numberInput {
+    inline-size: 4.5rem;
+  }
+
+  .wip {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font: var(--text-label);
+    letter-spacing: var(--track-label);
+    color: var(--text-muted);
+  }
+
+  .rowActions {
+    display: flex;
+    gap: var(--space-1);
+  }
+
+  .remap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    font: var(--text-body-sm);
+  }
+
+  /* BLOCK 2: the transitions matrix */
+  .matrixScroller {
+    overflow-x: auto;
+  }
+
+  .matrix {
+    border-collapse: collapse;
+    font: var(--text-body-sm);
+
+    & th,
+    & td {
+      padding: var(--space-2) var(--space-3);
+      text-align: center;
+      border: var(--border-line);
+    }
+
+    & th[scope='row'] {
+      text-align: start;
+      white-space: nowrap;
+    }
+
+    & thead th {
+      font: var(--text-label);
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: var(--color-canvas);
+    }
+
+    & td:has(input:checked) {
+      background: color-mix(in oklch, var(--color-primary) 10%, var(--color-paper));
+    }
+  }
+
+  .alert {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    color: var(--color-danger-text);
+    background: var(--color-danger-soft);
+    border: 2px solid var(--color-danger);
+    border-radius: var(--radius-sm);
+  }
+
+  .problems {
+    padding-inline-start: var(--space-5);
+    font: var(--text-body-sm);
+    color: var(--color-danger-text);
+  }
+
+  .saveBar {
+    position: sticky;
+    inset-block-end: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    padding-block: var(--space-3);
+    background: var(--color-canvas);
+    border-block-start: var(--border-line);
+  }
+
+  /* BLOCK 3: people and the read-only tables */
+  .addMember {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+
+    & > input {
+      inline-size: min(20rem, 100%);
+    }
+  }
+
+  .people,
+  .permissions {
+    inline-size: 100%;
+    max-inline-size: 44rem;
+    border-collapse: collapse;
+    font: var(--text-body-sm);
+
+    & th,
+    & td {
+      padding: var(--space-2) var(--space-3);
+      text-align: start;
+      border-block-end: var(--border-line);
+    }
+
+    & thead th {
+      font: var(--text-label);
+      letter-spacing: var(--track-label);
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+  }
+
+  .permissions td {
+    text-align: center;
+  }
+
+  .person {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 400;
+  }
+
+  .end {
+    text-align: end;
+  }
+
+  .dialogActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+
+  .typeList,
+  .triggers {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+
+    & li {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+    }
+  }
+}

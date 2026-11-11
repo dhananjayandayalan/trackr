@@ -19,6 +19,8 @@ import dev.trakr.api.project.ProjectFilter;
 import dev.trakr.api.project.ProjectRole;
 import dev.trakr.api.project.ProjectSummary;
 import dev.trakr.api.project.Template;
+import dev.trakr.api.project.TimelineView;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Records;
 import org.jooq.impl.DSL;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 /**
@@ -147,5 +150,47 @@ public class ProjectQueries {
                 .where(PROJECT_MEMBER.PROJECT_ID.eq(projectId))
                 .orderBy(APP_USER.DISPLAY_NAME)
                 .fetch(Records.mapping(MemberView::new));
+    }
+
+    /**
+     * The timeline (phase 17): every epic with its children nested (MULTISET, one query) and its progress counted
+     * with {@code count(*) FILTER (WHERE …)} — one pass over the children for both numbers. With {@code from}/
+     * {@code to}, only epics whose dates touch that window, plus the undated ones (they still need a place).
+     */
+    public List<TimelineView.Epic> timeline(UUID projectId, @Nullable LocalDate from, @Nullable LocalDate to) {
+        var child = ISSUE.as("child");
+        Field<Integer> childCount = DSL.field(DSL.selectCount().from(child)
+                .where(child.PARENT_ID.eq(ISSUE.ID), child.DELETED_AT.isNull()));
+        Field<Integer> doneCount = DSL.field(DSL.select(DSL.count().filterWhere(child.STATUS_CATEGORY.eq("done")))
+                .from(child).where(child.PARENT_ID.eq(ISSUE.ID), child.DELETED_AT.isNull()));
+
+        List<Condition> conditions = new ArrayList<>();
+        conditions.add(ISSUE.PROJECT_ID.eq(projectId));
+        conditions.add(ISSUE.TYPE.eq("epic"));
+        conditions.add(ISSUE.DELETED_AT.isNull());
+        if (from != null) {
+            conditions.add(DSL.coalesce(ISSUE.DUE_DATE, ISSUE.START_DATE).isNull()
+                    .or(DSL.coalesce(ISSUE.DUE_DATE, ISSUE.START_DATE).ge(from)));
+        }
+        if (to != null) {
+            conditions.add(DSL.coalesce(ISSUE.START_DATE, ISSUE.DUE_DATE).isNull()
+                    .or(DSL.coalesce(ISSUE.START_DATE, ISSUE.DUE_DATE).le(to)));
+        }
+
+        return dsl.select(ISSUE.ID, ISSUE.KEY, ISSUE.SUMMARY, ISSUE.STATUS_CATEGORY, ISSUE.START_DATE, ISSUE.DUE_DATE,
+                        childCount, doneCount, ISSUE.VERSION,
+                        DSL.multiset(DSL.select(child.ID, child.KEY, child.SUMMARY, child.TYPE, child.STATUS_CATEGORY,
+                                                child.START_DATE, child.DUE_DATE, child.ASSIGNEE_ID, child.VERSION)
+                                        .from(child)
+                                        .where(child.PARENT_ID.eq(ISSUE.ID), child.DELETED_AT.isNull())
+                                        .orderBy(child.START_DATE.nullsLast(), child.DUE_DATE.nullsLast(), child.NUMBER))
+                                .convertFrom(rows -> rows.map(Records.mapping(TimelineView.Child::new))))
+                .from(ISSUE)
+                .where(conditions)
+                // dated epics in date order, then the undated ones in key order
+                .orderBy(DSL.coalesce(ISSUE.START_DATE, ISSUE.DUE_DATE).nullsLast(), ISSUE.NUMBER)
+                .fetch(r -> new TimelineView.Epic(r.value1(), r.value2(), r.value3(), r.value4(), r.value5(),
+                        r.value6(), r.value7(), r.value8(),
+                        r.value7() == 0 ? 0 : r.value8() * 100 / r.value7(), r.value9(), r.value10()));
     }
 }

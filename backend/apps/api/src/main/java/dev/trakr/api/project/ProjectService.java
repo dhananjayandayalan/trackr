@@ -172,6 +172,13 @@ public class ProjectService {
         stars.deleteById(new ProjectStar.Key(userId, grant.projectId()));
     }
 
+    /** The timeline screen (phase 17): epics and their children; {@code from}/{@code to} narrow it to a window. */
+    @Transactional(readOnly = true)
+    public TimelineView timeline(UUID userId, String key, java.time.@Nullable LocalDate from,
+            java.time.@Nullable LocalDate to) {
+        return new TimelineView(queries.timeline(access.require(userId, key, ProjectRole.VIEWER).projectId(), from, to));
+    }
+
     @Transactional(readOnly = true)
     public List<MemberView> members(UUID userId, String key) {
         return queries.membersOf(access.require(userId, key, ProjectRole.VIEWER).projectId());

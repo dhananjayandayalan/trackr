@@ -50,6 +50,11 @@ tasks.withType<AbstractArchiveTask>().configureEach {
 }
 
 // BLOCK 6: integration test suite
+// one integrationTest task at a time across all modules — see TestcontainersSlot
+val testcontainersSlot = gradle.sharedServices.registerIfAbsent("testcontainers", TestcontainersSlot::class) {
+    maxParallelUsages = 1
+}
+
 testing {
     suites {
         named<JvmTestSuite>("test") {
@@ -62,6 +67,12 @@ testing {
             targets.all {
                 testTask.configure {
                     shouldRunAfter(tasks.named("test"))
+                    usesService(testcontainersSlot)
+                    // Spring caches every distinct test context (a @TestBean, @MockitoBean, extra properties or
+                    // module test makes a new one) for the whole run, and each holds its own containers: ~1.5 GB
+                    // with Elasticsearch. Keeping two means the least recently used one is closed, which stops
+                    // its containers too. The shared default context stays cached because most classes use it.
+                    systemProperty("spring.test.context.cache.maxSize", "2")
                 }
             }
         }

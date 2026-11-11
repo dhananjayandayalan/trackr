@@ -47,6 +47,21 @@ class IssueRows {
         }
     }
 
+    /** One project's live issues (phase 17: re-index them after a workflow change renamed or remapped statuses). */
+    @Transactional(readOnly = true)
+    public long forEachInProject(UUID projectId, Consumer<IssueSnapshot> action) {
+        try (Stream<IssueSnapshot> rows = jdbc.queryForStream(
+                "SELECT * FROM issue WHERE deleted_at IS NULL AND project_id = ? ORDER BY number",
+                (rs, n) -> snapshot(rs), projectId)) {
+            long[] count = {0};
+            rows.forEach(snapshot -> {
+                action.accept(snapshot);
+                count[0]++;
+            });
+            return count[0];
+        }
+    }
+
     private static IssueSnapshot snapshot(ResultSet rs) throws SQLException {
         String key = rs.getString("key");
         return new IssueSnapshot(

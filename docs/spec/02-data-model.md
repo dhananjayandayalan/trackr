@@ -42,7 +42,8 @@ infra:       event_publication (Spring Modulith outbox), flyway_schema_history
 | `V010__read_models.sql`          | notification, sprint_day_snapshot, sprint_report, processed_event, saved_filter | 10               |
 | `V011__comments_attachments.sql` | comment, comment_mention, attachment                                            | 15               |
 | `V012__collab.sql`               | collab_update, collab_snapshot                                                  | 16               |
-| `V013__row_level_security.sql`   | RLS policies                                                                    | 18               |
+| `V013__workflow_version.sql`     | workflow (one row per project: the workflow editor's optimistic-lock version)   | 17               |
+| `V014__row_level_security.sql`   | RLS policies                                                                    | 18               |
 
 Version numbers follow the phase order on purpose: Flyway refuses a version lower than one already applied (unless `outOfOrder` is enabled, which we don't — learn why).
 
@@ -115,6 +116,10 @@ id · project_id · name (1–30, **unique per project**) · category (`todo`,`i
 ### workflow_transition
 
 id · project_id · from_status_id nullable (null = any) · to_status_id. Unique (project_id, from_status_id, to_status_id) — use `NULLS NOT DISTINCT` so only one "any" row per target.
+
+### workflow (phase 17)
+
+project_id PK/FK · version bigint. The ETag of `GET/PUT /projects/{key}/workflow`: a save replaces many status and transition rows, so the lock can't live on one of them, and reusing `project.version` would make a project rename fail someone's workflow edit with 412. No row = version 0 (projects created before V013, and the dev seed, which runs after it); the first save upserts it.
 
 ### board / board_column
 
