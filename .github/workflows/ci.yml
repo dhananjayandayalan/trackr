@@ -1,0 +1,165 @@
+# CI (phase 18, 10-testing): every push to main and every pull request runs the backend and frontend checks in
+# parallel, then the end-to-end suite against the real apps; on main the four container images are built too.
+
+# BLOCK 1: triggers
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# a newer push to the same branch or PR cancels the run still going for the older one
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # BLOCK 2: backend — unit, module, slice and integration tests (Testcontainers starts Postgres, Redis, Kafka,
+  # Elasticsearch and SeaweedFS on the runner's Docker), Modulith verification, the OpenAPI snapshot
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+      # caches the wrapper, dependencies and build outputs between runs, keyed by the build files
+      - uses: gradle/actions/setup-gradle@v5
+      - run: ./gradlew check --console=plain
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: backend-test-reports
+          path: backend/**/build/reports/tests/
+          retention-days: 7
+
+  # BLOCK 3: frontend — types, lint, unit/component tests, the production build and its size budget
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      # installs the pnpm version package.json's "packageManager" names
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test --run
+      - run: pnpm build
+      # 00-product §8: first-load JS under 180 KB gzip
+      - run: pnpm size
+
+  # BLOCK 4: end to end — the infrastructure in Docker, the three apps from their jars (dev profile: the seed's
+  # users and projects), the production build behind `vite preview`, then Playwright in Chromium and WebKit
+  e2e:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Start infrastructure
+        working-directory: infra
+        run: |
+          cp .env.example .env
+          # any 22-character base64 id will do for a throwaway single-node cluster
+          sed -i 's/^KAFKA_CLUSTER_ID=.*/KAFKA_CLUSTER_ID=MkU3OEVBNTcwNTJENDM2Qk/' .env
+          docker compose --env-file .env up -d --wait
+
+      - name: Build and start the apps
+        working-directory: backend
+        run: |
+          ./gradlew :apps:api:bootJar :apps:collab:bootJar :apps:workers:bootJar --console=plain
+          mkdir -p ../.ci-logs
+          # the api first: it runs the migrations and the dev seed the other two read
+          nohup java -jar apps/api/build/libs/api.jar > ../.ci-logs/api.log 2>&1 &
+          timeout 180 bash -c 'until curl -fsS localhost:8080/actuator/health/readiness; do sleep 2; done'
+          nohup java -jar apps/collab/build/libs/collab.jar > ../.ci-logs/collab.log 2>&1 &
+          nohup java -jar apps/workers/build/libs/workers.jar > ../.ci-logs/workers.log 2>&1 &
+          timeout 180 bash -c 'until curl -fsS localhost:8081/actuator/health/readiness; do sleep 2; done'
+          timeout 180 bash -c 'until curl -fsS localhost:8082/actuator/health/readiness; do sleep 2; done'
+          # the seed reaches Elasticsearch only through a reindex (it was never sent as events)
+          curl -fsS -X POST -H 'X-Admin-Token: dev-admin-token' localhost:8082/admin/search/reindex
+
+      - name: Install dependencies and browsers
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium webkit
+
+      - name: Build the frontend
+        working-directory: frontend
+        run: pnpm build
+
+      - name: End-to-end and accessibility tests
+        working-directory: frontend
+        run: pnpm e2e
+
+      - name: Upload Playwright report and app logs
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: e2e-report
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+            .ci-logs/
+          retention-days: 7
+
+  # BLOCK 5: images — main only. Built to prove the Dockerfiles work; nothing is pushed until there is a registry.
+  images:
+    if: github.ref == 'refs/heads/main'
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      matrix:
+        include:
+          - { name: api, context: backend, file: backend/apps/api/Dockerfile }
+          - { name: workers, context: backend, file: backend/apps/workers/Dockerfile }
+          - { name: collab, context: backend, file: backend/apps/collab/Dockerfile }
+          - { name: web, context: frontend, file: frontend/Dockerfile }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          tags: trakr-${{ matrix.name }}:${{ github.sha }}
+          push: false
+          # layer cache in GitHub's cache service, one scope per image
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}

@@ -7,6 +7,7 @@ import java.io.UncheckedIOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
@@ -27,14 +28,18 @@ public class IndexManager implements InitializingBean {
     private static final Logger log = LoggerFactory.getLogger(IndexManager.class);
 
     private final ElasticsearchClient client;
+    // false only for the container image's AOT training run (Dockerfile), which starts the app without Elasticsearch
+    private final boolean ensureOnStartup;
 
-    IndexManager(ElasticsearchClient client) {
+    IndexManager(ElasticsearchClient client,
+            @Value("${trakr.search.ensure-index-on-startup:true}") boolean ensureOnStartup) {
         this.client = client;
+        this.ensureOnStartup = ensureOnStartup;
     }
 
     @Override
     public void afterPropertiesSet() throws IOException {
-        if (client.indices().existsAlias(a -> a.name(ALIAS)).value()) {
+        if (!ensureOnStartup || client.indices().existsAlias(a -> a.name(ALIAS)).value()) {
             return;
         }
         String first = PREFIX + 1;

@@ -1,0 +1,8 @@
+# The backend image's build context is this folder: send Gradle sources only, never local builds or caches
+**/build/
+**/bin/
+.gradle/
+**/.gradle/
+.kotlin/
+**/node_modules/
+**/*.log

@@ -1,5 +1,4 @@
 // BLOCK 1: global styles, in layer order (08-css-volt §1). Components import their own modules.
-import './styles/layers.css'
 import './styles/reset.css'
 import './styles/fonts.css'
 import './styles/tokens.css'

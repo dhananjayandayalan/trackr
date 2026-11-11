@@ -1,5 +1,6 @@
 package dev.trakr.workers.notify;
 
+import dev.trakr.workers.TestcontainersConfiguration.OwnerJdbc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.trakr.contracts.events.CommentEvent.CommentAdded;
@@ -39,9 +40,9 @@ class NotifierIT {
     private final StringRedisTemplate redis;
 
     @Autowired
-    NotifierIT(EventPublisher publisher, JdbcClient jdbc, RecordingMailSender mail, StringRedisTemplate redis) {
+    NotifierIT(EventPublisher publisher, OwnerJdbc owner, RecordingMailSender mail, StringRedisTemplate redis) {
         this.publisher = publisher;
-        this.jdbc = jdbc;
+        this.jdbc = owner.client();
         this.mail = mail;
         this.redis = redis;
     }

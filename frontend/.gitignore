@@ -5,3 +5,6 @@ coverage
 .vite
 test-results
 playwright-report
+# Playwright's saved sign-ins (e2e/global-setup.ts) and the demo recording's output
+e2e/.auth/
+demo/out/

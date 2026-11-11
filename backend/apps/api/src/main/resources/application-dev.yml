@@ -1,10 +1,11 @@
 # dev profile: layered on top of application.yml when "dev" is active
 # BLOCK 6: datasource
 spring:
+  # phase 18: the app connects as trakr_api — not the owner, so row-level security applies (V014)
   datasource:
     url: jdbc:postgresql://localhost:5432/trakr
-    username: trakr
-    password: ${POSTGRES_PASSWORD:trakr}
+    username: trakr_api
+    password: ${TRAKR_API_DB_PASSWORD:trakr_api}
     hikari:
       maximum-pool-size: 20
       # milliseconds: Hikari binds this as a plain long, so "3s" fails at startup
@@ -13,6 +14,10 @@ spring:
   # BLOCK 13: dev data — the migrations plus the repeatable seed in db/dev (2 users, 3 projects, ~300 issues)
   flyway:
     locations: classpath:db/migration,classpath:db/dev
+    # migrations run as the owner (creates tables, grants, policies); with a user of its own Flyway opens its own
+    # connection instead of borrowing one from the app's pool
+    user: trakr
+    password: ${POSTGRES_PASSWORD:trakr}
   # BLOCK 10: redis (sessions, login lockout) and mail (Mailpit catches everything, UI on :8025)
   data:
     redis:
@@ -36,6 +41,15 @@ springdoc:
 
 # BLOCK 14: SeaweedFS's dev identity (infra/seaweedfs/s3.json)
 trakr:
+  # phase 18: 5 sign-ins a minute per IP is right for production, but in dev every e2e run, demo recording and
+  # second browser comes from 127.0.0.1
+  rate-limit:
+    auth: { tokens: 60, per: 1m, burst: 30 }
+  # Swagger UI (dev only) needs inline styles
+  security:
+    content-security-policy: >-
+      default-src 'self'; img-src 'self' data: blob:; connect-src 'self' wss:; style-src 'self' 'unsafe-inline';
+      script-src 'self'; frame-ancestors 'none'; base-uri 'self'
   s3:
     access-key: ${S3_ACCESS_KEY:trakr-dev}
     secret-key: ${S3_SECRET_KEY:change-me-dev-secret}

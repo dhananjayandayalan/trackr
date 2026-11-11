@@ -198,8 +198,10 @@ public class ProjectService {
         if (member.role() == ProjectRole.ADMIN && role != ProjectRole.ADMIN) {
             requireAnotherAdmin(grant);
         }
+        ProjectRole previous = member.role();
         member.changeRole(role);
-        events.publishEvent(new ProjectMemberChanged(grant.projectId(), memberId, role, userId));
+        events.publishEvent(new ProjectMemberChanged(grant.projectId(), grant.workspaceId(), memberId, role, previous,
+                userId));
         publishMemberChanged(projects.findById(grant.projectId()).orElseThrow(), memberId, role, userId);
         return toView(memberId, role);
     }
@@ -212,7 +214,8 @@ public class ProjectService {
             requireAnotherAdmin(grant);
         }
         members.delete(member);
-        events.publishEvent(new ProjectMemberChanged(grant.projectId(), memberId, null, userId));
+        events.publishEvent(new ProjectMemberChanged(grant.projectId(), grant.workspaceId(), memberId, null,
+                member.role(), userId));
         publishMemberChanged(projects.findById(grant.projectId()).orElseThrow(), memberId, null, userId);
     }
 
@@ -239,12 +242,14 @@ public class ProjectService {
         workspaces.addMember(project.workspaceId(), memberId);
         ProjectMember.Key memberKey = new ProjectMember.Key(project.id(), memberId);
         ProjectMember member = members.findById(memberKey).orElse(null);
+        ProjectRole previous = member == null ? null : member.role();
         if (member == null) {
             members.save(ProjectMember.add(project.id(), memberId, role, clock));
         } else {
             member.changeRole(role);
         }
-        events.publishEvent(new ProjectMemberChanged(project.id(), memberId, role, invitedBy));
+        events.publishEvent(new ProjectMemberChanged(project.id(), project.workspaceId(), memberId, role, previous,
+                invitedBy));
         publishMemberChanged(project, memberId, role, invitedBy);
         return Optional.of(toView(user.get(), role));
     }

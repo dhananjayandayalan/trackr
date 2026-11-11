@@ -6,7 +6,7 @@ applyTo: "frontend/src/**/*.css"
 
 Source: `docs/spec/08-css-volt.md` and the VOLT design canvas.
 
-- Layer order is declared once in `src/styles/layers.css`: `@layer reset, tokens, base, components, utilities;`. Every stylesheet puts its rules inside one of these layers. Component modules use `@layer components { … }`.
+- Layer order is declared once in `public/layers.css` (linked first from `index.html`, so no chunk stylesheet can come before it): `@layer reset, tokens, base, components, utilities;`. Every stylesheet puts its rules inside one of these layers. Component modules use `@layer components { … }`.
 - Use only tokens (`var(--color-*)`, `var(--space-*)`, `var(--radius-*)`, `var(--shadow-*)`, `var(--font-*)`, `var(--text-*)`). No raw hex, px spacing or font names inside components. If a token is missing, add it to `tokens.css` first and say so.
 - Corners: `var(--radius-sm)` (2px) by default; never more than `var(--radius-md)` (4px). Radios are the only round control.
 - Depth comes from hard offset shadows (`--shadow-2` … `--shadow-6`), never blur.

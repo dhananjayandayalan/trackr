@@ -1,5 +1,6 @@
 package dev.trakr.workers.search;
 
+import dev.trakr.workers.TestcontainersConfiguration.OwnerJdbc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -33,12 +34,12 @@ class ReindexIT {
     private final KafkaAdmin kafkaAdmin;
 
     @Autowired
-    ReindexIT(Reindexer reindexer, IndexManager indices, ElasticsearchClient elasticsearch, JdbcClient jdbc,
+    ReindexIT(Reindexer reindexer, IndexManager indices, ElasticsearchClient elasticsearch, OwnerJdbc owner,
             KafkaAdmin kafkaAdmin) {
         this.reindexer = reindexer;
         this.indices = indices;
         this.elasticsearch = elasticsearch;
-        this.jdbc = jdbc;
+        this.jdbc = owner.client();
         this.kafkaAdmin = kafkaAdmin;
     }
 
@@ -56,7 +57,9 @@ class ReindexIT {
         // finish theirs first, or a late write lands in the index after the wipe below
         awaitIndexerCaughtUp();
 
-        // wipe: the index no longer matches Postgres
+        // wipe: the index no longer matches Postgres. Refresh first: delete-by-query only sees refreshed documents,
+        // and the indexer's last bulk (committed in Kafka a moment ago) may not be searchable yet
+        elasticsearch.indices().refresh(r -> r.index(IndexManager.ALIAS));
         elasticsearch.deleteByQuery(d -> d.index(IndexManager.ALIAS).query(q -> q.matchAll(m -> m)).refresh(true));
         assertThat(count()).isZero();
 

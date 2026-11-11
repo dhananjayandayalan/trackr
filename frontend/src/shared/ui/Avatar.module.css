@@ -15,6 +15,10 @@
     border-radius: var(--radius-sm);
     user-select: none;
 
+    &::before {
+      content: attr(data-initials);
+    }
+
     &[data-size='sm'] {
       --_size: var(--control-xs);
       font: var(--text-mono-sm);

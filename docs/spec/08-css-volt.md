@@ -4,7 +4,7 @@ Source of truth for values: the VOLT design canvas (Foundations page). This file
 
 ## 1. Files and layer order
 
-`src/main.tsx` imports, in this order: `layers.css`, `reset.css`, `fonts.css`, `tokens.css`, `base.css`, `utilities.css`. Components import their own `*.module.css`.
+`index.html` links `public/layers.css` before anything else; `src/main.tsx` then imports, in this order: `reset.css`, `fonts.css`, `tokens.css`, `base.css`, `utilities.css`. Components import their own `*.module.css`. (Layer order is set by the first stylesheet that names the layers. Imported from `main.tsx`, a production build put chunk stylesheets such as Button's ahead of it — found in phase 18.)
 
 ```css
 /* layers.css — the only file with no layer: it declares the order */

@@ -91,6 +91,12 @@ public class SseHub {
         byUser.values().forEach(set -> set.forEach(Subscriber::ping));
     }
 
+    /** Open streams on this instance, board and /me together: the trakr.sse.subscribers gauge (RealtimeMetrics). */
+    public int subscriberCount() {
+        return byProject.values().stream().mapToInt(Set::size).sum()
+                + byUser.values().stream().mapToInt(Set::size).sum();
+    }
+
     /** The projects with at least one open stream here, and who is on each. */
     public Map<UUID, Set<UUID>> viewers() {
         Map<UUID, Set<UUID>> viewers = new java.util.HashMap<>();

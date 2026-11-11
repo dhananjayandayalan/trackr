@@ -1,0 +1,13 @@
+# prod profile (phase 18): see apps/api application-prod.yml — settings from environment variables only
+spring:
+  datasource:
+    url: ${TRAKR_DB_URL}
+    username: ${TRAKR_DB_USER:trakr_collab}
+    password: ${TRAKR_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${TRAKR_DB_POOL_SIZE:10}
+      pool-name: trakr-collab
+  data:
+    redis:
+      host: ${TRAKR_REDIS_HOST:localhost}
+      port: ${TRAKR_REDIS_PORT:6379}

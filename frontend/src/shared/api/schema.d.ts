@@ -868,22 +868,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/_diag/thread": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["thread"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/issue-links/{id}": {
         parameters: {
             query?: never;
@@ -1865,10 +1849,6 @@ export interface components {
         CursorPageComment: {
             items: components["schemas"]["Comment"][];
             nextCursor?: string | null;
-        };
-        ThreadInfo: {
-            name: string;
-            virtual: boolean;
         };
     };
     responses: never;
@@ -3547,26 +3527,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    thread: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["ThreadInfo"];
-                };
             };
         };
     };

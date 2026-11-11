@@ -39,6 +39,11 @@ public class RoomRegistry {
         return Optional.ofNullable(rooms.get(issueId));
     }
 
+    /** Rooms open right now: the trakr.collab.rooms gauge (CollabMetrics). */
+    public int size() {
+        return rooms.size();
+    }
+
     public Collection<Room> all() {
         return List.copyOf(rooms.values());
     }

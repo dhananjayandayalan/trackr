@@ -1,0 +1,142 @@
+# The production-shaped stack (phase 18, 11-infra §8): the three apps and the web front (Caddy + the built SPA) as
+# containers, on top of the infrastructure in docker-compose.yml. From infra/, with .\dev.ps1 stopped (same ports):
+#   docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --build --wait
+# then open http://localhost. It is the same compose project (trakr), so it uses the dev volumes: same database,
+# same seed users, same search index. Stop it with the same -f flags and `stop`.
+
+# BLOCK 1: shared settings. Healthchecks use bash's /dev/tcp: the JRE image has no curl or wget, and installing one
+# just for this would grow every image. "UP" in the readiness response means the app may get traffic.
+x-app-healthcheck: &app-healthcheck
+  interval: 5s
+  timeout: 3s
+  retries: 60
+  start_period: 20s
+
+x-app-env: &app-env
+  SPRING_PROFILES_ACTIVE: prod
+  TRAKR_DB_URL: jdbc:postgresql://postgres:5432/trakr
+  TRAKR_REDIS_HOST: redis
+  TRAKR_KAFKA_BOOTSTRAP: kafka:29092
+  TRAKR_APP_ORIGIN: http://localhost
+  # traces/metrics to the LGTM container when its profile runs: TRAKR_OTEL_ENABLED=true in .env
+  TRAKR_OTEL_ENABLED: ${TRAKR_OTEL_ENABLED:-false}
+  TRAKR_OTLP_ENDPOINT: http://lgtm:4318
+
+x-logging: &logging-defaults
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # BLOCK 2: the api — runs the migrations (as the owner), so the other two apps wait for it to be healthy
+  api:
+    build:
+      context: ../backend
+      dockerfile: apps/api/Dockerfile
+    image: trakr-api
+    environment:
+      <<: *app-env
+      TRAKR_DB_PASSWORD: ${TRAKR_API_DB_PASSWORD}
+      TRAKR_DB_OWNER_PASSWORD: ${POSTGRES_PASSWORD}
+      # this stack shares the dev database, whose dev-seed repeatable migrations aren't in the prod image
+      SPRING_FLYWAY_IGNORE_MIGRATION_PATTERNS: "*:missing"
+      TRAKR_MAIL_HOST: mailpit
+      TRAKR_MAIL_PORT: "1025"
+      TRAKR_ES_URIS: http://elasticsearch:9200
+      # the name the browser uses too (BLOCK 5): presigned URLs are signed for a host
+      TRAKR_S3_ENDPOINT: http://s3.localhost
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      <<: *app-healthcheck
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\r\n\r\n' >&3 && grep -q UP <&3"]
+    # the JVM sizes its heap from this (MaxRAMPercentage=75 in the Dockerfile)
+    mem_limit: 1g
+    logging: *logging-defaults
+
+  # BLOCK 3: collab — the WebSocket relay
+  collab:
+    build:
+      context: ../backend
+      dockerfile: apps/collab/Dockerfile
+    image: trakr-collab
+    environment:
+      <<: *app-env
+      TRAKR_DB_PASSWORD: ${TRAKR_COLLAB_DB_PASSWORD}
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      <<: *app-healthcheck
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8081 && printf 'GET /actuator/health/readiness HTTP/1.0\r\n\r\n' >&3 && grep -q UP <&3"]
+    mem_limit: 512m
+    logging: *logging-defaults
+
+  # BLOCK 4: workers — Kafka consumers; its port only serves actuator and /admin, so it isn't published
+  workers:
+    build:
+      context: ../backend
+      dockerfile: apps/workers/Dockerfile
+    image: trakr-workers
+    environment:
+      <<: *app-env
+      TRAKR_DB_PASSWORD: ${TRAKR_WORKERS_DB_PASSWORD}
+      TRAKR_MAIL_HOST: mailpit
+      TRAKR_MAIL_PORT: "1025"
+      TRAKR_ES_URIS: http://elasticsearch:9200
+      TRAKR_ADMIN_TOKEN: ${TRAKR_ADMIN_TOKEN:-change-me-admin-token}
+    depends_on:
+      api:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    healthcheck:
+      <<: *app-healthcheck
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8082 && printf 'GET /actuator/health/readiness HTTP/1.0\r\n\r\n' >&3 && grep -q UP <&3"]
+    mem_limit: 768m
+    logging: *logging-defaults
+
+  # BLOCK 5: web — Caddy with the SPA's files: the only port the browser talks to
+  web:
+    build: ../frontend
+    image: trakr-web
+    ports:
+      - "80:80"
+    environment:
+      TRAKR_SITE: http://localhost
+      S3_SITE: http://s3.localhost
+      S3_ORIGIN: http://s3.localhost
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+    networks:
+      default:
+        # the api's S3 client resolves s3.localhost to Caddy too, so server and browser use one signed host
+        aliases:
+          - s3.localhost
+    depends_on:
+      api:
+        condition: service_healthy
+      collab:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+    healthcheck:
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost/"]
+    logging: *logging-defaults
+
+volumes:
+  caddydata:

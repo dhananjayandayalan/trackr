@@ -1,5 +1,6 @@
 package dev.trakr.workers.reports;
 
+import dev.trakr.workers.TestcontainersConfiguration.OwnerJdbc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.trakr.contracts.events.IssueSnapshot;
@@ -35,9 +36,9 @@ class ReportProjectorIT {
     private final MutableClock clock;
 
     @Autowired
-    ReportProjectorIT(EventPublisher publisher, JdbcClient jdbc, MutableClock clock) {
+    ReportProjectorIT(EventPublisher publisher, OwnerJdbc owner, MutableClock clock) {
         this.publisher = publisher;
-        this.jdbc = jdbc;
+        this.jdbc = owner.client();
         this.clock = clock;
     }
 

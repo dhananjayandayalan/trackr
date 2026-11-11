@@ -38,9 +38,10 @@
 ## 6. Row-level security (defence in depth, phase 18)
 
 - Policies from 02-data-model §7.
-- Setting the tenant: a `TransactionSynchronization`-aware component runs `SELECT set_config('app.workspace_id', ?, true)` at the start of each transaction (true = local to the transaction, safe with pooled connections).
+- Setting the tenant (as built in phase 18): users can belong to several workspaces, so the api tells Postgres **who** asks (`app.user_id`) and the policy derives the workspaces from `workspace_member`. `TenantDataSource` (a `DelegatingDataSource` around Hikari) runs `set_config('app.user_id', ?, false), set_config('app.rls_bypass', ?, false)` on **every connection borrow**, not only at transaction begin: jOOQ also reads outside transactions, and those reads would otherwise see nothing. Every borrow overwrites both values, so nothing leaks between pooled borrowers.
+- Who: a signed-in user → their id; an HTTP request with nobody signed in → nothing (tenant tables look empty: fail closed); background work (Kafka consumers, schedulers, async listeners) → `app.rls_bypass = on`.
 - The api connects as `trakr_api` which is **not** the table owner (owners bypass RLS unless `FORCE ROW LEVEL SECURITY`).
-- Workers connect as `trakr_workers` with `BYPASSRLS` only if needed for cross-tenant projections — prefer setting the workspace from the event envelope.
+- Workers connect as `trakr_workers` with `BYPASSRLS` (a reindex and the digests read across tenants); collab as `trakr_collab`, also `BYPASSRLS`, but with grants on four tables only. Flyway connects as the owner (`spring.flyway.user`).
 
 ## 7. Secrets
 
@@ -48,7 +49,7 @@ Local: `infra/.env` (git-ignored). Apps read env vars (`TRAKR_DB_PASSWORD`, `GOO
 
 ## 8. Rate limiting
 
-Redis token bucket (Lua script, atomic) keyed `rl:{userId}:{route-group}`; route groups: `write` 20/s burst 40, `search` 10/s burst 20, `auth` 5/min per IP.
+Redis token bucket (Lua script, atomic) keyed `rl:{userId}:{route-group}`; route groups: `write` 20/s burst 40, `search` 10/s burst 20, `auth` 5/min per IP. Built in phase 18 as `shared/web/RateLimitFilter` + `redis/token_bucket.lua` (Redis's clock, so every api instance agrees); 429 problem+json with `Retry-After`; reads are not limited; Redis down = not limited. The dev profile allows 60 sign-ins a minute (e2e runs, the demo recording) and integration tests switch it off except `RateLimitIT`.
 
 ## 9. Audit
 

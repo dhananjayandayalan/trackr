@@ -78,6 +78,16 @@ spring:
         spring.json.use.type.headers: false
     listener:
       ack-mode: record
+      # phase 18: a listener continues the trace from the record's traceparent header
+      observation-enabled: true
+    # phase 18: every send (the outbox externalizer's too) starts a producer span and writes traceparent
+    template:
+      observation-enabled: true
+  # phase 18: @Async work (Modulith's event listeners) keeps the trace and security context of the request that
+  # published the event, instead of starting a fresh trace on the executor's thread
+  task:
+    execution:
+      propagate-context: true
   # BLOCK 15: modulith events — the registry (outbox) and its externalization to Kafka
   modulith:
     events:
@@ -101,6 +111,9 @@ spring:
 server:
   port: 8080
   shutdown: graceful
+  # phase 18: behind Caddy, Tomcat takes the client's address and scheme from X-Forwarded-* — but only when the
+  # request comes from a private-network proxy (its default trusted ranges), so a browser can't spoof them
+  forward-headers-strategy: native
   compression:
     enabled: true
   # BLOCK 11: the session cookie
@@ -118,8 +131,9 @@ server:
 management:
   endpoints:
     web:
+      # phase 18: what production exposes; the dev profile opens everything
       exposure:
-        include: health,info,metrics,prometheus,conditions
+        include: health,info,prometheus
   endpoint:
     health:
       probes:
@@ -129,6 +143,31 @@ management:
   health:
     mail:
       enabled: false
+  # BLOCK 17: observability (phase 18) — every request, query, Kafka send and listener becomes a span. Traces
+  # and metrics go over OTLP to Grafana's all-in-one LGTM image (infra profile `observability`, :3000), only when
+  # TRAKR_OTEL_ENABLED=true (.\dev.ps1 -Observability); otherwise the exporter would log a failure every few seconds.
+  tracing:
+    sampling:
+      # every trace in dev; a busy prod would keep a fraction (TRAKR_TRACE_SAMPLING=0.1)
+      probability: ${TRAKR_TRACE_SAMPLING:1.0}
+    export:
+      enabled: ${TRAKR_OTEL_ENABLED:false}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${TRAKR_OTLP_ENDPOINT:http://localhost:4318}/v1/traces
+  otlp:
+    metrics:
+      export:
+        enabled: ${TRAKR_OTEL_ENABLED:false}
+        url: ${TRAKR_OTLP_ENDPOINT:http://localhost:4318}/v1/metrics
+        step: 10s
+
+# BLOCK 18: every log line carries the app, trace and span id: a log line found in Grafana (or a file) leads to its trace
+logging:
+  pattern:
+    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
 
 # BLOCK 5: our properties
 trakr:
@@ -142,6 +181,16 @@ trakr:
   search:
     # the alias, never a concrete trakr-issues-v{n}: a reindex moves it without the api noticing
     index: trakr-issues
+  # phase 18 (09-security §5, §8): response headers and rate limits
+  security:
+    content-security-policy: >-
+      default-src 'self'; img-src 'self' data: blob:; connect-src 'self' wss:; style-src 'self'; script-src 'self';
+      frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://accounts.google.com https://github.com
+  rate-limit:
+    enabled: true
+    write: { tokens: 20, per: 1s, burst: 40 }
+    search: { tokens: 10, per: 1s, burst: 20 }
+    auth: { tokens: 5, per: 1m, burst: 5 }
   # attachments (phase 15): the S3 bucket. The endpoint is also what the browser uploads to, so it must be the
   # address the browser can reach; the keys have dev defaults in application-dev.yml only
   s3:

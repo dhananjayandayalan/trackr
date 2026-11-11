@@ -34,6 +34,10 @@ spring:
       max-poll-records: 50
     listener:
       ack-mode: record
+      observation-enabled: true
+    # phase 18: relay messages and snapshots carry traceparent, so the api's snapshot consumer continues the trace
+    template:
+      observation-enabled: true
   # BLOCK 3: the app only reads and writes rows; the api's Flyway owns the schema
   sql:
     init:
@@ -53,6 +57,31 @@ management:
     health:
       probes:
         enabled: true
+  # BLOCK 6: observability (phase 18) — every request, query, Kafka send and listener becomes a span. Traces
+  # and metrics go over OTLP to Grafana's all-in-one LGTM image (infra profile `observability`, :3000), only when
+  # TRAKR_OTEL_ENABLED=true (.\dev.ps1 -Observability); otherwise the exporter would log a failure every few seconds.
+  tracing:
+    sampling:
+      # every trace in dev; a busy prod would keep a fraction (TRAKR_TRACE_SAMPLING=0.1)
+      probability: ${TRAKR_TRACE_SAMPLING:1.0}
+    export:
+      enabled: ${TRAKR_OTEL_ENABLED:false}
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: ${TRAKR_OTLP_ENDPOINT:http://localhost:4318}/v1/traces
+  otlp:
+    metrics:
+      export:
+        enabled: ${TRAKR_OTEL_ENABLED:false}
+        url: ${TRAKR_OTLP_ENDPOINT:http://localhost:4318}/v1/metrics
+        step: 10s
+
+# BLOCK 7: every log line carries the app, trace and span id: a log line found in Grafana (or a file) leads to its trace
+logging:
+  pattern:
+    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
 
 # BLOCK 5: our properties (CollabProperties)
 trakr:

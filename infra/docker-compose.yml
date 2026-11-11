@@ -154,7 +154,26 @@ services:
       test: ["CMD", "/mailpit", "readyz"]
     logging: *logging-defaults
 
+  # BLOCK 10: observability (phase 18) — Grafana's all-in-one OpenTelemetry image: an OTLP collector on 4317 (gRPC)
+  # and 4318 (HTTP) feeding Tempo (traces), Prometheus/Mimir (metrics) and Loki (logs), with Grafana on :3000
+  # (admin/admin) already wired to all three. The apps export to it when TRAKR_OTEL_ENABLED=true.
+  # Start with: docker compose --env-file .env --profile observability up -d --wait   (or .\dev.ps1 -Observability)
+  lgtm:
+    image: grafana/otel-lgtm:0.40.0
+    profiles: ["observability"]
+    ports:
+      - "3000:3000"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - lgtmdata:/data
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/api/health || exit 1"]
+    logging: *logging-defaults
+
 volumes:
+  lgtmdata:
   pgdata:
   redisdata:
   kafkadata:

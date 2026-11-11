@@ -1,5 +1,6 @@
 package dev.trakr.workers.kafka;
 
+import dev.trakr.workers.TestcontainersConfiguration.OwnerJdbc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -44,11 +45,11 @@ class DeadLetterIT {
 
     @Autowired
     DeadLetterIT(KafkaTemplate<String, Object> kafka, EventPublisher publisher, ElasticsearchClient elasticsearch,
-            JdbcClient jdbc, KafkaContainer container) {
+            OwnerJdbc owner, KafkaContainer container) {
         this.kafka = kafka;
         this.publisher = publisher;
         this.elasticsearch = elasticsearch;
-        this.jdbc = jdbc;
+        this.jdbc = owner.client();
         this.container = container;
     }
 

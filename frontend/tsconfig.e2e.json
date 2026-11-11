@@ -1,5 +1,5 @@
 {
-  // Playwright tests: they run in Node, but the callbacks passed to page.evaluate() run in the page — so Node
+  // Playwright tests and the demo recording (demo/): they run in Node, but the callbacks passed to page.evaluate() run in the page — so Node
   // types *and* the DOM library.
   "compilerOptions": {
     "target": "ES2023",
@@ -23,5 +23,5 @@
 
     "types": ["node"]
   },
-  "include": ["e2e"]
+  "include": ["e2e", "demo"]
 }

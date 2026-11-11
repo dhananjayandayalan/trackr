@@ -14,6 +14,7 @@ import dev.trakr.api.workflow.internal.WorkflowTransitionRepository;
 import dev.trakr.contracts.events.WorkflowChanged;
 import java.time.Clock;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -156,7 +157,10 @@ public class WorkflowService {
                 }
             }
         }
-        events.publishEvent(new WorkflowReplaced(projectId, next, remapTo, added, deleted, previousNames));
+        List<WorkflowStatusView> previous = current.values().stream()
+                .sorted(Comparator.comparingInt(WorkflowStatusView::position)).toList();
+        events.publishEvent(new WorkflowReplaced(projectId, grant.workspaceId(), userId, previous, next, remapTo, added,
+                deleted, previousNames));
         store.deleteStatuses(deleted);
         store.insertTransitions(projectId, nextTransitions);
 

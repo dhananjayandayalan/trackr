@@ -1,0 +1,68 @@
+# Caddy in front of everything (phase 18, 11-infra §8): one origin for the browser — the SPA's files, the api,
+# the collab WebSocket and OAuth callbacks — so cookies, CSRF and CSP work exactly as in dev behind Vite's proxy.
+# Locally: TRAKR_SITE=http://localhost (plain HTTP, no certificate). In production set it to the domain, e.g.
+# trakr.example.com, and Caddy gets and renews a TLS certificate for it on its own.
+
+# BLOCK 1: global options — no admin API inside the container
+{
+	admin off
+}
+
+{$TRAKR_SITE:http://localhost} {
+	# BLOCK 2: security headers (09-security §5), on every response. The api sends the same set on its own
+	# responses; these replace them, so the browser sees one policy. S3_ORIGIN is where attachments are uploaded
+	# to and shown from (presigned URLs go straight to SeaweedFS, not through the api).
+	header {
+		Content-Security-Policy "default-src 'self'; img-src 'self' data: blob: {$S3_ORIGIN}; connect-src 'self' ws: wss: {$S3_ORIGIN}; style-src 'self'; script-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://accounts.google.com https://github.com"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# browsers ignore HSTS over plain HTTP; behind a real certificate it pins HTTPS for a year
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# BLOCK 3: the api. flush_interval -1 writes every byte through at once: without it Caddy buffers the
+	# response and an SSE event (a card moved) would wait in the buffer instead of reaching the board.
+	handle /api/* {
+		reverse_proxy api:8080 {
+			flush_interval -1
+		}
+	}
+
+	# BLOCK 4: collaborative editing. A WebSocket starts as an HTTP request with "Upgrade: websocket";
+	# reverse_proxy sees the header and switches to piping the socket both ways. Nothing to configure.
+	handle /collab/* {
+		reverse_proxy collab:8081
+	}
+
+	# BLOCK 5: OAuth sign-in starts and returns on the api
+	@oauth path /oauth2/* /login/oauth2/*
+	handle @oauth {
+		reverse_proxy api:8080
+	}
+
+	# BLOCK 6: the SPA. Hashed files under /assets/ never change (a new build gets new names): cache them for a
+	# year. index.html must be revalidated every time, or a browser keeps loading last week's asset names.
+	# Unknown paths (/p/MAR/board) get index.html: the router in the browser takes it from there.
+	handle {
+		root * /srv
+		encode zstd gzip
+		@immutable path /assets/*
+		header @immutable Cache-Control "public, max-age=31536000, immutable"
+		@fonts path /fonts/*
+		header @fonts Cache-Control "public, max-age=604800"
+		@document not path /assets/* /fonts/*
+		header @document Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# BLOCK 7: attachments. Presigned upload/download URLs point at S3_ORIGIN (http://s3.localhost locally): the
+# browser resolves *.localhost to itself, Caddy passes the request through with its Host unchanged — the host is
+# part of the signature — and SeaweedFS checks it. Inside the compose network the api reaches the same name,
+# because the caddy service has s3.localhost as a network alias.
+{$S3_SITE:http://s3.localhost} {
+	reverse_proxy seaweedfs:8333
+}

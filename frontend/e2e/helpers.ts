@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright'
 import {
   test as base,
   expect,
@@ -10,13 +11,18 @@ import {
 /** The dev seed's people (backend R__dev_seed.sql); both are members of MAR. */
 export const ADA = { email: 'ada@trakr.dev', name: 'Ada Lovelace' }
 export const GRACE = { email: 'grace@trakr.dev', name: 'Grace Hopper' }
-const PASSWORD = 'correct-horse-7'
+export const PASSWORD = 'correct-horse-7'
+
+/** Where global-setup.ts keeps a user's signed-in cookies. */
+export function authFile(who: { email: string }): string {
+  return `e2e/.auth/${who.email.split('@')[0] ?? 'user'}.json`
+}
 
 /**
  * The tests' `test`, with two fixtures:
  * - `signIn(who)`: a browser context of its own (its own cookies: a second "window", of another person), signed
- *   in. Every context it opened is closed when the test ends — left open, its stream would still count as
- *   "here" in the next test.
+ *   in with the session global-setup.ts saved. Every context it opened is closed when the test ends — left
+ *   open, its stream would still count as "here" in the next test.
  * - `restoreLater(page, place)`: puts a card back where it was when the test ends — passed or failed or timed
  *   out. A `finally` in the test isn't enough: on a timeout Playwright tears the fixtures down (closing the
  *   pages) before the test's own code gets to run. This fixture depends on signIn, so it is torn down first,
@@ -48,14 +54,27 @@ export const test = base.extend<{
 })
 
 async function signedIn(browser: Browser, who: { email: string }): Promise<Page> {
-  const context = await browser.newContext()
+  const context = await browser.newContext({ storageState: authFile(who) })
   const page = await context.newPage()
-  await page.goto('/login')
-  await page.getByLabel('Email').fill(who.email)
-  await page.getByLabel('Password').fill(PASSWORD)
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await page.goto('/')
   await expect(page).toHaveURL('/')
   return page
+}
+
+/**
+ * No axe violations on the page as it is now (00-product §8: "no axe violations on the 12 screens"), against
+ * WCAG 2.2 A and AA. The failure message lists each rule and the elements it hit, so a red run says what to fix.
+ */
+export async function expectAccessible(page: Page) {
+  const { violations } = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+    .analyze()
+  const report = violations.map(
+    (violation) =>
+      `${violation.id} (${violation.impact ?? 'n/a'}): ${violation.help}\n    ` +
+      violation.nodes.map((node) => node.target.join(' ')).join('\n    '),
+  )
+  expect(report, report.join('\n')).toEqual([])
 }
 
 /** The board at /p/MAR/board, with its live stream connected. */

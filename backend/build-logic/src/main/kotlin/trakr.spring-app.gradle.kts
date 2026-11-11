@@ -18,6 +18,13 @@ val libs = the<VersionCatalogsExtension>().named("libs")
 dependencies {
     implementation(platform(libs.findLibrary("spring-modulith-bom").get()))
     // no spring-boot-docker-compose: infra is started by hand and connections live in application.yml
+
+    // phase 18: every app traces (W3C traceparent over HTTP and Kafka, exported over OTLP) and serves
+    // Prometheus metrics, so one trace can follow a move from the api through Kafka into the workers
+    implementation(platform(libs.findLibrary("opentelemetry-bom").get()))
+    implementation(libs.findLibrary("spring-boot-starter-opentelemetry").get())
+    implementation(libs.findLibrary("micrometer-registry-prometheus").get())
+    implementation(libs.findLibrary("micrometer-registry-otlp").get())
 }
 
 // BLOCK 4: a stable jar name (api.jar) for Dockerfiles and scripts

@@ -14,11 +14,16 @@
 
 .PARAMETER NoWorkers
   Skip the workers app (only needed for search indexing and emails).
+
+.PARAMETER Observability
+  Also start Grafana's LGTM container (traces, metrics, logs on http://localhost:3000) and make the apps export
+  their traces and metrics to it over OTLP.
 #>
 param(
   [ValidateSet('up', 'stop')] [string] $Action = 'up',
   [switch] $KeepInfra,
-  [switch] $NoWorkers
+  [switch] $NoWorkers,
+  [switch] $Observability
 )
 
 $root     = $PSScriptRoot
@@ -52,7 +57,9 @@ function Get-StackProcess {
 
 function Invoke-Compose([string[]] $composeArgs) {
   Push-Location $infra
-  try { & docker compose --env-file .env @composeArgs } finally { Pop-Location }
+  # the observability profile adds the LGTM container (phase 18); "stop" with the profile stops it too
+  $profileArgs = if ($Observability) { @('--profile', 'observability') } else { @() }
+  try { & docker compose --env-file .env @profileArgs @composeArgs } finally { Pop-Location }
   if ($LASTEXITCODE -ne 0) { throw "docker compose $($composeArgs -join ' ') failed" }
 }
 
@@ -126,6 +133,8 @@ try {
   Write-Host 'Starting containers...' -ForegroundColor Cyan
   Invoke-Compose @('up', '-d', '--wait')
 
+  # the apps inherit this script's environment: with it set, they export traces and metrics to LGTM over OTLP
+  if ($Observability) { $env:TRAKR_OTEL_ENABLED = 'true' }
   Write-Host 'Starting apps (first run compiles, give it a minute)...' -ForegroundColor Cyan
   # full path: cmd may be set not to look in the current folder (NoDefaultCurrentDirectoryInExePath)
   $gradlew = "`"$(Join-Path $backend 'gradlew.bat')`""
@@ -150,6 +159,7 @@ try {
   Write-Host '  API health       http://localhost:8080/actuator/health'
   Write-Host '  Collab health    http://localhost:8081/actuator/health'
   if (-not $NoWorkers) { Write-Host '  Workers health   http://localhost:8082/actuator/health' }
+  if ($Observability) { Write-Host '  Grafana          http://localhost:3000   (admin / admin: Explore > Tempo for traces)' }
   Write-Host '  Mailpit          http://localhost:8025'
   Write-Host '  Elasticsearch    http://localhost:9200'
   Write-Host "  Logs             $logs"

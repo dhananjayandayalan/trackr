@@ -33,6 +33,8 @@ interface InlineFieldProps {
 export function InlineField({ label, value, canEdit, editor, onSave, extraActions }: InlineFieldProps) {
   const id = useId()
   const editorId = `${id}-editor`
+  const labelId = `${id}-label`
+  const triggerId = `${id}-trigger`
   const [open, setOpen] = useState(false)
   const anchor = { '--_anchor': `--field-${id.replace(/[^a-zA-Z0-9]/g, '-')}` } as CSSProperties
 
@@ -56,14 +58,21 @@ export function InlineField({ label, value, canEdit, editor, onSave, extraAction
 
   return (
     <div className={styles.row} style={anchor}>
-      <dt className={styles.label}>{label}</dt>
+      <dt className={styles.label} id={labelId}>
+        {label}
+      </dt>
       <dd className={styles.value}>
         {canEdit ? (
+          // named "<label> <value>" (e.g. "Assignee Ada Lovelace"): the label beside it and the text it shows, so
+          // what a sighted user reads is part of what a screen reader says and what voice control listens for
+          // (WCAG 2.5.3, label in name). It's a button with a popup, which is the "edit" part.
           <button
             type="button"
+            id={triggerId}
             className={styles.trigger}
             popoverTarget={editorId}
-            aria-label={`${label}: edit`}
+            aria-labelledby={`${labelId} ${triggerId}`}
+            aria-haspopup="dialog"
           >
             {value}
           </button>

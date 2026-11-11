@@ -170,9 +170,10 @@ export function CommentComposer({
         placeholder="Add a comment… type @ to mention someone"
         aria-label={label}
         maxLength={10_000}
+        // a textarea can't be a combobox (no aria-expanded on it, axe: aria-allowed-attr); as a textbox it may
+        // still point at the list it controls and at the option the arrow keys picked
         aria-autocomplete="list"
         aria-controls={`${id}-mentions`}
-        aria-expanded={listOpen}
         aria-activedescendant={listOpen ? optionId(active) : undefined}
       />
       <ul

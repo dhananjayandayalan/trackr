@@ -3,7 +3,8 @@
 TRAKR is a Jira clone built **from an empty folder, by hand, to learn how every file and every block works**.
 The developer types the code. You (Copilot) assist one block at a time and explain it. Speed matters less than understanding.
 
-The spec is the source of truth: `docs/spec/`. Start at `docs/spec/README.md`. The current phase lives in `docs/spec/phases/`.
+The spec is the source of truth: `docs/spec/`. Start at `docs/spec/README.md`. All 19 build phases are done; the phase-by-phase
+plans were removed after phase 18, and new work starts from the reference files (00–11).
 
 ---
 
@@ -64,7 +65,7 @@ The spec is the source of truth: `docs/spec/`. Start at `docs/spec/README.md`. T
 - Frontend files: components `PascalCase.tsx` with a sibling `PascalCase.module.css`; hooks `useThing.ts`; everything else `kebab-case.ts`.
 - CSS: only tokens from `frontend/src/styles/tokens.css` for colour, space, radius, shadow and type. No hard-coded hex values inside components.
 - Tests sit next to the code they test (`*Test.java` in `src/test/java` with the same package, `*.test.ts(x)` beside the file).
-- Commit messages: `phase-NN: <what you learned/built>`.
+- Commit messages: a short imperative summary of the change (the `phase-NN:` prefix ended with phase 18).
 
 ## 4. Explaining style
 

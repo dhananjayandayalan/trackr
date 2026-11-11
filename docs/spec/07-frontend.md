@@ -18,7 +18,7 @@ frontend/
     ├── main.tsx                    createRoot, StrictMode, <App/>
     ├── vite-env.d.ts               CSS Modules + env typings
     ├── styles/
-    │   ├── layers.css              @layer order — imported first
+    │   ├── (public/layers.css)     @layer order — linked first from index.html
     │   ├── reset.css               @layer reset
     │   ├── tokens.css              @layer tokens — VOLT custom properties
     │   ├── fonts.css               @font-face (Archivo, Inter, JetBrains Mono)

@@ -2,9 +2,9 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/trakr
-    # the trakr_workers role gets its grants in phase 18; until then the owner role, like the api
-    username: trakr
-    password: ${POSTGRES_PASSWORD:trakr}
+    # read-only on the domain tables, writes its read models (V014 grants); BYPASSRLS, it works across tenants
+    username: trakr_workers
+    password: ${TRAKR_WORKERS_DB_PASSWORD:trakr_workers}
     hikari:
       maximum-pool-size: 10
       pool-name: trakr-workers

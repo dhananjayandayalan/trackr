@@ -22,7 +22,8 @@ describe('display components', () => {
   it('Avatar shows initials and is named by the full name', () => {
     render(<Avatar name="Ada Lovelace" initials="AL" color="violet" />)
     const avatar = screen.getByRole('img', { name: 'Ada Lovelace' })
-    expect(avatar).toHaveTextContent('AL')
+    // drawn by CSS from data-initials, so it is no text node (jsdom doesn't render ::before content)
+    expect(avatar).toHaveAttribute('data-initials', 'AL')
     expect(avatar).toHaveAttribute('data-color', 'violet')
   })
 

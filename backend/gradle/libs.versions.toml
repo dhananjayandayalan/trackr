@@ -14,6 +14,10 @@ owaspSanitizer = "20261011.1"
 junit = "6.0.3"
 # Argon2PasswordEncoder runs on BouncyCastle; the Boot BOM does not manage it
 bouncycastle = "1.86"
+# phase 18: elasticsearch-java 9.4.8 needs opentelemetry-api 1.63, the Boot 4.1.2 BOM has the OTel family at 1.62.
+# Gradle then picks api 1.63 but leaves the SDK and exporters at 1.62, and span export dies with
+# NoClassDefFoundError (InstrumentationUtil). The OTel BOM moves the whole family to one version.
+opentelemetry = "1.63.0"
 
 [libraries]
 # BOMs: one version per family, imported with platform(...)
@@ -29,6 +33,13 @@ jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations
 # test: no version, junit-bom / the Spring Boot BOM supply it
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 assertj-core = { module = "org.assertj:assertj-core" }
+
+# observability (phase 18): Boot 4's OpenTelemetry starter = Micrometer Tracing's OTel bridge + the OTLP exporter
+# + Boot's auto-configuration for both; Prometheus scrape format for /actuator/prometheus. Versions from the Boot BOM.
+opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }
+spring-boot-starter-opentelemetry = { module = "org.springframework.boot:spring-boot-starter-opentelemetry" }
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
+micrometer-registry-otlp = { module = "io.micrometer:micrometer-registry-otlp" }
 
 # Gradle plugins as libraries: build-logic puts them on its classpath so convention plugins can apply them
 spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "springBoot" }

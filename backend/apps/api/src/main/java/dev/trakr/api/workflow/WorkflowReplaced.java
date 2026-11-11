@@ -11,13 +11,17 @@ import java.util.UUID;
  * statuses and re-copies categories; the board module fixes its columns. If either fails, the whole save rolls
  * back — a workflow is never half-replaced.
  *
+ * @param workspaceId     the project's workspace (the audit log is per workspace)
+ * @param actorId         who saved
+ * @param previous        the statuses as they were before this save, in order (the audit log's "before")
  * @param statuses        the statuses as they are now, in order
  * @param remapTo         deleted status id → the status its issues move to
  * @param added           statuses that are new in this save
  * @param deleted         statuses that are about to be removed
  * @param previousNames   old name of every status that was renamed (a column named after it follows)
  */
-public record WorkflowReplaced(UUID projectId, List<WorkflowStatusView> statuses, Map<UUID, UUID> remapTo,
+public record WorkflowReplaced(UUID projectId, UUID workspaceId, UUID actorId, List<WorkflowStatusView> previous,
+        List<WorkflowStatusView> statuses, Map<UUID, UUID> remapTo,
         Set<UUID> added,
         Set<UUID> deleted, Map<UUID, String> previousNames) {
 }

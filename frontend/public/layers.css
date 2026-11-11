@@ -1,0 +1,7 @@
+/* The only rule outside a layer: it fixes the order once. Linked first from index.html, not imported by main.tsx
+   (phase 18): the order of layers is the order in which the browser first *sees* them, and a production build
+   splits CSS into chunks — Button's and Icon's stylesheets loaded before the entry's, so `components` was declared
+   before `reset` and reset's `color: inherit` beat every button. A file in public/ isn't bundled or reordered. A later layer beats an earlier one whatever the
+   selectors' specificity — so a utility (.visually-hidden) wins over any component rule, and nobody needs
+   !important. Unlayered styles would beat all layers, which is why every other file uses one. */
+@layer reset, tokens, base, components, utilities;

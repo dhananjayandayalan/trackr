@@ -4,6 +4,9 @@ TRAKR is a Jira clone (boards, backlog, sprints, issues, search, timeline, repor
 
 This folder is the spec. It is written so GitHub Copilot can help you **one block at a time** while you stay the author.
 
+The application is complete: all 19 phases (00–18) are built. The per-phase build plans (`phases/`) were removed
+after phase 18; §4 below keeps the map of what each phase built, and the code's `BLOCK` comments still follow it.
+
 ## 1. How the spec is organised
 
 | File | What it answers |
@@ -20,13 +23,12 @@ This folder is the spec. It is written so GitHub Copilot can help you **one bloc
 | [09-security.md](09-security.md) | Sessions, login, OAuth, CSRF, roles, row-level security |
 | [10-testing.md](10-testing.md) | What to test at each level and how |
 | [11-infra.md](11-infra.md) | Docker Compose services, ports, credentials, env vars, local URLs |
-| [phases/](phases/) | **The build order.** 19 phases from empty folder to production build |
 
-The reference files (00–11) say **what** and **why**. The phase files say **in what order** and break every file into **blocks**.
+The reference files (00–11) say **what** and **why**.
 
 ## 2. The learning loop (do this for every block)
 
-Each phase lists files, and each file is split into numbered blocks like this:
+The phase plans split every file into numbered blocks like this (the `BLOCK n` comments in the code are what is left of them):
 
 > **Block 3 — Kafka listener (KRaft) config**
 > *Cue:* `# BLOCK 3: kafka listeners — one for containers, one for the host`
@@ -34,7 +36,7 @@ Each phase lists files, and each file is split into numbered blocks like this:
 > *Check:* …
 > *Ask yourself:* …
 
-1. **Read** the block's purpose in the phase file. Close the spec if you can — try to predict the code.
+1. **Read** the purpose of the block in the reference file it implements. Close the spec if you can — try to predict the code.
 2. **Type the cue comment** into the file. Copilot inline completion uses the comment, the open file and your open tabs to suggest the block.
 3. **Accept line by line**, not all at once (`Ctrl+→` / `Cmd+→` accepts one word; `Tab` accepts the whole suggestion). Read each line before you accept it. Reject anything the spec does not ask for.
 4. **Explain it back** in your own words. If you can't, select the block and ask Copilot Chat: *"Explain this block"* — the repo's Copilot instructions make it answer as What / Why / Concept / Watch out.
@@ -44,7 +46,7 @@ Each phase lists files, and each file is split into numbered blocks like this:
 
 ### Keeping Copilot to block size
 - Inline completion does **not** read `.github/copilot-instructions.md`; it reads your code, your comment and neighbouring tabs. The cue comment is how you steer it — that is why every block has one.
-- Keep **this phase file open in a tab** next to the code. Copilot uses open tabs as context, so suggestions follow the spec's names.
+- Keep **the reference file you are implementing open in a tab** next to the code. Copilot uses open tabs as context, so suggestions follow the spec's names.
 - Turn off multi-line "next edit" style suggestions if your editor has them, so Copilot does not rewrite code you did not ask about. Keep plain inline completion on.
 - Copilot **Chat** and **agent mode** do read `.github/copilot-instructions.md` and the path-scoped files in `.github/instructions/`. They are told never to write whole files and to explain after every block. Don't use agent mode to "do the phase" — that defeats the purpose.
 - When Copilot suggests a Spring Boot 3 or React 18 pattern, that is a learning moment: check the spec, fix it, note it in the log.
@@ -53,11 +55,11 @@ Each phase lists files, and each file is split into numbered blocks like this:
 
 - **No generators, no boilerplate repos.** Every `build.gradle.kts`, `package.json`, `tsconfig.json`, `vite.config.ts`, `application.yml`, `docker-compose.yml` is typed block by block.
   The only generated files: Gradle wrapper, pnpm lockfile, jOOQ classes, `schema.d.ts`.
-- **One phase at a time.** Each phase ends green: its checks pass and you can explain every block.
-- **Tests come with the code**, inside the same phase.
-- **Commit at the end of each block group** with `phase-NN: …`.
+- **One change at a time.** Each change ends green: its checks pass and you can explain every block.
+- **Tests come with the code**, in the same change.
+- **Commit at the end of each block group** with a message that says what changed.
 
-## 4. Phase map
+## 4. Phase map (what was built, in order)
 
 | # | Phase | You will learn |
 |---|---|---|

@@ -285,6 +285,7 @@ function Person({ user, empty }: { user: UserRef | null; empty: string }) {
         initials={user.initials}
         color={avatarColor(user.avatarColor)}
         size="sm"
+        decorative
       />
       {user.displayName}
     </span>

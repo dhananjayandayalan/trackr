@@ -36,6 +36,8 @@ import dev.trakr.contracts.events.IssueTransitioned;
 import dev.trakr.contracts.events.IssueUpdated;
 import dev.trakr.contracts.events.WorkLogged;
 import dev.trakr.kernel.Rank;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -92,11 +94,13 @@ public class IssueService {
     private final ApplicationEventPublisher events;
     private final TransactionTemplate transactions;
     private final Clock clock;
+    // phase 18: trakr.issue.moves{project} — how hot the board is, per project (Prometheus / OTLP)
+    private final MeterRegistry meters;
 
     IssueService(IssueRepository issues, IssueLinkRepository links, WorklogRepository worklogs, IssueQueries queries,
             IssueHistory history, IssueMarks marks, IssueNumberAllocator numbers, IssueLocks locks,
             ProjectAccess access, WorkflowService workflow, BoardService boards, ApplicationEventPublisher events,
-            TransactionTemplate transactions, Clock clock) {
+            TransactionTemplate transactions, Clock clock, MeterRegistry meters) {
         this.issues = issues;
         this.links = links;
         this.worklogs = worklogs;
@@ -111,6 +115,7 @@ public class IssueService {
         this.events = events;
         this.transactions = transactions;
         this.clock = clock;
+        this.meters = meters;
     }
 
     @Transactional
@@ -284,6 +289,8 @@ public class IssueService {
         }
 
         // BLOCK 6: history + events. Both events carry the same sequence (one version bump); dedupe by event id
+        Counter.builder("trakr.issue.moves").description("Cards moved on a board or in a backlog")
+                .tag("project", grant.key()).register(meters).increment();
         history.moved(issue, userId, fromSprintId, fromRank);
         IssueSnapshot snapshot = issue.snapshot();
         events.publishEvent(IssueMoved.of(clock.instant(), userId, fromSprintId, snapshot));

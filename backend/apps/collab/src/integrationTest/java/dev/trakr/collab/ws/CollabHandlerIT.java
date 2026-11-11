@@ -1,5 +1,6 @@
 package dev.trakr.collab.ws;
 
+import dev.trakr.collab.TestcontainersConfiguration.OwnerJdbc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -52,9 +53,9 @@ class CollabHandlerIT {
     private World w;
 
     @Autowired
-    CollabHandlerIT(JdbcClient jdbc, StringRedisTemplate redis, KafkaTemplate<String, Object> kafka,
+    CollabHandlerIT(OwnerJdbc owner, StringRedisTemplate redis, KafkaTemplate<String, Object> kafka,
             KafkaListenerEndpointRegistry listeners, @LocalServerPort int port) {
-        this.jdbc = jdbc;
+        this.jdbc = owner.client();
         this.redis = redis;
         this.kafka = kafka;
         this.listeners = listeners;

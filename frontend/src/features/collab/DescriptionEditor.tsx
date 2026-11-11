@@ -11,6 +11,7 @@ import type { AvatarColor } from '@/shared/ui/Avatar.tsx'
 import { SafeHtml } from '@/shared/ui/SafeHtml.tsx'
 import { collabStore, descriptionField, type CollabUser, type TrakrCollab } from './trakr-provider.ts'
 import styles from './DescriptionEditor.module.css'
+import './prosemirror.css'
 
 /**
  * The issue's description as a shared document (06-collab §2): everyone with the issue open types into the same
@@ -55,6 +56,8 @@ function CollabEditor({
   // only undoes your own changes, not your neighbour's.
   const editor = useEditor({
     editable: canEdit,
+    // no runtime <style> element: production's CSP forbids it; prosemirror.css carries those rules instead
+    injectCSS: false,
     extensions: [
       StarterKit.configure({
         undoRedo: false,

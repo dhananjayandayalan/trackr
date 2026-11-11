@@ -1,5 +1,6 @@
 package dev.trakr.api.notification;
 
+import dev.trakr.api.TestcontainersConfiguration.OwnerJdbc;
 import static dev.trakr.api.TestBrowser.uniqueEmail;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,9 +31,9 @@ class NotificationApiIT {
     private final JdbcClient jdbc;
 
     @Autowired
-    NotificationApiIT(MockMvcTester mvc, JdbcClient jdbc) {
+    NotificationApiIT(MockMvcTester mvc, OwnerJdbc owner) {
         this.mvc = mvc;
-        this.jdbc = jdbc;
+        this.jdbc = owner.client();
     }
 
     @Test

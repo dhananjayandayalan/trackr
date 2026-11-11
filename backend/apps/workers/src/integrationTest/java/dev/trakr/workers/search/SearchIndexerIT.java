@@ -1,5 +1,6 @@
 package dev.trakr.workers.search;
 
+import dev.trakr.workers.TestcontainersConfiguration.OwnerJdbc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -40,10 +41,10 @@ class SearchIndexerIT {
     private final JdbcClient jdbc;
 
     @Autowired
-    SearchIndexerIT(EventPublisher publisher, ElasticsearchClient elasticsearch, JdbcClient jdbc) {
+    SearchIndexerIT(EventPublisher publisher, ElasticsearchClient elasticsearch, OwnerJdbc owner) {
         this.publisher = publisher;
         this.elasticsearch = elasticsearch;
-        this.jdbc = jdbc;
+        this.jdbc = owner.client();
     }
 
     @Test

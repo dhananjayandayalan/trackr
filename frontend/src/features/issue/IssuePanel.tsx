@@ -1,7 +1,11 @@
-import { Suspense, useEffect, useEffectEvent, useRef } from 'react'
+import { Suspense, lazy, useEffect, useEffectEvent, useRef } from 'react'
 import { ErrorBoundary } from './ErrorBoundary.tsx'
-import { IssueView } from './IssueView.tsx'
 import styles from './IssuePanel.module.css'
+
+// the issue view is its own chunk (~18 KB gzip), fetched the first time a panel opens: a board or backlog that
+// nobody opens a card on doesn't pay for it (phase 18, the first-load budget). The Suspense below already shows
+// "Loading…" while the issue's data arrives; it covers the chunk too.
+const IssueView = lazy(() => import('./IssueView.tsx').then((module) => ({ default: module.IssueView })))
 
 /**
  * The issue as a side panel over the board or backlog (00-product §3.7). The page under it stays mounted —

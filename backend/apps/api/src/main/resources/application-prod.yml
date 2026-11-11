@@ -1,0 +1,23 @@
+# prod profile (phase 18): the container image runs with it (infra/docker-compose.prod.yml). Everything that differs
+# between environments comes from environment variables (09-security §7); nothing secret has a default here.
+# BLOCK 1: Postgres — the app as trakr_api (RLS applies), Flyway as the owner
+spring:
+  datasource:
+    url: ${TRAKR_DB_URL}
+    username: ${TRAKR_DB_USER:trakr_api}
+    password: ${TRAKR_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${TRAKR_DB_POOL_SIZE:20}
+      connection-timeout: 3000
+      pool-name: trakr-api
+  flyway:
+    user: ${TRAKR_DB_OWNER:trakr}
+    password: ${TRAKR_DB_OWNER_PASSWORD}
+  # BLOCK 2: Redis (sessions, rate limits, idempotency keys) and the mail relay
+  data:
+    redis:
+      host: ${TRAKR_REDIS_HOST:localhost}
+      port: ${TRAKR_REDIS_PORT:6379}
+  mail:
+    host: ${TRAKR_MAIL_HOST:localhost}
+    port: ${TRAKR_MAIL_PORT:25}

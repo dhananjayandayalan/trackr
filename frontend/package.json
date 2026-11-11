@@ -16,6 +16,8 @@
     "format": "prettier --write .",
     "test": "vitest",
     "e2e": "playwright test",
+    "size": "node scripts/check-bundle-size.mjs",
+    "demo": "playwright install ffmpeg && node demo/record-demo.ts",
     "api:types": "openapi-typescript http://localhost:8080/v3/api-docs -o src/shared/api/schema.d.ts"
   },
   "browserslist": [
@@ -47,6 +49,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@babel/core": "8.1.0",
     "@eslint/js": "9.39.5",
     "@playwright/test": "1.65.0",

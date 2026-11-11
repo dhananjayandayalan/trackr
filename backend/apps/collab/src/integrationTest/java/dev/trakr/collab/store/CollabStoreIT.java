@@ -1,5 +1,6 @@
 package dev.trakr.collab.store;
 
+import dev.trakr.collab.TestcontainersConfiguration.OwnerJdbc;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.trakr.collab.CollabIT;
@@ -18,9 +19,9 @@ class CollabStoreIT {
     private final JdbcClient jdbc;
 
     @Autowired
-    CollabStoreIT(CollabStore store, JdbcClient jdbc) {
+    CollabStoreIT(CollabStore store, OwnerJdbc owner) {
         this.store = store;
-        this.jdbc = jdbc;
+        this.jdbc = owner.client();
     }
 
     @Test

@@ -55,7 +55,8 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.route.tsx', '*.config.{js,ts}'],
+    // Playwright's globalSetup must be a default export, like the config files
+    files: ['**/*.route.tsx', '*.config.{js,ts}', 'e2e/global-setup.ts'],
     rules: { 'no-restricted-syntax': 'off' },
   },
   // Playwright tests: a fixture's `use(value)` is Playwright's, not React's use() hook
@@ -66,7 +67,7 @@ export default tseslint.config(
 
   // BLOCK 7: plain JS (this file) isn't in a tsconfig: lint it without type information, in Node
   {
-    files: ['**/*.js'],
+    files: ['**/*.{js,mjs}'],
     ...tseslint.configs.disableTypeChecked,
     languageOptions: { ...tseslint.configs.disableTypeChecked.languageOptions, globals: globals.node },
   },

@@ -148,6 +148,8 @@ tasks.named<Test>("integrationTest") {
     systemProperty("snapshots.dir", snapshots.asFile.absolutePath)
     systemProperty("snapshots.update", providers.gradleProperty("updateSnapshots").getOrElse("false"))
     systemProperty("perf", providers.gradleProperty("perf").getOrElse("false"))
+    // phase 18: the suite signs in hundreds of times from 127.0.0.1; RateLimitIT tests the buckets with its own filter
+    systemProperty("trakr.rate-limit.enabled", "false")
     inputs.files(snapshots).withPropertyName("snapshots")
     // BLOCK 15: workers owns the index mapping; the search tests create their index from that same file
     val mapping = project(":apps:workers").layout.projectDirectory.file("src/main/resources/es/trakr-issues-v1.json")

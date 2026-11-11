@@ -113,6 +113,9 @@ class KafkaConsumerConfig {
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(typed(consumerFactory));
         factory.getContainerProperties().setAckMode(AckMode.RECORD);
+        // phase 18: these factories are ours, so spring.kafka.listener.observation-enabled doesn't reach them.
+        // On, each record's handling becomes a span that continues the trace in its traceparent header.
+        factory.getContainerProperties().setObservationEnabled(true);
         // three consumers per group, one per partition (04-events §4: 3 partitions locally)
         factory.setConcurrency(3);
         factory.setCommonErrorHandler(errorHandler);
@@ -128,6 +131,8 @@ class KafkaConsumerConfig {
         factory.setConsumerFactory(typed(consumerFactory));
         factory.setBatchListener(true);
         factory.getContainerProperties().setAckMode(AckMode.BATCH);
+        // a batch has no single parent: each record's trace gets a link in the batch's span
+        factory.getContainerProperties().setObservationEnabled(true);
         factory.setConcurrency(3);
         factory.setCommonErrorHandler(errorHandler);
         return factory;

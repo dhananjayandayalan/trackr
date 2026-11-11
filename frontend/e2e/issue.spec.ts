@@ -37,17 +37,17 @@ test('the side panel edits an issue and the board behind it follows', async ({ s
     await expect(cardIn(column(ada, 'In progress'), key)).toBeVisible()
 
     // BLOCK 3: assignee and story points, each in its popover editor
-    await panel.getByRole('button', { name: 'Assignee: edit' }).click()
+    await panel.getByRole('button', { name: /^Assignee / }).click()
     const assignee = ada.getByRole('form', { name: 'Edit Assignee' })
     await assignee.getByLabel('Assignee').selectOption({ label: GRACE.name })
     await assignee.getByRole('button', { name: 'Save' }).click()
-    await expect(panel.getByRole('button', { name: 'Assignee: edit' })).toContainText(GRACE.name)
+    await expect(panel.getByRole('button', { name: /^Assignee / })).toContainText(GRACE.name)
 
-    await panel.getByRole('button', { name: 'Story points: edit' }).click()
+    await panel.getByRole('button', { name: /^Story points / }).click()
     const points = ada.getByRole('form', { name: 'Edit Story points' })
     await points.getByLabel('Story points').fill('8')
     await points.getByRole('button', { name: 'Save' }).click()
-    await expect(panel.getByRole('button', { name: 'Story points: edit' })).toHaveText('8')
+    await expect(panel.getByRole('button', { name: /^Story points / })).toHaveText('8')
 
     // BLOCK 4: a comment that mentions Grace, picked from the list that "@Gra" opens
     const composer = panel.getByRole('textbox', { name: `Comment on ${key}` })

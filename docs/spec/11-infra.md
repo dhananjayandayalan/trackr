@@ -95,4 +95,35 @@ trakr.app.origin: http://localhost:5173
 
 ## 8. Production shape (phase 18)
 
-Caddy in front: `/` → static frontend build (immutable hashed assets, `index.html` no-cache), `/api/*` → api (flush interval -1 for SSE), `/collab/*` → collab (WebSocket), `/oauth2/*` + `/login/oauth2/*` → api. Apps run as containers built with Spring Boot's Buildpacks image task or a hand-written multi-stage Dockerfile (we write the Dockerfile by hand — learning goal), using the Java 25 AOT cache for fast startup.
+Caddy in front: `/` → static frontend build (immutable hashed assets, `index.html` no-cache), `/api/*` → api (flush interval -1 for SSE), `/collab/*` → collab (WebSocket), `/oauth2/*` + `/login/oauth2/*` → api. Apps run as containers built with a hand-written multi-stage Dockerfile, using the Java 25 AOT cache for fast startup.
+
+| File | What |
+|---|---|
+| `backend/apps/{api,workers,collab}/Dockerfile` | build with Gradle (cache mount) → extract layers → JRE image, non-root, AOT cache from a training run (`-Dspring.context.exit=onRefresh`) |
+| `frontend/Dockerfile` | `pnpm build` → `dist/` inside `caddy:2.10-alpine` |
+| `infra/caddy/Caddyfile` | routing, compression, cache headers, security headers; `s3.localhost` → SeaweedFS for presigned URLs |
+| `infra/docker-compose.prod.yml` | the four images on top of `docker-compose.yml`, healthchecks, `SPRING_PROFILES_ACTIVE=prod`, per-app DB roles |
+| `apps/*/src/main/resources/application-prod.yml` | connection settings from env vars only: `TRAKR_DB_URL`, `TRAKR_DB_PASSWORD`, `TRAKR_DB_OWNER_PASSWORD`, `TRAKR_REDIS_HOST`, `TRAKR_MAIL_HOST`, … |
+
+```powershell
+# from infra/, with .\dev.ps1 stopped (same ports)
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml up -d --build --wait
+# http://localhost — the same compose project and volumes as dev, so the seed users work
+docker compose --env-file .env -f docker-compose.yml -f docker-compose.prod.yml stop
+```
+
+AOT cache, measured on the dev laptop (`docker compose run` with and without `-XX:AOTCache`): collab starts in 1.8 s instead of 4.9 s, the api in 7.0 s instead of 11.5 s. The api's training run has to be lazy (Modulith's outbox queries the database when its beans are created), so its cache covers less, and every start still validates the Flyway history and connects to Kafka.
+
+Attachments: presigned URLs are signed for a host, and the browser and the api must use the same one. Locally that is `http://s3.localhost`: browsers resolve `*.localhost` to themselves (Caddy), and inside the compose network `s3.localhost` is a network alias of the Caddy container.
+
+## 9. Observability (phase 18)
+
+Every app has Micrometer Tracing with the OpenTelemetry bridge (`spring-boot-starter-opentelemetry`) and Prometheus + OTLP metrics registries. HTTP requests, JDBC, Kafka sends and listeners are spans; the `traceparent` header carries a trace from the api through Kafka into the workers and collab. Log lines carry `[app,traceId,spanId]`.
+
+| | |
+|---|---|
+| Collector + UI | `grafana/otel-lgtm` in the `observability` compose profile: OTLP on 4317/4318, Grafana on http://localhost:3000 (admin/admin) |
+| Turn it on | `.\dev.ps1 -Observability` (starts the profile and sets `TRAKR_OTEL_ENABLED=true` for the apps) |
+| Sampling | `TRAKR_TRACE_SAMPLING` (default 1.0) |
+| Custom metrics | `trakr.issue.moves{project}`, `trakr.sse.subscribers`, `trakr.collab.rooms` |
+| Prometheus | `/actuator/prometheus` on each app |

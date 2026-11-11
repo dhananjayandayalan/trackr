@@ -163,6 +163,11 @@
     color: var(--color-ink);
     white-space: nowrap;
     text-overflow: ellipsis;
+
+    /* an open epic's bar is violet: ink on it is 3:1, white 6.4:1 (WCAG AA wants 4.5:1 for small text) */
+    .bar:not([data-kind='child'], [data-done]) & {
+      color: var(--color-on-primary);
+    }
   }
 
   .handle {

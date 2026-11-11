@@ -2,9 +2,9 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/trakr
-    # the trakr_collab role gets its grants in phase 18; until then the owner role, like the api
-    username: trakr
-    password: ${POSTGRES_PASSWORD:trakr}
+    # reads issue/project/membership, writes collab_update and collab_snapshot — nothing else (V014 grants)
+    username: trakr_collab
+    password: ${TRAKR_COLLAB_DB_PASSWORD:trakr_collab}
     hikari:
       maximum-pool-size: 10
       pool-name: trakr-collab

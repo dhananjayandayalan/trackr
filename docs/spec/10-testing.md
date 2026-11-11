@@ -25,7 +25,7 @@ Tests are written **in the same phase** as the code, block by block like everyth
 - Testcontainers are reused across tests (`@ServiceConnection` + a shared `TestcontainersConfiguration` class; enable reuse locally with `testcontainers.reuse.enable=true` in `~/.testcontainers.properties`).
 - Never mock what you own in integration tests; mock only external HTTP (OAuth providers) with WireMock.
 - Shared fixtures: `docs/spec/fixtures/rank-vectors.json`, `apps/collab/src/test/resources/fixtures/*.bin` (Yjs messages produced by a one-off Node script, checked in).
-- Each phase lists its required tests under "Tests" — the phase is not done until they pass.
+- A change is not done until its tests pass — `./gradlew check`, `pnpm test`, and `pnpm e2e` for anything a user can see.
 
 ## 3. Commands
 
@@ -36,3 +36,5 @@ Tests are written **in the same phase** as the code, block by block like everyth
 | `./gradlew check`           | everything + Modulith verify + OpenAPI snapshot           |
 | `pnpm test`                 | Vitest                                                    |
 | `pnpm e2e`                  | Playwright against `docker compose` + running apps        |
+| `pnpm size`                 | first-load JS of `dist/` against the 180 KB gzip budget   |
+| `k6 run perf/k6/board.js`   | optional load test: 50 users on the board, p95 budgets    |
